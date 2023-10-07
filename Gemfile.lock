@@ -9,7 +9,12 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
+    psych (5.1.0)
+      stringio
     rake (13.0.6)
+    rdoc (6.5.0)
+      psych (>= 4.0.0)
+    stringio (3.0.8)
     unicode-display_width (2.5.0)
     unicode-emoji (3.4.0)
       unicode-version (~> 1.0)
@@ -19,6 +24,7 @@ PLATFORMS
   aarch64-linux-android
 
 DEPENDENCIES
+  rdoc
   sg!
 
 BUNDLED WITH
