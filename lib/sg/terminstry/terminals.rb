@@ -1,7 +1,8 @@
 require 'sg/enumerable'
 require 'sg/color'
+require_relative 'constants'
 
-module SG::Terminals
+module SG::Terminstry::Terminals
   class Base
     def fgbg f, b
       r = ''

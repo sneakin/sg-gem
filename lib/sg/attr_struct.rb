@@ -7,7 +7,9 @@ module SG
     end
     
     def initialize *values
-      members.zip(values, self.class.init_values || []) { |f, v, iv| self[f] = v || eval_init(iv) }
+      members.zip(values, self.class.init_values || []) do |f, v, iv|
+        self[f] = v || eval_init(iv)
+      end
     end
 
     def members; self.class.members; end
