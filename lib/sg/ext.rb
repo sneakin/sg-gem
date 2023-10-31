@@ -66,10 +66,6 @@ EOT
         end
       end
 
-      def const_by_value n
-        constants.find { |c| const_get(c) == n }
-      end
-
       def to_bool; true; end
     end
 
@@ -103,6 +99,10 @@ end
 extend(Attributes)
 EOT
         end
+      end
+
+      def const_by_value n
+        constants.find { |c| const_get(c) == n }
       end
     end
     
