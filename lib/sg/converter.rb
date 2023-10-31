@@ -6,6 +6,12 @@ require 'sg/method_cache'
 
 module SG  
   class Converter
+    class Ignored
+      def * other
+        other
+      end
+    end    
+
     class Identity
       def initialize klass
         @klass = klass
