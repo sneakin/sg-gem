@@ -22,12 +22,28 @@ module SG::Algebra
       BinOp.new(:**, self, other)
     end
 
+    def | other
+      BinOp.new(:|, self, other)
+    end
+
+    def & other
+      BinOp.new(:&, self, other)
+    end
+
+    def ^ other
+      BinOp.new(:^, self, other)
+    end
+
     def call env
       self
     end
     
     def method_missing mid, *args, **opts, &cb
       MethodCall.new(self, mid, args, opts, cb)
+    end
+
+    def to_ary
+      [ self ]
     end
   end
   
@@ -49,7 +65,7 @@ module SG::Algebra
     end
 
     alias_method :inspect, :to_s
-    
+
     def call env
       lr = left.respond_to?(:call) ? left.call(env) : left
       rr = right.respond_to?(:call) ? right.call(env) : right
@@ -106,7 +122,7 @@ module SG::Algebra
 
     def self.for other
       case other
-      when Symbol.new(other)
+      when ::Symbol then new(other)
       else Constant.new(other)
       end
     end
