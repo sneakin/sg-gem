@@ -46,8 +46,8 @@ module SG
       def delegate(*methods, to:)
         methods.each do |m|
           class_eval <<-EOT
-def #{m} *args, **opts, &cb
-  self.#{to}.#{m}(*args, **opts, &cb)
+def #{m}(...)
+  self.#{to}.#{m}(...)
 end
 EOT
         end
@@ -64,10 +64,6 @@ EOT
             end
           end
         end
-      end
-
-      def const_by_value n
-        constants.find { |c| const_get(c) == n }
       end
 
       def to_bool; true; end
@@ -103,6 +99,10 @@ end
 extend(Attributes)
 EOT
         end
+      end
+
+      def const_by_value n
+        constants.find { |c| const_get(c) == n }
       end
     end
     

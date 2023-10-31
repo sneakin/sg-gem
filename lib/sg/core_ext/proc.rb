@@ -1,7 +1,7 @@
 class Proc
   def partial_before *args
-    self.class.new do |*a, **o, &b|
-      self.call(*args, *a, **o, &b)
+    self.class.new do |...|
+      self.call(*args, ...)
     end
   end
 
@@ -24,8 +24,8 @@ class Proc
   end
   
   def compose other
-    self.class.new do |*a, **o, &b|
-      other.call(self.call(*a, **o, &b))
+    self.class.new do |...|
+      other.call(self.call(...))
     end
   end
 
@@ -34,9 +34,9 @@ class Proc
   end
   
   def but *exes, &cb
-    self.class.new do |*a, **o, &b|
+    self.class.new do |...|
       begin
-        self.call(*a, **o, &b)
+        self.call(...)
       rescue
         if exes.empty? || exes.include?($!.class)
           cb.call($!)
