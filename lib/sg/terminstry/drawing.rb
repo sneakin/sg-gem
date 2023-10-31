@@ -4,7 +4,7 @@ require_relative 'constants'
 require_relative 'util'
 
 module SG::Terminstry::Drawing
-  def self.tabbox title, content, size: tty_size, bg: 9, fg: 9, borderbg: 9, borderfg: fg, titlefg: fg
+  def self.tabbox title, content, size: Terminstry.tty_size, bg: 9, fg: 9, borderbg: 9, borderfg: fg, titlefg: fg
     border = "\e[0;%i;%im" % [ 30 + borderfg, 40 + borderbg ]
     color = "\e[0;%i;%im" % [ 30 + fg, 40 + bg ]
     title_color = "\e[0;%i;%im" % [ 30 + titlefg, 40 + bg ]
