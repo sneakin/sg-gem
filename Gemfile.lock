@@ -2,9 +2,9 @@ PATH
   remote: .
   specs:
     sg (0.1.0)
-      rake
-      unicode-display_width
-      unicode-emoji
+      rake (~> 13.0.0)
+      unicode-display_width (~> 2.5.0)
+      unicode-emoji (~> 3.4.0)
 
 GEM
   remote: https://rubygems.org/
@@ -24,7 +24,7 @@ PLATFORMS
   aarch64-linux-android
 
 DEPENDENCIES
-  rdoc
+  rdoc (~> 6.5.0)
   sg!
 
 BUNDLED WITH

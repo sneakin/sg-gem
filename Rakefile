@@ -1,3 +1,6 @@
+NAME = 'sg'
+VERSION = '0.0.1'
+
 require 'rspec/core/rake_task'
 
 RSPEC_OPTS = ENV['RSPEC_OPTS'] || ''
@@ -33,4 +36,18 @@ namespace :doc do
     rdoc = RDoc::RDoc.new
     rdoc.document %w{-o doc/api lib}
   end
+end
+
+namespace :gem do
+  file "#{NAME}-#{VERSION}.gem" => 'sg.gemspec' do
+    sh("gem build sg.gemspec")
+  end
+  
+  desc "Build the gem."
+  task :build => "#{NAME}-#{VERSION}.gem"
+end
+
+desc 'Remove any built files.'
+task :clean do
+  sh("rm -rf #{NAME}*.gem doc/api doc/spec.html")
 end
