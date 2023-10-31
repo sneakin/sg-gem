@@ -1,4 +1,4 @@
-require 'sg/enumerable'
+require 'sg/ext'
 require 'sg/color'
 require_relative 'constants'
 
