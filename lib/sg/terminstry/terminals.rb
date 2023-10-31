@@ -22,11 +22,11 @@ module SG::Terminstry::Terminals
   # For a terminal lacking color support:
   class VT100 < Base
     def fg c
-      "\e[%sm" % [ fg_gray(c.to(Color::Gray).level) ]
+      "\e[%sm" % [ fg_gray(c.to(SG::Color::Gray).level) ]
     end
 
     def bg c
-      "\e[%sm" % [ bg_gray(c.to(Color::Gray).level) ]
+      "\e[%sm" % [ bg_gray(c.to(SG::Color::Gray).level) ]
     end
 
     def normal
@@ -67,21 +67,21 @@ module SG::Terminstry::Terminals
   # with dim and bright support.
   class XTerm < VT100
     def fg c
-      hsl = c.to(Color::HSL)
+      hsl = c.to(SG::Color::HSL)
       return "\e[%sm" % [ fg_gray(hsl.luminosity) ] if hsl.saturation < 0.1
 
-      # TODO move to Color::VT100      
+      # TODO move to SG::Color::VT100      
       # clamp the hue to the 6 colors
-      c16 = hsl.to(Color::VT100)
+      c16 = hsl.to(SG::Color::VT100)
       "\e[%i;%im" % [ c16.attribute, 30 + c16.color_code ]
     end
 
     def bg c
-      hsl = c.to(Color::HSL)
+      hsl = c.to(SG::Color::HSL)
       return "\e[%sm" % [ bg_gray(hsl.luminosity) ] if hsl.saturation < 0.1
       
       # clamp the hue to the 6 colors
-      c16 = hsl.to(Color::VT100)
+      c16 = hsl.to(SG::Color::VT100)
       "\e[%im" % [ 40 + c16.color_code ]
     end
   end
@@ -99,9 +99,9 @@ module SG::Terminstry::Terminals
     protected
     
     def color_index c
-      hsl = c.to(Color::HSL)
+      hsl = c.to(SG::Color::HSL)
       return gray_index(hsl.luminosity) if hsl.saturation < 0.1
-      c = c.to(Color::RGB)
+      c = c.to(SG::Color::RGB)
       # The palette has a 6x6x6 RGB cube after the 16 standard colors.
       # All the RGB components are restricted to six values.
       16 + (c.red / 255.0 * 5).round * 36 +
@@ -130,12 +130,12 @@ module SG::Terminstry::Terminals
   # See: https://github.com/termstandard/colors
   class XTermTrue < XTerm
     def fg c
-      c = c.to(Color::RGB)
+      c = c.to(SG::Color::RGB)
       "\e[38;2;%i;%i;%im" % c.to_a
     end
     
     def bg c
-      c = c.to(Color::RGB)
+      c = c.to(SG::Color::RGB)
       "\e[48;2;%i;%i;%im" % c.to_a
     end
   end
@@ -150,20 +150,20 @@ module SG::Terminstry::Terminals
     end
 
     def fgbg f, b
-      f = f.to(Color::RGB)
-      b = b.to(Color::RGB)
+      f = f.to(SG::Color::RGB)
+      b = b.to(SG::Color::RGB)
       @in_tag += 1
       '<span style="color: #%s; background: #%s">' % [ f.to_hex_string, b.to_hex_string ]
     end
 
     def fg c
-      c = c.to(Color::RGB)
+      c = c.to(SG::Color::RGB)
       @in_tag += 1
       '<span style="color: #%s">' % [ c.to_hex_string ]
     end
 
     def bg c
-      c = c.to(Color::RGB)
+      c = c.to(SG::Color::RGB)
       @in_tag += 1
       '<span style="background: #%s">' % [ c.to_hex_string ]
     end
