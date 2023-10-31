@@ -46,8 +46,8 @@ module SG
       def delegate(*methods, to:)
         methods.each do |m|
           class_eval <<-EOT
-def #{m} *args, **opts, &cb
-  self.#{to}.#{m}(*args, **opts, &cb)
+def #{m}(...)
+  self.#{to}.#{m}(...)
 end
 EOT
         end

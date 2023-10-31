@@ -1,11 +1,11 @@
 class Object
-  def try m, *a, **o, &cb
-    send(m, *a, **o, &cb)
+  def try(m, ...)
+    send(m, ...)
   end
 end
 
 class NilClass
-  def try m, *a, **o, &cb
+  def try(m, ...)
     nil
   end
 end
