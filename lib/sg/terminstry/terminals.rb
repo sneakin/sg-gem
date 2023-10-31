@@ -14,6 +14,9 @@ module SG::Terminstry::Terminals
     def fg c; ''; end
     def bg c; ''; end
     def normal; ''; end
+    def bold; ''; end
+    def underline; ''; end
+    def italic; ''; end
   end
   
   # For a terminal lacking color support:
@@ -29,6 +32,10 @@ module SG::Terminstry::Terminals
     def normal
       "\e[0m"
     end
+
+    def bold; "\e[1m"; end
+    def underline; "\e[4m"; end
+    def italic; "\e[3m"; end
 
     protected
     
@@ -165,6 +172,18 @@ module SG::Terminstry::Terminals
       r = '</span>' * @in_tag
       @in_tag = 0
       r
+    end
+
+    def bold
+      '<span style="font-weight: bold;">'
+    end
+
+    def underline
+      '<span style="text-decoration: underline;">'
+    end
+    
+    def italic
+      '<span style="font-style: italic;">'
     end
   end
 
