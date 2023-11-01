@@ -12,6 +12,12 @@ RSpec::Core::RakeTask.new(:spec) do |t|
 end
 
 namespace :spec do
+  desc 'Run the RSpec test suit'
+  RSpec::Core::RakeTask.new(:fast) do |t|
+    t.rspec_opts = '-t "~slow"'
+    t.pattern = 'tests/spec/**{,/*/**}/*.spec'
+  end
+
   desc 'Run the RSpec test suit with the doc formatter.'
   RSpec::Core::RakeTask.new(:doc) do |t|
     t.rspec_opts = "-f doc #{RSPEC_OPTS}"
