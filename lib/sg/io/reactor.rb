@@ -14,6 +14,8 @@ require 'sg/io/reactor/listener'
 require 'sg/io/reactor/dispatch_set'
 
 class SG::IO::Reactor
+  attr_reader :inputs, :outputs, :errs, :idlers
+  
   def initialize
     @inputs = DispatchSet.new
     @outputs = DispatchSet.new
@@ -36,7 +38,8 @@ class SG::IO::Reactor
     del_err(actor)
     self
   end
-  
+
+  protected  
   def add_to_set set, actor_or_io, io, actor_kind, &cb
     if actor_or_io && cb
       set.add(actor_kind.new(actor_or_io, &cb), actor_or_io)
@@ -46,6 +49,8 @@ class SG::IO::Reactor
       raise ArgumentError.new("Expected an IO and block, or Actor and IO.")
     end
   end
+
+  public
 
   def add_input actor_or_io, io = nil, &cb
     add_to_set(@inputs, actor_or_io, io, BasicInput, &cb)
@@ -68,7 +73,7 @@ class SG::IO::Reactor
   end
 
   def add_err actor, io = nil, &cb
-    add_to_set(@errs, actor, io, BasicOutput, &cb)
+    add_to_set(@errs, actor, io, BasicInput, &cb)
   end
 
   def del_err actor
@@ -77,12 +82,18 @@ class SG::IO::Reactor
 
   def add_idler &cb
     @idlers << cb
+    cb
   end
 
   def del_idler fn
-    @idlers.delete(fn)
+    puts("=> del_idler #{fn.inspect} #{@idlers.inspect}")
+    r = @idlers.delete(fn)
+    puts("<= del_idler #{fn.inspect} #{@idlers.inspect}")
+    r
   end
 
+  # todo error set really is errors and not stderr, possibly every io?
+  
   def process timeout: nil
     ios = [ @inputs.needs_processing.keys,
             @outputs.needs_processing.keys,
@@ -103,10 +114,9 @@ class SG::IO::Reactor
   def flush
     i,o,e = ::IO.select([],
                         @outputs.needs_processing.keys,
-                        @errs.needs_processing.keys,
+                        [],
                         0)
     @outputs.process(o) if o
-    @errs.process(e) if e
     self
   end
 
