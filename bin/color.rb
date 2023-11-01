@@ -2,17 +2,17 @@
 
 $: << File.join(File.dirname(File.dirname(__FILE__)), 'lib')
 
-require 'sg/terminals'
-
 if $0 == __FILE__
-  Terminals = SG::Terminals
+  require 'sg/terminstry/terminals'
+
+  Terminals = SG::Terminstry::Terminals
   Color = SG::Color
   
   vt100 = Terminals.make_tty
   case ARGV.shift
-  when 'normal' then
+  when 'normal' then # Print the code to reset the TTY.
     $stdout.write(vt100.normal)
-  when 'rgb' then
+  when 'rgb' then # Print the escape code for an RGB color.
     fg = Color::RGB.new(*ARGV[0,3].collect { |a| a.to_f })
     if ARGV[3,3].size == 3
       bg = Color::RGB.new(*ARGV[3,3].collect { |a| a.to_f })
@@ -20,28 +20,28 @@ if $0 == __FILE__
     else
       $stdout.write(vt100.fg(fg))
     end
-  when 'hsl' then
+  when 'hsl' then # Print the escape code for an HSL color.
     fg = Color::HSL.new(*ARGV[0,3].collect { |a| a.to_f })
     bg = Color::HSL.new(*ARGV[3,3].collect { |a| a.to_f })
     $stdout.write(vt100.fgbg(fg, bg))
-  when 'gray' then
+  when 'gray' then # Print the escape code for a gray.
     gray = Color::Gray.new(ARGV[0].to_f)
     puts("%s%f%s  %s%f%s" %
          [ vt100.fgbg(gray.invert, gray), ARGV[0].to_f, vt100.normal,
            vt100.fgbg(gray, Color::RGB.new(0)), ARGV[0].to_f, vt100.normal])
-  when 'rgb-hsl' then
+  when 'rgb-hsl' then # Convert RGB to HSL for side by side comparison.
     rgb = Color::RGB.new(*ARGV[0,3].collect { |a| a.to_f })
     hsl = rgb.to(Color::HSL)
     puts("%s%.2f %.2f %.2f%s  %s%.2f %.2f %.2f%s" %
          [ vt100.fgbg(hsl.invert, hsl), *hsl, vt100.normal,
            vt100.fgbg(hsl, Color::RGB.new(0)), *hsl, vt100.normal])
-  when 'hsl-rgb' then
+  when 'hsl-rgb' then # Convert HSL to RGB for side by side comparison.
     hsl = Color::HSL.new(*ARGV[0,3].collect(&:to_f))
     rgb = hsl.to(Color::RGB)
     puts("%s%3i %3i %3i%s  %s%3i %3i %3i%s" %
          [ vt100.fgbg(rgb.invert, rgb), *rgb, vt100.normal,
            vt100.fgbg(rgb, Color::RGB.new(0)), *rgb, vt100.normal ])
-  when /^([-+*\/.])$/ then
+  when /^([-+*\/.])$/ then # Print a list of named colors.
     op = $1.to_sym
     colors = ARGV.collect { |a| Color.from_string(a) }
     r = colors[1..-1].reduce(colors[0]) { |a, c| a.send(op, c) }.clamp
@@ -49,7 +49,7 @@ if $0 == __FILE__
           join(" #{op} ")
     s += " = %s%s%s" % [ vt100.fg(r), r, vt100.normal ]
     puts(s)
-  when 'swatch' then
+  when 'swatch' then # Print the entire HSL colorspace.
     s = (ARGV[2] || 1).to_f
     lines = (ARGV[1] || (ENV.fetch('LINES', 24).to_i - 1))
     cols = (ARGV[0] || (ENV.fetch('COLUMNS', 40).to_i - 4))
@@ -62,7 +62,7 @@ if $0 == __FILE__
       end
       $stdout.puts(vt100.normal)
     end
-  when 'rgb-grad' then
+  when 'rgb-grad' then # Print a gradient that uses the whole RGB colorspace.
     rows = (ARGV[1] || ENV.fetch('LINES', 20)).to_i - 1
     cols = (ARGV[0] || ENV.fetch('COLUMNS', 20)).to_i - 1
     style = ARGV[2].to_i
@@ -81,6 +81,9 @@ if $0 == __FILE__
       end
       $stdout.puts(vt100.normal)
     end
+  when /-*help/ then # Print this list.
+    require 'sg/selfhelp'
+    SG::SelfHelp.print
   else raise ArgumentError.new("Unknown mode.")
   end
 end
