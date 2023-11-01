@@ -2,6 +2,8 @@ require 'sg/io/reactor'
 require 'socket'
 
 describe SG::IO::Reactor do
+  TimeOut = 2
+    
   describe 'with inputs' do
     let(:pipe) { IO.pipe }
     let(:input) { pipe[0] }
@@ -13,16 +15,16 @@ describe SG::IO::Reactor do
       end
     end
     
-    describe '#process' do
+    describe '#process', slow: true do
       it "times out" do
         start = Time.now
-        expect(subject.process(timeout: 3)).to be(subject)
+        expect(subject.process(timeout: TimeOut)).to be(subject)
         ending = Time.now
-        expect(ending - start).to be >= 3
+        expect(ending - start).to be >= TimeOut
       end
       
       it "does not call the input's callback" do
-        expect { subject.process(timeout: 1) }.to_not change { @has_input }
+        expect { subject.process(timeout: TimeOut) }.to_not change { @has_input }
       end
       
       describe 'after writing to the output' do
@@ -31,7 +33,7 @@ describe SG::IO::Reactor do
         end
         
         it "calls the input's block" do
-          expect { subject.process(timeout: 3) }.to change { @has_input }
+          expect { subject.process(timeout: TimeOut) }.to change { @has_input }
         end
       end
     end
@@ -60,9 +62,9 @@ describe SG::IO::Reactor do
       end)
     end
     
-    describe '#process' do
+    describe '#process', slow: true do
       it "calls the output's callback" do
-        expect { subject.process(timeout: 1) }.to change { @can_output }
+        expect { subject.process(timeout: TimeOut) }.to change { @can_output }
       end
       
       describe 'after filling the output' do
@@ -77,14 +79,43 @@ describe SG::IO::Reactor do
         end
         
         it "does not call the output's callback" do
-          expect { subject.process(timeout: 1) }.to_not change { @can_output }
+          expect { subject.process(timeout: TimeOut) }.to_not change { @can_output }
         end
       
         it "times out" do
           start = Time.now
-          expect(subject.process(timeout: 3)).to be(subject)
+          expect(subject.process(timeout: TimeOut)).to be(subject)
           ending = Time.now
-          expect(ending - start).to be >= 3
+          expect(ending - start).to be >= TimeOut
+        end
+      end
+    end
+
+    describe '#flush' do
+      it "calls the output's callback" do
+        expect { subject.flush }.to change { @can_output }
+      end
+      
+      describe 'after filling the output' do
+        before do
+          begin
+            64.times do
+              output.write_nonblock("Halo\n" * 1024)
+              output.flush
+            end
+          rescue IO::EAGAINWaitWritable
+          end
+        end
+        
+        it "does not call the output's callback" do
+          expect { subject.flush }.to_not change { @can_output }
+        end
+      
+        it "times out immediately" do
+          start = Time.now
+          expect(subject.flush).to be(subject)
+          ending = Time.now
+          expect(ending - start).to be < 1
         end
       end
     end
@@ -101,7 +132,7 @@ describe SG::IO::Reactor do
     
   end
 
-  describe 'with errs on a TCP socket' do  
+  describe 'with OOB on a TCP socket' do  
     Port = 4112
     let(:server) { TCPServer.new(Port).tap { |s| s.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, 1); s.listen(1) } }
     let(:worker) { server.accept }
@@ -126,30 +157,30 @@ describe SG::IO::Reactor do
     
     describe '#process' do
       it "does not call the error callback" do
-        expect { subject.process(timeout: 1) }.to_not change { @err_input }
+        expect { subject.process(timeout: TimeOut) }.to_not change { @err_input }
       end
       
-      it "times out" do
+      it "times out", slow: true do
         start = Time.now
-        expect(subject.process(timeout: 3)).to be(subject)
+        expect(subject.process(timeout: TimeOut)).to be(subject)
         ending = Time.now
-        expect(ending - start).to be >= 3
+        expect(ending - start).to be >= TimeOut
       end
 
-      describe 'after sending data' do
+      describe 'after sending data', slow: true do
         before do
           worker.sendmsg("Hello")
         end
         
         it "does not call the error callback" do
-          expect { subject.process(timeout: 1) }.to_not change { @err_input }
+          expect { subject.process(timeout: TimeOut) }.to_not change { @err_input }
         end
       
         it "times out" do
           start = Time.now
-          expect(subject.process(timeout: 3)).to be(subject)
+          expect(subject.process(timeout: TimeOut)).to be(subject)
           ending = Time.now
-          expect(ending - start).to be >= 3
+          expect(ending - start).to be >= TimeOut
         end
       end
 
@@ -159,7 +190,7 @@ describe SG::IO::Reactor do
         end
         
         it "calls the error callback" do
-          expect { subject.process(timeout: 1) }.to change { @err_input }
+          expect { subject.process(timeout: TimeOut) }.to change { @err_input }
         end
       end
     end
@@ -182,21 +213,22 @@ describe SG::IO::Reactor do
       end
     end
     
-    describe '#process' do
+    describe '#process', slow: true do
       describe 'with no activity' do
         it 'calls the idler' do
-          expect { subject.process(timeout: 1) }.to change { @idled }
+          expect { subject.process(timeout: TimeOut) }.to change { @idled }
         end
       end
 
       describe 'with activity' do
         before do
           subject.add_input($stdin) do
+            # noop
           end
         end
         
         it 'calls the idler' do
-          expect { subject.process(timeout: 1) }.to change { @idled }
+          expect { subject.process(timeout: TimeOut) }.to change { @idled }
         end
       end
     end
@@ -206,16 +238,46 @@ describe SG::IO::Reactor do
     end
   end
 
-  describe '#flush' do
-    it 'processes all the ready outputs'
-  end
-
   describe '#done!' do
-    it 'flips done? to true'
-    it 'stops the server loop'
+    it { expect { subject.done! }.to change(subject, :done?).to(true) }
   end
   
-  describe '#server' do
+  describe '#serve!', slow: true do
+    let(:pipe) { IO.pipe }
+                         
+    before do
+      subject.add_input(pipe[0]) do
+        @can_read = true
+      end
+      @done = false
+      @cb_calls = 0
+      @start = Time.now
+      @thread = Thread.new do
+        subject.serve!(timeout: 1) do
+          @cb_calls += 1
+        end
+        @done = true
+      end
+    end
+
+    after do
+      @thread.kill
+    end
+
+    it { expect { subject.done!; @thread.join }.to change { @thread.alive? }.from(true).to(false) }
+    it { expect { subject.done! }.to change { subject.done? }.to(true) }
+
+    it 'calls the after each processing' do
+      sleep(2)
+      expect(@cb_calls).to be >= 1
+    end
+    
+    it 'uses the supplied timeout' do
+      subject.done!
+      @thread.join
+      ending = Time.now
+      expect(ending - @start).to be >= 1
+    end
   end
   
 end

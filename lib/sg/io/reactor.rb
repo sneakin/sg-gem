@@ -86,10 +86,7 @@ class SG::IO::Reactor
   end
 
   def del_idler fn
-    puts("=> del_idler #{fn.inspect} #{@idlers.inspect}")
-    r = @idlers.delete(fn)
-    puts("<= del_idler #{fn.inspect} #{@idlers.inspect}")
-    r
+    @idlers.delete(fn)
   end
 
   # todo error set really is errors and not stderr, possibly every io?
@@ -130,6 +127,7 @@ class SG::IO::Reactor
   end
   
   def serve! timeout: 60, &cb
+    @done = false
     if cb
       until done?
         process(timeout: timeout)
