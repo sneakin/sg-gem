@@ -279,5 +279,21 @@ describe SG::IO::Reactor do
       expect(ending - @start).to be >= 1
     end
   end
-  
+
+  describe '#add_listener' do
+    Port = 4112
+    let(:server) { TCPServer.new(Port).tap { |s| s.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, 1); s.listen(1) } }
+
+    before do
+      server
+    end
+
+    after do
+      server.close
+    end
+
+    it { expect { subject.add_listener(server) }.to raise_error(ArgumentError) }
+    it { expect { subject.add_listener(server) { :ok } }.to change { subject.inputs.ios } }
+    it { expect(subject.add_listener(server) { :ok }).to be_kind_of(SG::IO::Reactor::Listener) }
+  end
 end
