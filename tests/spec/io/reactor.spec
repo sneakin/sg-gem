@@ -1,8 +1,10 @@
 require 'sg/io/reactor'
 require 'socket'
+require 'timeout'
 
 describe SG::IO::Reactor do
   TimeOut = 2
+  Port = 4112
     
   describe 'with inputs' do
     let(:pipe) { IO.pipe }
@@ -133,7 +135,6 @@ describe SG::IO::Reactor do
   end
 
   describe 'with OOB on a TCP socket' do  
-    Port = 4112
     let(:server) { TCPServer.new(Port).tap { |s| s.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, 1); s.listen(1) } }
     let(:worker) { server.accept }
     let(:client) { TCPSocket.new('localhost', Port) }
@@ -264,7 +265,7 @@ describe SG::IO::Reactor do
       @thread.kill
     end
 
-    it { expect { subject.done!; @thread.join }.to change { @thread.alive? }.from(true).to(false) }
+    it { expect { subject.done!; Timeout.timeout(5) { @thread.join } }.to change { @thread.alive? }.from(true).to(false) }
     it { expect { subject.done! }.to change { subject.done? }.to(true) }
 
     it 'calls the after each processing' do
@@ -274,14 +275,13 @@ describe SG::IO::Reactor do
     
     it 'uses the supplied timeout' do
       subject.done!
-      @thread.join
+      Timeout.timeout(5) { @thread.join }
       ending = Time.now
       expect(ending - @start).to be >= 1
     end
   end
 
   describe '#add_listener' do
-    Port = 4112
     let(:server) { TCPServer.new(Port).tap { |s| s.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, 1); s.listen(1) } }
 
     before do
