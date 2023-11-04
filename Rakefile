@@ -44,6 +44,8 @@ namespace :doc do
   end
 end
 
+task :doc => [ 'doc:api', 'spec:html' ]
+
 namespace :gem do
   file "#{NAME}-#{VERSION}.gem" => 'sg.gemspec' do
     sh("gem build sg.gemspec")
