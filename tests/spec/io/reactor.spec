@@ -268,7 +268,7 @@ describe SG::IO::Reactor do
     it { expect { subject.done!; Timeout.timeout(5) { @thread.join } }.to change { @thread.alive? }.from(true).to(false) }
     it { expect { subject.done! }.to change { subject.done? }.to(true) }
 
-    it 'calls the after each processing' do
+    it 'calls the block after each processing' do
       sleep(2)
       expect(@cb_calls).to be >= 1
     end
