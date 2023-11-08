@@ -11,6 +11,7 @@ require 'sg/io/reactor/basic_input'
 require 'sg/io/reactor/basic_output'
 require 'sg/io/reactor/queued_output'
 require 'sg/io/reactor/listener'
+require 'sg/io/reactor/socket_connector'
 require 'sg/io/reactor/dispatch_set'
 
 class SG::IO::Reactor

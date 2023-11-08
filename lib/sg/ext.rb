@@ -47,7 +47,7 @@ module SG
         methods.each do |m|
           class_eval <<-EOT
 def #{m}(...)
-  self.#{to}.#{m}(...)
+  #{to}.#{m}(...)
 end
 EOT
         end

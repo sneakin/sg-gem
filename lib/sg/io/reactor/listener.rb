@@ -9,8 +9,15 @@ class SG::IO::Reactor
     def process
       sock = io.accept
       cin, cout = @cb.call(sock)
-      @dispatcher.add_input(cin, sock) if cin
-      @dispatcher.add_output(cout, sock) if cout
+      # fixme Source wrappers
+      if cin
+        raise RuntimeError.new("Expected a Reactor::IInput") unless IInput === cin
+        @dispatcher.add_input(cin)
+      end
+      if cout
+        raise RuntimeError.new("Expected a Reactor::IOutput") unless IOutput === cout
+        @dispatcher.add_output(cout)
+      end
     rescue
       @on_error ? @on_error.call($!) : raise($!)
     end

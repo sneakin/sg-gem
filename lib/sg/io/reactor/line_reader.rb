@@ -1,9 +1,11 @@
 require 'sg/io/reactor'
 
 class SG::IO::Reactor::LineReader < SG::IO::Reactor::IInput
-  def initialize io, sep = "\n", read_size: nil, &cb
+  attr_reader :separator, :read_size
+  
+  def initialize io, separator: "\n", read_size: nil, &cb
     super(io)
-    @separator = sep
+    @separator = separator
     @buffer = ''
     @read_size = read_size || 8192
     @cb = cb

@@ -7,6 +7,8 @@ class SG::IO::Reactor
     end
 
     def add actor, io = actor.io
+      raise ArgumentError.new('expected a Source, not %s' % [ actor.class ]) unless Source === actor
+      #raise ArgumentError.new('expected an IO, not %s' % [ io.class ]) unless ::IO === io
       @ios[io] = actor
     end
 

@@ -2,6 +2,8 @@ require 'sg/io/reactor'
 require 'socket'
 require 'timeout'
 
+# todo defense against IO errors
+
 describe SG::IO::Reactor do
   TimeOut = 2
   Port = 4112

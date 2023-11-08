@@ -1,3 +1,6 @@
+require 'socket'
+require 'sg/ext'
+require 'sg/core_ext'
 require 'sg/io/reactor'
 
 class SG::IO::Reactor
@@ -7,6 +10,11 @@ class SG::IO::Reactor
       @connected = false
       super(Socket.new(family, protocol, 0))
       @peeraddr = Socket.sockaddr_in(port, host)
+    end
+
+    def but ex, &block
+      @cb = @cb.but(ex, &block)
+      self
     end
     
     def needs_processing?
@@ -20,6 +28,12 @@ class SG::IO::Reactor
     rescue Errno::EISCONN
       @connected = true
       @cb.call(io)
+    rescue
+      if @cb.on_error
+        @cb.on_error.call($!)
+      else
+        raise
+      end
     end
     
     def self.tcp host, port, &cb

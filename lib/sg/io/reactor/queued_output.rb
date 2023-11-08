@@ -1,4 +1,5 @@
 require 'thread'
+require 'openssl'
 
 class SG::IO::Reactor
   class QueuedOutput < IOutput
@@ -11,11 +12,17 @@ class SG::IO::Reactor
 
     def close
       @closing = true
+      self
     end
 
     alias close_write close
+
+    def closed?
+      @closing == true || super
+    end
     
     def flush
+      self
     end
     
     def << data
@@ -33,13 +40,16 @@ class SG::IO::Reactor
     def puts *lines
       if lines.empty?
         write("\n")
+        lines
       else
         lines.each { |l| write(l.to_s + "\n") }
       end
     end
+
+    def queue_empty?; @queue.empty?; end
     
     def needs_processing?
-      !closed? && (!@queue.empty? || @closing)
+      !@queue.empty?
     end
 
     def process
@@ -47,6 +57,7 @@ class SG::IO::Reactor
       data = nil
       while !@queue.empty?
         data = @queue.shift
+        amt = 0 # for when exceptions happen
         amt = @cb.call(data)
         @queue.unshift(data[amt..-1]) if amt < data.size
       end

@@ -2,6 +2,7 @@
 class SG::IO::Reactor
   class BasicOutput < IOutput
     def initialize io, needs_processing: nil, &cb
+      raise ArgumentError.new('no block given') if cb == nil
       super(io)
       @cb = cb
       @needs_processing = needs_processing

@@ -32,20 +32,31 @@ class Proc
   def and &cb
     compose(cb)
   end
+
+  attr_accessor :on_error, :fn
+
+  def fn
+    @fn || self
+  end
   
   def but *exes, &cb
+    return self unless cb
+    
     this = self
-    self.class.new do |*a, **o, &b|
+    other = self.class.new do |*a, **o, &b|
       begin
         this.call(*a, **o, &b)
       rescue
         if exes.empty? || exes.include?($!.class)
-          cb.call($!)
+          other.on_error.call($!)
         else
           raise
         end
       end
     end
+    other.fn = this
+    other.on_error = cb
+    other
   end
   
 end
