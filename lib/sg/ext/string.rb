@@ -1,4 +1,6 @@
 module SG::Ext::String
+  using SG::Ext
+  
   def pluralize
     case self
     when 'foot' then 'feet'
