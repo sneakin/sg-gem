@@ -1,5 +1,7 @@
 require 'sg/ext'
 
+using SG::Ext
+
 module SG
   class Graph
     class DuplicateEdgeError < ArgumentError

@@ -4,6 +4,8 @@ require 'sg/ext'
 require 'sg/graph'
 require 'sg/method_cache'
 
+using SG::Ext
+
 module SG  
   class Converter
     class Ignored

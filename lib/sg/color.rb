@@ -1,6 +1,8 @@
 require 'sg/ext'
 require 'sg/converter'
 
+using SG::Ext
+
 module SG
   module Color
     class Base
