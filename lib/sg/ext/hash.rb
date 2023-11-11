@@ -1,8 +1,11 @@
-module SG::Ext::Hash
-  def symbolize_keys
-    self.class[self.collect { |k, v| [ k.to_sym, v ] }]
-  end
-  def stringify_keys
-    self.class[self.collect { |k, v| [ k.to_s, v ] }]
+module SG::Ext
+  refine ::Hash do
+    def symbolize_keys
+      self.class[self.collect { |k, v| [ k.to_sym, v ] }]
+    end
+    
+    def stringify_keys
+      self.class[self.collect { |k, v| [ k.to_s, v ] }]
+    end
   end
 end

@@ -1,7 +1,8 @@
-module SG::Ext::Mod
-  def mattr_accessor *attrs
-    attrs.each do |attr|
-      module_eval <<-EOT
+module SG::Ext
+  refine ::Module do
+    def mattr_accessor *attrs
+      attrs.each do |attr|
+        module_eval <<-EOT
 def self.#{attr}
   @#{attr}
 end
@@ -9,12 +10,12 @@ def self.#{attr}= v
   @#{attr} = v
 end
 EOT
+      end
     end
-  end
 
-  def xinheritable_attr *attrs
-    attrs.each do |attr|
-      module_eval <<-EOT
+    def xinheritable_attr *attrs
+      attrs.each do |attr|
+        module_eval <<-EOT
 module Attributes
   def #{attr}
     nil
@@ -27,10 +28,11 @@ module Attributes
 end
 extend(Attributes)
 EOT
+      end
     end
-  end
 
-  def const_by_value n
-    constants.find { |c| const_get(c) == n }
+    def const_by_value n
+      constants.find { |c| const_get(c) == n }
+    end
   end
 end
