@@ -1,6 +1,8 @@
 require 'sg/io/reactor'
 
 describe SG::IO::Reactor::SocketConnector do
+  using SG::Ext
+  
   Port = 2000 + rand(1000)
   
   subject do

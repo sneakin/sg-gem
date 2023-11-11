@@ -11,6 +11,8 @@ module SG
   # into or unpacked from a string of binary data.
   # Attributes are defined using #define_packing.
   module PackedStruct
+    using SG::Ext
+  
     class UnpackError < RuntimeError
       attr_reader :this, :inst, :data
       def initialize msg, *args

@@ -1,9 +1,10 @@
 require 'socket'
 require 'sg/ext'
-require 'sg/core_ext'
 require 'sg/io/reactor'
 
 class SG::IO::Reactor
+  using SG::Ext
+  
   class SocketConnector < SG::IO::Reactor::IOutput
     def initialize family: Socket::AF_INET, protocol: Socket::SOCK_STREAM, host:, port:, &cb
       @cb = cb

@@ -1,6 +1,0 @@
-require_relative 'core_ext/try'
-require_relative 'core_ext/hash'
-require_relative 'core_ext/integer'
-require_relative 'core_ext/enumerable'
-require_relative 'core_ext/string'
-require_relative 'core_ext/proc'

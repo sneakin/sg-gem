@@ -21,7 +21,7 @@ module SG
     end
 
     module Nil
-      def try meth = nil, *args, &block
+      def try meth = nil, *args, **opts, &block
         nil
       end
 
@@ -112,9 +112,9 @@ EOT
         eval("$%s = ENV[%s].to_bool if ENV.has_key?(%s)" % [ name.downcase, name.upcase.dump, name.upcase.dump ])
       end
 
-      def try meth = nil, *args, &block
+      def try meth = nil, *args, **opts, &block
         if meth
-          send(meth, *args, &block)
+          send(meth, *args, **opts, &block)
         else
           instance_exec(&block)
         end
@@ -161,6 +161,72 @@ EOT
       def to_bool
         !(self =~ /^((no*)|(f(alse)?)|0*$)/i)
       end
+
+      def split_at n
+        [ self[0, n], self[n, size - n] ]
+      end
+
+      def strip_controls
+        gsub(/[\x00-\x1F]+/, '')
+      end
+      
+      def strip_escapes
+        gsub(/(\e\[?[-0-9;]+[a-zA-Z])/, '')
+      end
+
+      def strip_display_only
+        strip_escapes.strip_controls
+      end
+
+      def screen_size
+        # size minus the escapes and control codes with double width chars counted twice
+        #VisualWidth.measure(strip_display_only)
+        strip_escapes.display_width
+      end
+
+      def visual_slice len
+        if screen_size < len
+          [ self, nil ]
+        else
+          part = ''
+          width = 0
+          in_escape = false
+          each_char do |c|
+            if width >= len
+              break
+            end
+            if c == "\e"
+              in_escape = true
+            elsif in_escape && (Range.new('a'.ord, 'z'.ord).include?(c.ord) || Range.new('A'.ord, 'Z'.ord).include?(c.ord))
+              in_escape = false
+            elsif !in_escape
+              width += Unicode::DisplayWidth.of(c)
+            end
+            part += c
+          end
+          return [ part, self[part.size..-1] ]
+        end
+      end
+      
+      def each_visual_slice n, &cb
+        return to_enum(__method__, n) unless cb
+
+        if screen_size < n
+          cb.call(self)
+        else
+          rest = self
+          begin
+            sl, rest = rest.visual_slice(n)
+            cb.call(sl)
+          end while(rest && !rest.empty?)
+        end
+
+        self
+      end
+      
+      def truncate len
+        visual_slice(len).first
+      end
     end
 
     module Enum
@@ -176,6 +242,10 @@ EOT
 
       def average
         sum / size.to_f
+      end
+
+      def split_at n
+        [ first(n), drop(n) ]
       end
     end
 
@@ -195,6 +265,17 @@ EOT
         end
         count
       end
+
+      def nth_byte byte
+        (self >> (byte * 8)) & 0xFF
+      end
+      
+      # todo unused
+      def self.revbits bits = 32
+        bits.times.reduce(0) do |a, i|
+          a | (((self >> i) & 1) << (bits-1-i))
+        end
+      end      
     end
 
     module IO
@@ -211,29 +292,159 @@ EOT
     end
 
     module Proc
-      def * other
-        if other || other != 1
-          lambda { |*args| other.call(self.call(*args)) }
-        else
-          self
+      def partial_before *args
+        self.class.new do |*a, **o, &b|
+          self.call(*args, *a, **o, &b)
         end
       end
-    end    
+
+      def partial_after *args
+        self.class.new do |*a, **o, &b|
+          self.call(*a, *args, **o, &b)
+        end
+      end
+      
+      def partial_options **opts
+        self.class.new do |*a, **o, &b|
+          self.call(*a, **o.merge(opts), &b)
+        end
+      end
+      
+      def partial_defaults **opts
+        self.class.new do |*a, **o, &b|
+          self.call(*a, **opts.merge(o), &b)
+        end
+      end
+      
+      def compose other
+        self.class.new do |*a, **o, &b|
+          other.call(self.call(*a, **o, &b))
+        end
+      end
+
+      alias * compose
+
+      def and &cb
+        compose(cb)
+      end
+
+      attr_accessor :on_error
+
+      def fn= v
+        @fn = v
+      end
+
+      def fn
+        @fn || self
+      end
+
+      def but *exes, &cb
+        return self unless cb
+        RescuedProc.new(self, *exes, &cb)
+      end
+    end
+
+    class RescuedProc < ::Proc
+      attr_reader :fn, :on_error, :exceptions
+      
+      def initialize fn, *exceptions, &cb
+        super(&fn)
+        @fn = fn
+        @exceptions = exceptions
+        @on_error = cb
+      end
+
+      def call *a, **o, &cb
+        @fn.call(*a, **o, &cb)
+      rescue
+        if @exceptions.empty? || @exceptions.include?($!.class)
+          @on_error.call($!)
+        else
+          raise
+        end
+      end
+    end
+    
+    module Hash
+      def symbolize_keys
+        self.class[self.collect { |k, v| [ k.to_sym, v ] }]
+      end
+      def stringify_keys
+        self.class[self.collect { |k, v| [ k.to_s, v ] }]
+      end
+    end
+    
+    def self.monkey_patch!
+      ::Class.include(SG::Ext::ClassMethods)
+      ::Object.extend(SG::Ext::Object)
+      ::Object.include(SG::Ext::Instance)
+      #::Module.include(SG::Ext::Object)
+      ::Module.include(SG::Ext::Mod)
+      ::NilClass.include(SG::Ext::Nil)
+      ::FalseClass.include(SG::Ext::Nil)
+      ::String.include(SG::Ext::String)
+      ::String.include(SG::Ext::Enum)
+      ::Enumerable.include(SG::Ext::Enum)
+      ::Numeric.include(SG::Ext::Numeric)
+      ::Integer.include(SG::Ext::Integer)
+      ::IO.include(SG::Ext::IO)
+      ::Proc.include(SG::Ext::Proc)
+      ::Hash.include(SG::Ext::Hash)
+    end
+
+    refine ::Class do
+      include SG::Ext::ClassMethods
+      include SG::Ext::Object
+    end
+
+    refine ::Object.singleton_class do
+      include SG::Ext::Object
+    end
+
+    refine ::Object do
+      include SG::Ext::Instance
+    end
+
+    refine ::Module do
+      include SG::Ext::Mod
+    end
+
+    refine ::NilClass do
+      include SG::Ext::Nil
+    end
+
+    refine ::FalseClass do
+      include SG::Ext::Nil
+    end
+
+    refine ::String do
+      include SG::Ext::Enum
+      include SG::Ext::String
+    end
+
+    refine ::Enumerable do
+      include SG::Ext::Enum
+    end
+
+    refine ::Numeric do
+      include SG::Ext::Numeric
+    end
+
+    refine ::Integer do
+      include SG::Ext::Integer
+    end
+
+    refine ::IO do
+      include SG::Ext::IO
+    end
+
+    refine ::Proc do
+      include SG::Ext::Proc
+    end
+
+    refine ::Hash do
+      include SG::Ext::Hash
+    end
   end
 end
-
-Class.include(SG::Ext::ClassMethods)
-Object.extend(SG::Ext::Object)
-Object.include(SG::Ext::Instance)
-#Module.include(SG::Ext::Object)
-Module.include(SG::Ext::Mod)
-NilClass.include(SG::Ext::Nil)
-FalseClass.include(SG::Ext::Nil)
-String.include(SG::Ext::String)
-String.include(SG::Ext::Enum)
-Enumerable.include(SG::Ext::Enum)
-Numeric.include(SG::Ext::Numeric)
-Integer.include(SG::Ext::Integer)
-IO.include(SG::Ext::IO)
-Proc.include(SG::Ext::Proc)
 

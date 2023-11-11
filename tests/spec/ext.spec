@@ -1,5 +1,7 @@
 require 'sg/ext'
 
+using SG::Ext
+
 shared_examples 'inheritable attributes' do
   it 'changes the value' do
     expect { klass.beta = 123 }.

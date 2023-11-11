@@ -1,4 +1,8 @@
+require 'sg/ext'
+
 module SG
+  using SG::Ext
+  
   module AttrStruct
     def self.included base
       base.inheritable_attr(:members)

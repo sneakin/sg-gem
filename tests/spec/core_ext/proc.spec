@@ -1,16 +1,25 @@
-require 'sg/core_ext/proc'
+require 'sg/ext'
+
+using SG::Ext
+
+describe SG::Ext::RescuedProc do
+  let(:fn) { Proc.new { |x, y| x / y } }
+  let(:cb) { lambda { |ex| @ex = ex } }
+  subject do
+    described_class.new(fn, ZeroDivisionError, &cb)
+  end
+
+  it { expect(subject).to be_kind_of(Proc) }
+  it { expect(subject.fn).to be(fn) }
+  it { expect(subject.on_error).to be(cb) }
+  it { expect(subject.exceptions).to eq([ ZeroDivisionError ]) }
+  it { expect(subject.call(6, 3)).to eq(2) }
+  it { expect { subject.call(6, 0) }.to change { @ex }.to(ZeroDivisionError) }
+end
 
 describe Proc do
   subject { Proc.new { |x, y| x / y } }
 
-  describe '#fn' do
-    it { expect(subject.fn).to be(subject) }
-
-    describe 'after setting' do
-      it { expect { subject.fn = 3 }.to change(subject, :fn).to(3) }
-    end
-  end
-  
   describe '#but' do
     describe 'without a block' do
       it 'returns the proc' do
@@ -50,7 +59,7 @@ describe Proc do
       end
       
       it 'passes along returns' do
-        expect(subject.call(6, 2)).to be(3)
+        expect(subject.call(6, 2)).to eq(3)
       end
     end
   end
