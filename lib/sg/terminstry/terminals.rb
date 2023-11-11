@@ -2,6 +2,8 @@ require 'sg/ext'
 require 'sg/color'
 require_relative 'constants'
 
+using SG::Ext
+
 module SG::Terminstry::Terminals
   class Base
     def fgbg f, b

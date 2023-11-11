@@ -2,6 +2,9 @@
 require 'io/console'
 require_relative 'constants'
 require_relative 'util'
+require 'sg/ext'
+
+using SG::Ext
 
 module SG::Terminstry::Drawing
   def self.tabbox title, content, size: SG::Terminstry.tty_size, bg: 9, fg: 9, borderbg: 9, borderfg: fg, titlefg: fg
