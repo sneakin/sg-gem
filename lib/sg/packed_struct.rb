@@ -111,6 +111,17 @@ module SG
       end
     end
 
+    def self.pad_size amount, to = nil
+      to ||= 4
+      p = amount & (to-1)
+      p = to - p if p > 0
+      p
+    end
+
+    def self.pad n, to = nil
+      n + pad_size(n, to)
+    end
+
     # An abstract definition of the types used by the Packer.
     class Type
       # Returns the number of bytes inst will use.
@@ -348,7 +359,7 @@ module SG
             else
               inst.send(name).try(:bytesize)
             end || 0
-        SG.pad(sz, byte_align)
+        PackedStruct.pad(sz, byte_align)
       end
       
       def packer inst
@@ -381,7 +392,7 @@ module SG
       def bytesize inst
         value_size = 1 + (inst.send(name).try(:bytesize) || 0)
         len = PackedStruct.eval_length(length, inst)
-        SG.pad(len ? len : value_size, byte_align)
+        PackedStruct.pad(len ? len : value_size, byte_align)
       end
       
       def packer inst

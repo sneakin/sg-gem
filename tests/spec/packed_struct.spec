@@ -1,5 +1,3 @@
-#require '../spec'
-require 'sg/padding'
 require 'sg/packed_struct'
 require_relative 'packed_struct/data'
 
@@ -498,9 +496,9 @@ describe SG::PackedStruct do
         include SG::PackedStruct
         define_packing [:size, :int32],
                        [:value, :string, :size ],
-                       [:padding, :string, lambda { SG.pad_size(size) } ]
+                       [:padding, :string, lambda { SG::PackedStruct.pad_size(size) } ]
         calc_attr :size, lambda { value.bytesize }
-        calc_attr :padding, lambda { "\x00" * SG.pad_size(size) }
+        calc_attr :padding, lambda { "\x00" * SG::PackedStruct.pad_size(size) }
       end
     end
 
@@ -522,7 +520,7 @@ describe SG::PackedStruct do
         it "packs to #{attrs[0] + 4} bytes with padding" do
           packed = subject.pack
           expect(packing.bytesize).
-            to eq(subject.size + 4 + SG.pad_size(subject.size))
+            to eq(subject.size + 4 + SG::PackedStruct.pad_size(subject.size))
         end
 
         it 'unpacks' do
@@ -567,12 +565,12 @@ describe SG::PackedStruct do
         include SG::PackedStruct
         define_packing [:size, :int32],
                        [:value, :stringz ],
-                       [:padding, :string, lambda { SG.pad_size(value.bytesize + 1) } ]
+                       [:padding, :string, lambda { SG::PackedStruct.pad_size(value.bytesize + 1) } ]
         calc_attr :size do
-          (4 + value.bytesize + 1 + SG.pad_size(value.bytesize + 1)) / 4
+          (4 + value.bytesize + 1 + SG::PackedStruct.pad_size(value.bytesize + 1)) / 4
         end
         calc_attr :padding do
-          "\x00" * SG.pad_size(value.bytesize + 1)
+          "\x00" * SG::PackedStruct.pad_size(value.bytesize + 1)
         end
       end
     end
@@ -602,12 +600,12 @@ describe SG::PackedStruct do
         include SG::PackedStruct
         define_packing [:size, :int32],
                        [:value, :stringz ],
-                       [:padding, :string, lambda { SG.pad_size(attribute_offset(:padding)) } ]
+                       [:padding, :string, lambda { SG::PackedStruct.pad_size(attribute_offset(:padding)) } ]
         calc_attr :size do
           bytesize / 4
         end
         calc_attr :padding do
-          "\x00" * SG.pad_size(attribute_offset(:padding))
+          "\x00" * SG::PackedStruct.pad_size(attribute_offset(:padding))
         end
       end
     end
@@ -640,7 +638,7 @@ describe SG::PackedStruct do
         define_packing [:size, :int32],
                        [:value, :stringz, lambda { size * 4 - attribute_offset(:value) } ]
         calc_attr :size do
-          SG.pad(1 + attribute_offset(:value) + value.bytesize) / 4
+          SG::PackedStruct.pad(1 + attribute_offset(:value) + value.bytesize) / 4
         end
       end
     end
