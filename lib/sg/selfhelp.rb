@@ -36,11 +36,18 @@ module SG
       puts("%sUsage:%s %s command [args...]" % [ heading, normal, $0 ])
       puts
       puts("%sCommands:%s" % [ heading, normal ])
-      scan_for_commands.each do |(cmd, desc, args)|
-        if args
+      cmds = scan_for_commands
+      cells = cmds.collect do |(cmd, desc, args)|
+        has_args = args && !args.empty?
+        if has_args
           cmd = cmd + " " + italic + args.join(' ')
         end
-        puts("%s%16s%s  %s" % [ bold, cmd, normal, desc ])
+        [ cmd, desc, cmd.bytesize - (has_args ? italic.bytesize + 1 : 0) ]
+      end
+      max_cmd = 2 + cells.max { |a, b| a[2] <=> b[2] }[2]
+      fmt = "%%s%%%is%%s  %%s" % [ max_cmd ]
+      cells.each do |(cmd, desc, has_args)|
+        puts(fmt % [ bold, cmd, normal, desc ])
       end
     end
   end
