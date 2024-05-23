@@ -19,7 +19,7 @@ module SG
             cmds << [
               $1,
               $4,
-              $3 ? $3.strip[1...-1].split(/\s+/) : []
+              $3 ? $3.strip[1...-1] : nil
             ]
           end
         end
@@ -40,14 +40,18 @@ module SG
       cells = cmds.collect do |(cmd, desc, args)|
         has_args = args && !args.empty?
         if has_args
-          cmd = cmd + " " + italic + args.join(' ')
+          cmd = cmd + " " + italic + args
         end
-        [ cmd, desc, cmd.bytesize - (has_args ? italic.bytesize + 1 : 0) ]
+        [ cmd, desc,
+          cmd.bytesize - (has_args ? italic.bytesize + 1 : 0),
+          has_args
+        ]
       end
       max_cmd = 2 + cells.max { |a, b| a[2] <=> b[2] }[2]
       fmt = "%%s%%%is%%s  %%s" % [ max_cmd ]
-      cells.each do |(cmd, desc, has_args)|
-        puts(fmt % [ bold, cmd, normal, desc ])
+      fmt2 = "%%s%%%is%%s  %%s" % [ 4 + max_cmd ] # factor in that #% counted the escaped bytes
+      cells.each do |(cmd, desc, size, has_args)|
+        puts((has_args ? fmt2 : fmt) % [ bold, cmd, normal, desc ])
       end
     end
   end
