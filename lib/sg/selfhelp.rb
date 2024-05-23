@@ -12,11 +12,15 @@ module SG
         cmds = []
         src.each_line do |l|
           case l
-          when /^  when \/(.+)\/ then( # (.*$))?/,
-               /^  when '(.*)' then( # (.*$))?/,
-               /^  when "(.*)" then( # (.*$))?/
+          when /^\s*when \/(.+)\/ then( # (\(.*\)\s*)?(.*$))?/,
+               /^\s*when '(.*)' then( # (\(.*\)\s*)?(.*$))?/,
+               /^\s*when "(.*)" then( # (\(.*\)\s*)?(.*$))?/
           then
-            cmds << [ $1, $3 ]
+            cmds << [
+              $1,
+              $4,
+              $3 ? $3.strip[1...-1].split(/\s+/) : []
+            ]
           end
         end
         return cmds
@@ -28,10 +32,14 @@ module SG
       heading = tty.fg(SG::Color::VT100.new(:brightcyan)) + tty.bold + tty.italic
       bold = tty.bold
       normal = tty.normal
+      italic = tty.italic
       puts("%sUsage:%s %s command [args...]" % [ heading, normal, $0 ])
       puts
       puts("%sCommands:%s" % [ heading, normal ])
-      scan_for_commands.each do |(cmd, desc)|
+      scan_for_commands.each do |(cmd, desc, args)|
+        if args
+          cmd = cmd + " " + italic + args.join(' ')
+        end
         puts("%s%16s%s  %s" % [ bold, cmd, normal, desc ])
       end
     end
