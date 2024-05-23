@@ -12,9 +12,9 @@ module SG
         cmds = []
         src.each_line do |l|
           case l
-          when /^\s*when \/(.+)\/ then( # (\(.*\)\s*)?(.*$))?/,
-               /^\s*when '(.*)' then( # (\(.*\)\s*)?(.*$))?/,
-               /^\s*when "(.*)" then( # (\(.*\)\s*)?(.*$))?/
+          when /^\s*when \/(.+)\/ then( # @cmd(\(.*\))?\s*(.*$))?/,
+               /^\s*when '(.*)' then( # @cmd(\(.*\))?\s*(.*$))?/,
+               /^\s*when "(.*)" then( # @cmd(\(.*\))?\s*(.*$))?/
           then
             cmds << [
               $1,
