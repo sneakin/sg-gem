@@ -316,6 +316,7 @@ EOT
         ctx = OpenSSL::SSL::SSLContext.new(*ssl_options)
         ctx.set_params(**ssl_params) if ssl_params
         tcp = OpenSSL::SSL::SSLSocket.new(tcp, ctx)
+        tcp.hostname = host
         tcp.sync_close = true
         tcp.connect
       end
