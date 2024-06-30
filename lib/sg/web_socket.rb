@@ -300,7 +300,7 @@ EOT
       io.close
     end
     
-    def self.connect host, port = 80, path = '/', ssl: port == 443, ssl_options: nil
+    def self.connect host, port = 80, path = '/', ssl: port == 443, ssl_options: nil, ssl_params = nil
       if String === host && host =~ /^[^ ]+:/
         host = URI.parse(host)
       end
@@ -314,7 +314,7 @@ EOT
       tcp = TCPSocket.open(host, port)
       if ssl
         ctx = OpenSSL::SSL::SSLContext.new(*ssl_options)
-        #ctx.set_params(verify_mode: OpenSSL::SSL::VERIFY_PEER)
+        ctx.set_params(**ssl_params) if ssl_params
         tcp = OpenSSL::SSL::SSLSocket.new(tcp, ctx)
         tcp.sync_close = true
         tcp.connect
