@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'sg'
-  s.version     = '0.1.0'
+  s.version     = '0.2.0'
   s.licenses    = ['MIT']
   s.summary     = "Common modules for all SemanticGap projects."
   #s.description = "Much longer explanation of the example!"
