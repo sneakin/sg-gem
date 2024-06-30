@@ -300,7 +300,7 @@ EOT
       io.close
     end
     
-    def self.connect host, port = 80, path = '/', ssl: port == 443, ssl_options: nil, ssl_params = nil
+    def self.connect host, port = 80, path = '/', ssl: port == 443, ssl_options: nil, ssl_params: nil
       if String === host && host =~ /^[^ ]+:/
         host = URI.parse(host)
       end
