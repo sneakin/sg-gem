@@ -1,6 +1,7 @@
 NAME = 'sg'
 VERSION = '0.0.1'
 
+require 'pathname'
 require 'rspec/core/rake_task'
 
 RSPEC_OPTS = ENV['RSPEC_OPTS'] || ''
