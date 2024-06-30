@@ -3,6 +3,8 @@ require 'sg/converter'
 require 'sg/ext'
 require 'sg/algebra'
 
+using SG::Ext
+
 module SG::Units
   class Unit
     include SG::Convertible
