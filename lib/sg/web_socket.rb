@@ -301,7 +301,7 @@ EOT
     end
     
     def self.connect host, port = 80, path = '/', ssl: port == 443
-      if host =~ /^[^ ]+:/
+      if String === host && host =~ /^[^ ]+:/
         host = URI.parse(host)
       end
       if URI === host
