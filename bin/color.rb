@@ -2,11 +2,28 @@
 
 $: << File.join(File.dirname(File.dirname(__FILE__)), 'lib')
 
+# Shell script helpers for color usage, previewing, and fun.
 if $0 == __FILE__
+  require 'optparse'
   require 'sg/terminstry/terminals'
 
   Terminals = SG::Terminstry::Terminals
   Color = SG::Color
+
+  # Presently a test for Yard handlers  
+  args = OptionParser.new do |o|
+    o.banner = "Color helpers and demos."
+    o.separator "Usage: #{$0} command args..."
+
+    o.on('-v', '--verbose') do
+      puts($0)
+      exit(-1)
+    end
+
+    o.on('-c', '--color VALUE', 'Color value to use.') do |v|
+      puts(v.inspect)
+    end
+  end.parse!(ARGV)
   
   vt100 = Terminals.make_tty
   case ARGV.shift

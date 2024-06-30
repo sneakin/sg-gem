@@ -732,7 +732,12 @@ module SG
 end
 
 if $0 == __FILE__
+  require 'optparse'
   S = SG::PackedStruct
+
+  args = OptionParser.new do |o|
+    o.banner = 'PackedStruct test.'
+  end.parse!(ARGV)
 
   # Basic structure
   if ENV['USENEW'] == '1'
