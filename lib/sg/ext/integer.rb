@@ -14,7 +14,7 @@ module SG::Ext
       (self >> (byte * 8)) & 0xFF
     end
     
-    # todo unused
+    # @todo unused
     def self.revbits bits = 32
       bits.times.reduce(0) do |a, i|
         a | (((self >> i) & 1) << (bits-1-i))

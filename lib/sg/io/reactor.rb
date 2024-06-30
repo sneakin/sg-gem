@@ -90,7 +90,7 @@ class SG::IO::Reactor
     @idlers.delete(fn)
   end
 
-  # todo error set really is errors and not stderr, possibly every io?
+  # @todo error set really is errors and not stderr, possibly every io?
   
   def process timeout: nil
     ios = [ @inputs.needs_processing.keys,

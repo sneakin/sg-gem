@@ -1,4 +1,4 @@
-# todo needs processing needs to be redone
+# @todo needs processing needs to be redone
 class SG::IO::Reactor
   class BasicOutput < IOutput
     def initialize io, needs_processing: nil, &cb

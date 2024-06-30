@@ -1,15 +1,14 @@
 require 'sg/ext'
 require 'sg/attr_struct'
 require 'sg/hash_struct'
-require 'sg/padding'
-
-# todo array and string fields that use all the data
-# todo explicit field offset: data interleaved with fields, trees
 
 module SG
   # Include this to be able to define attributes that get packed
   # into or unpacked from a string of binary data.
-  # Attributes are defined using #define_packing.
+  # Attributes are defined by including the module and
+  # using {ClassMethods#define_packing}.
+  # @todo array and string fields that use all the data
+  # @todo explicit field offset: data interleaved with fields, trees
   module PackedStruct
     using SG::Ext
   
@@ -51,7 +50,7 @@ module SG
     end
     
     # A generic catch all packer string.
-    # todo used?
+    # @todo used?
     def packer
       'a%i' % [ bytesize ]
     end
@@ -88,8 +87,8 @@ module SG
 
       # Defines the attributes and the types to use when
       # packing the object.
-      # The arguments are arrays: `[ name, type, opts* ]`
-      # See Packer::Segmenter for the available fields.
+      # The arguments are arrays: +[ name, type, opts* ]+
+      # See {Packer::Segmenter} for the available fields.
       def define_packing *fields
         # add the structure attributes
         if include?(AttrStruct)
@@ -151,7 +150,7 @@ module SG
       end
     end
 
-    # A wrapper for values Array#pack and String#unpack handle.
+    # A wrapper for values {Array#pack} and {String#unpack} handle.
     class BasicType < Type
       attr_reader :packer
 
@@ -177,7 +176,7 @@ module SG
       end
     end      
     
-    # Generate types for /u?int(8|16|32|64)(l|b)?/i
+    # Generate types for +/u?int(8|16|32|64)(l|b)?/i+
     Types = { c: 8, s: 16, l: 32, q: 64 }.
               reduce({}) do |h, (p, bits)|
       { '' => '', 'l' => '<', 'b' => '>' }.each do |endian, pe|
@@ -342,7 +341,7 @@ module SG
       end
     end
 
-    # todo strings and arrays need separate read and write lengths: a string length that uses a field calculated from bytesize; or an error if bytesize is in the length
+    # @todo strings and arrays need separate read and write lengths: a string length that uses a field calculated from bytesize; or an error if bytesize is in the length
     
     class StringField < Field
       attr_reader :length, :byte_align
@@ -570,7 +569,7 @@ module SG
         raise ArgumentError.new("Duplicated field: %s" % [ dups.join(', ') ]) if dups.size > 0
       end
 
-      # todo deep copied?
+      # @todo deep copied?
       def dup
         self.class.new.clone(self)
       end
@@ -584,7 +583,7 @@ module SG
         segments.collect(&:field_names).flatten
       end
 
-      # todo subclassing may need this flipped around so the PackedStruct creates the Packer, Struct may have to go too.
+      # @todo subclassing may need this flipped around so the PackedStruct creates the Packer, Struct may have to go too.
       
       def instance_class
         this = self
