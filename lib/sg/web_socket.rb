@@ -287,7 +287,6 @@ EOT
     
     def pong ping
       send_frame(Frame.new(opcode: :pong, mask: rand(0xFFFFFFFF), payload: ping.payload))
-      io.flush
       self
     end
     
@@ -297,6 +296,8 @@ EOT
 
     def close
       send_close
+      io.close
+    rescue IOError # already closed?
       io.close
     end
     
