@@ -5,22 +5,22 @@ module SG
     def self.scan_for_commands
       File.open($0, 'rt') do |src|
         broke = src.each_line do |l|
-          break true if l.match?(/\$0 == __FILE__/)
+          break true if l.match?(/(#\s*@commands|\$0 == __FILE__)/)
         end
         return [] unless broke
 
         cmds = []
         src.each_line do |l|
           case l
-          when /^\s*when \/(.+)\/ then( # @cmd(\(.*\))?\s*(.*$))/,
-               /^\s*when '(.*)' then( # @cmd(\(.*\))?\s*(.*$))/,
+          when /^\s*when '(.*)' then( # @cmd(\(.*\))?\s*(.*$))/,
                /^\s*when "(.*)" then( # @cmd(\(.*\))?\s*(.*$))/
           then
-            cmds << [
-              $1,
-              $4,
-              $3 ? $3.strip[1...-1] : nil
-            ]
+            msg = $4
+            args = $3
+            cmds << [ $1.split(/['"\/]\s*,\s*['"\/]/).join(', '),
+                      msg, args ? args.strip[1...-1] : nil ]
+          when /^\s*when \/(.+)\/ then( # @cmd(\(.*\))?\s*(.*$))/ then
+            cmds << [ $1, $4, $3 ? $3.strip[1...-1] : nil ]
           end
         end
         return cmds
