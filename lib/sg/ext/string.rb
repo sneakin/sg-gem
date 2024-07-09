@@ -1,5 +1,9 @@
 module SG::Ext
   refine ::String do
+    def blank?
+      empty?
+    end
+    
     def pluralize
       case self
       when 'foot' then 'feet'
