@@ -27,15 +27,14 @@ module SG
       end
     end
     
-    def self.print
-      tty = SG::Terminstry::Terminals.global
+    def self.print io: $stdout, tty: SG::Terminstry::Terminals.global
       heading = tty.fg(SG::Color::VT100.new(:brightcyan)) + tty.bold + tty.italic
       bold = tty.bold
       normal = tty.normal
       italic = tty.italic
-      puts("%sUsage:%s %s command [args...]" % [ heading, normal, $0 ])
-      puts
-      puts("%sCommands:%s" % [ heading, normal ])
+      io.puts("%sUsage:%s %s command [args...]" % [ heading, normal, $0 ])
+      io.puts
+      io.puts("%sCommands:%s" % [ heading, normal ])
       cmds = scan_for_commands
       cells = cmds.collect do |(cmd, desc, args)|
         has_args = args && !args.empty?
@@ -51,7 +50,7 @@ module SG
       fmt = "%%s%%%is%%s  %%s" % [ max_cmd ]
       fmt2 = "%%s%%%is%%s  %%s" % [ 4 + max_cmd ] # factor in that #% counted the escaped bytes
       cells.each do |(cmd, desc, size, has_args)|
-        puts((has_args ? fmt2 : fmt) % [ bold, cmd, normal, desc ])
+        io.puts((has_args ? fmt2 : fmt) % [ bold, cmd, normal, desc ])
       end
     end
   end
