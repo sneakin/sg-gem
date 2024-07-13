@@ -13,6 +13,7 @@ module SG
     class ConnectError < RuntimeError; end
     
     attr_accessor :io
+    delegate :closed?, to: :io
     
     def initialize io, init_data: nil
       @io = io
