@@ -25,17 +25,28 @@ module SG::Ext
       end
     end
 
+    # fixme 'hello world' -> 'HelloWorld', 'Hello World' -> 'HelloWorld'
     def camelize
       # capitalize and join the words
       gsub(/[[:upper:]]+/) { |m| m.capitalize }.
         gsub(/((?:^|\s+|[-_]+)[[:lower:]]+)/) { |m| m = m.gsub(/[-_]|\s/, ''); "%s%s" % [ m[0].upcase, m[1..-1].downcase ] }
     end
 
+    def decamelize delim: '_'
+      # replace case transitions, spaces, and hyphens with ~delim~
+      gsub(/[[:upper:]]+/) { |m| m.capitalize }.
+        gsub(/(\s|-)+/, delim).
+        gsub(/((?:^|[[:lower:]])[[:upper:]])/) { |m| m[1] ? "%s%s%s" % [ m[0].downcase, delim, m[1].downcase ] : m.downcase }
+    end
+
     def underscore
       # replace case transitions, spaces, and hyphens with underscores
-      gsub(/[[:upper:]]+/) { |m| m.capitalize }.
-        gsub(/(\s|-)+/, '_').
-        gsub(/((?:^|[[:lower:]])[[:upper:]])/) { |m| m[1] ? "%s_%s" % [ m[0].downcase, m[1].downcase ] : m.downcase }
+      decamelize(delim: '_')
+    end
+
+    def hyphenate
+      # replace case transitions, spaces, and hyphens with hyphens
+      decamelize(delim: '-')
     end
 
     def to_bool
