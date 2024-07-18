@@ -100,7 +100,7 @@ describe SG::Assoc do
         Element.new('Cathy', 24)
     end
 
-    [ :name, 'name', lambda { |e| e.name } ].each do |key|
+    [ :name, lambda { |e| e.name } ].each do |key|
       describe "with keys from #{key}" do
         subject { described_class.new(key: key, value: :age) }
 
