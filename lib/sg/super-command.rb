@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env -S ruby -W:no-experimental
 require 'bundler/setup'
 require 'optparse'
 require 'sg/terminstry'
