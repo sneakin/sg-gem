@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require 'bundler/setup'
 require 'optparse'
+require 'sg/terminstry'
 require 'sg/assoc'
 require 'sg/ext'
 
@@ -14,23 +15,35 @@ module SG
     Environment = Struct.new(:super_command, :command, :matches)
       
     attr_reader :commands, :options_builder
-    attr_accessor :default_command
+    attr_accessor :default_command, :tty
     
-    def initialize default: 'help'
+    def initialize default: 'help', tty: SG::Terminstry::Terminals.global
       @commands = Assoc.new(key: :name)
       @default_command = default
+      @tty = tty
       add_default_commands
     end
 
+    def tty_styles
+      @tty_styles ||= {
+        heading: tty.fg(SG::Color::VT100.new(:brightcyan)) + tty.bold + tty.italic,
+        normal: tty.normal,
+        bold: tty.bold,
+        italic: tty.italic,
+        underline: tty.underline
+      }
+    end
+    
     def options op = nil, &cb
       if cb
         @options_builder = cb
       else
+        tty_styles => { heading: h, normal: n }
         op ||= OptionParser.new do |o|
           o.banner = <<-EOT % [ o.program_name ]
-Usage: %s command [options...] [arguments...]
+#{h}Usage:#{n} %s command [options...] [arguments...]
 
-Global options:
+#{h}Global options:#{n}
 EOT
           o.on('-h', '--help', "Prints out available commands and options.") do
             @help = true
@@ -41,16 +54,19 @@ EOT
     end
 
     def options_for cmd, opts = options, name: cmd.printable_name
-      opts.banner = <<-EOT % [ opts.program_name, name, cmd.desc ]
-Usage: %s %s [options...] [arguments...]
-
-%s
-
-Global options:
+      tty_styles => { heading: h, normal: n }
+      opts.banner = <<-EOT % [ opts.program_name, name ]
+#{h}Usage:#{n} %s %s [options...] [arguments...]
 EOT
+      if cmd.desc
+        opts.banner += "\n" + cmd.desc + "\n"
+      end
+      
+      opts.banner += "\n#{h}Global options:#{n}"
+
       if cmd.has_options?
         opts.separator ''
-        opts.separator 'Command options:'
+        opts.separator "#{h}Command options:#{n}"
         cmd.build_options(opts)
       end
       
@@ -97,14 +113,16 @@ EOT
     end
 
     def print_help cmd_name
+      tty_styles => { heading: h, normal: r, bold: b }
+
       if cmd_name.blank?
         puts(options.help)
         puts
-        puts("Commands")
+        puts("#{h}Commands#{r}")
         tbl = commands.collect { |c| [ c.printable_name, c.desc ] }
         maxw = tbl.max_by { |(n, d)| n.size }&.first&.size || 8
         tbl.each do |(n, d)|
-          puts("%*s  %s" % [ maxw, n, d ])
+          puts("#{b}%*s#{r}  %s" % [ maxw, n, d ])
         end
       else
         begin
