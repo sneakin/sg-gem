@@ -149,7 +149,7 @@ EOT
     end
   end
 
-  describe 'argument banner thatbis empty' do
+  describe 'argument banner that is empty' do
     subject { super_cmd('one', '--help') }
     it { expect(subject).to eql(<<-EOT) }
 Usage: super-command one [options...]
