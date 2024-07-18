@@ -17,5 +17,28 @@ module SG::Ext
     def split_at n
       [ first(n), drop(n) ]
     end
+
+    def permutate_with variants, acc = [], &cb
+      #return to_enum(__method__, variants) unless cb
+      unless cb
+        # work around refinement semantics
+        return Enumerator.new do |yielder|
+          permutate_with(variants) do |p|
+            yielder << p
+          end
+        end
+      end
+      
+      if size == 0
+        if acc.size > 0
+          cb.call(acc)
+        end
+      else
+        head = first
+        variants.each do |v|
+          drop(1).permutate_with(variants, acc + [ v.to_proc.call(head) ], &cb)
+        end
+      end
+    end
   end
 end

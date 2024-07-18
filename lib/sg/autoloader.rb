@@ -6,13 +6,14 @@ class ::Module
     parts = self.name.split('::')
     parts.shift if parts[0] == 'Object'
     parts << sym.to_s
-    begin
-      require(File.join(*parts.collect(&:underscore)))
-    rescue LoadError
-      require(File.join(*parts.collect(&:hyphenate)))
+    parts.permutate_with([ :underscore, :hyphenate, :camelize ]) do |path|
+      begin
+        require(File.join(*path))
+        return const_get(sym)
+      rescue LoadError
+        next
+      end
     end
-    const_get(sym)
-  rescue LoadError
     raise NameError, sym
   end
 end

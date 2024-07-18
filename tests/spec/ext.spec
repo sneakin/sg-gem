@@ -77,6 +77,83 @@ describe Module do
   end
 end
 
+# todo test with any Enumerable
+describe Array do
+  describe '#permutate_with' do
+    describe 'empty array' do
+      subject { [] }
+      it 'never calls the block' do
+        expect do |b|
+          subject.permutate_with([ :upcase, :downcase ], &b)
+        end.to yield_successive_args()
+      end
+    end
+
+    describe 'single item' do
+      subject { [ 'hello' ] }
+      it 'calls the block for every variant' do
+        expect do |b|
+          subject.permutate_with([ :upcase, :downcase ], &b)
+        end.to yield_successive_args([ 'HELLO' ], [ 'hello' ])
+      end
+    end
+
+    describe 'many items' do
+      subject { [ 'hello', 'world', 'foo' ] }
+      it 'calls the block for every variast of every item' do
+        expect do |b|
+          subject.permutate_with([ :upcase, :downcase,
+                                   lambda { |s| s.capitalize }
+                                 ], &b)
+        end.to yield_successive_args(["HELLO", "WORLD", "FOO"],
+                                     ["HELLO", "WORLD", "foo"],
+                                     ["HELLO", "WORLD", "Foo"],
+                                     ["HELLO", "world", "FOO"],
+                                     ["HELLO", "world", "foo"],
+                                     ["HELLO", "world", "Foo"],
+                                     ["HELLO", "World", "FOO"],
+                                     ["HELLO", "World", "foo"],
+                                     ["HELLO", "World", "Foo"],
+                                     ["hello", "WORLD", "FOO"],
+                                     ["hello", "WORLD", "foo"],
+                                     ["hello", "WORLD", "Foo"],
+                                     ["hello", "world", "FOO"],
+                                     ["hello", "world", "foo"],
+                                     ["hello", "world", "Foo"],
+                                     ["hello", "World", "FOO"],
+                                     ["hello", "World", "foo"],
+                                     ["hello", "World", "Foo"],
+                                     ["Hello", "WORLD", "FOO"],
+                                     ["Hello", "WORLD", "foo"],
+                                     ["Hello", "WORLD", "Foo"],
+                                     ["Hello", "world", "FOO"],
+                                     ["Hello", "world", "foo"],
+                                     ["Hello", "world", "Foo"],
+                                     ["Hello", "World", "FOO"],
+                                     ["Hello", "World", "foo"],
+                                     ["Hello", "World", "Foo"])
+      end
+      
+      describe 'with no block' do
+        subject { [ 'hello', 'world' ] }
+        it 'returns an Enumerator' do
+          expect(subject.permutate_with([ :upcase, :downcase ])).
+            to be_kind_of(Enumerator)
+        end
+        
+        it 'enumerates every variant of every item' do
+          en = subject.each.permutate_with([ :upcase, :downcase ])
+          expect(en.next).to eql([ 'HELLO', 'WORLD' ])
+          expect(en.next).to eql([ 'HELLO', 'world' ])
+          expect(en.next).to eql([ 'hello', 'WORLD' ])
+          expect(en.next).to eql([ 'hello', 'world' ])
+          expect { en.next }.to raise_error(StopIteration)
+        end
+      end
+    end
+  end
+end
+
 describe String do
   describe '#blank?' do
     [ '', ' ', '    ', nil ].each do |value|
