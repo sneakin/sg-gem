@@ -21,7 +21,7 @@ Commands
 (one | two | three | (?-mix:[-+]?\\d+))  Print a number
 EOT
   OPTS_HELP = <<-EOT
-Usage: super-command %s [options...] [arguments...]
+Usage: super-command %s [options...] alpha beta
 
 Implemented in a class.
 
@@ -147,5 +147,19 @@ EOT
         end
       end
     end
+  end
+
+  describe 'argument banner thatbis empty' do
+    subject { super_cmd('one', '--help') }
+    it { expect(subject).to eql(<<-EOT) }
+Usage: super-command one [options...]
+
+Print a number
+
+Global options:
+    -h, --help                       Prints out available commands and options.
+    -v, --verbose
+        --version
+EOT
   end
 end

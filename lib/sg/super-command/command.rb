@@ -5,12 +5,13 @@ using SG::Ext
 module SG
   class SuperCommand
     class Command
-      attr_reader :name, :desc, :options, :action
+      attr_reader :name, :desc, :options, :action, :argdoc
       
-      def initialize name:, desc: nil, options: nil, &fn
+      def initialize name:, desc: nil, options: nil, argdoc: nil, &fn
         @name = name
         @desc = desc
         @options = options
+        @argdoc = argdoc
         @action = fn
       end
 

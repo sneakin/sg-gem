@@ -55,8 +55,8 @@ EOT
 
     def options_for cmd, opts = options, name: cmd.printable_name
       tty_styles => { heading: h, normal: n }
-      opts.banner = <<-EOT % [ opts.program_name, name ]
-#{h}Usage:#{n} %s %s [options...] [arguments...]
+      opts.banner = <<-EOT % [ opts.program_name, name, cmd.argdoc != '' ? ' ' : '', cmd.argdoc || '[arguments...]' ]
+#{h}Usage:#{n} %s %s [options...]%s%s
 EOT
       if cmd.desc
         opts.banner += "\n" + cmd.desc + "\n"
@@ -160,6 +160,10 @@ if $0 == __FILE__
   end
 
   class OptionCommand < SG::SuperCommand::Command
+    def argdoc
+      "alpha beta"
+    end
+    
     def desc
       'Implemented in a class.'
     end
@@ -211,6 +215,7 @@ if $0 == __FILE__
   end
   
   scmd.add_command(%w{ one two three } + [ /[-+]?\d+/ ]) do |c|
+    c.argdoc = ''
     c.desc = 'Print a number'
     c.run do |env, args|
       case env.command

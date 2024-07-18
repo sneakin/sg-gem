@@ -8,13 +8,14 @@ require_relative 'command'
 module SG
   class SuperCommand
     class Builder
-      attr_accessor :name, :desc, :action
+      attr_accessor :name, :desc, :action, :argdoc
 
-      def initialize name: nil, desc: nil, options: nil, action: nil, &cb
+      def initialize name: nil, desc: nil, options: nil, action: nil, argdoc: nil, &cb
         @name = name
         @desc = desc
         @options = nil
         @action = action
+        @argdoc = argdoc
         cb.call(self) if cb
       end
 
@@ -39,6 +40,7 @@ module SG
         Command.new(name: Array === name ? ArrayWithEq[*name] : name,
                     desc: desc,
                     options: options,
+                    argdoc: argdoc,
                     &action)
       end
     end
