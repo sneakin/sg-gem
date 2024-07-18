@@ -76,3 +76,145 @@ describe Module do
     end
   end
 end
+
+describe String do
+  describe '#blank?' do
+    [ '', ' ', '    ', nil ].each do |value|
+      it "considers #{value.inspect} blank" do
+        expect(value.blank?).to be(true)
+      end
+    end
+
+    [ 'a', ' 12', '  45', true ].each do |value|
+      it "considers #{value.inspect} not be blank" do
+        expect(value.blank?).to be(false)
+      end
+    end
+  end
+
+  describe '#pluralize' do
+    Examples = {
+      'foot' => 'feet',
+      'day' => 'days',
+      'fey' => 'feys',
+      'fry' => 'fries',
+      'cringy' => 'cringies',
+      'berry' => 'berries',
+      'bunch' => 'bunches',
+      'thief' => 'thieves',
+      'leaf' => 'leaves',
+      'life' => 'lives',
+      'gif' => 'gifs',
+      'five' => 'fives',
+      'cat' => 'cats',
+      'goose' => 'geese',
+      'fish' => 'fish',
+      'sharkfish' => 'sharkfish',
+      'sheep' => 'sheep',
+      'peep' => 'peeps',
+      'potato' => 'potatoes',
+      'taco' => 'tacos'
+    }
+    Examples.each do |input, output|
+      it "converts #{input.inspect} to #{output.inspect}" do
+        expect(input.pluralize).to eql(output)
+      end
+    end
+  end
+  
+  describe '#titleize' do
+    Examples = {
+      'hello world' => 'Hello World',
+      'hello-world' => 'Hello-World',
+      'hello_world' => 'Hello_World',
+      'hello World' => 'Hello World',
+    }
+    Examples.each do |input, output|
+      it "converts #{input.inspect} to #{output.inspect}" do
+        expect(input.titleize).to eql(output)
+      end
+    end
+  end
+  
+  describe '#camelize' do
+    Examples =
+      Hash[ [ ' ', '-', '_' ].permutation(1).collect { |p|
+              [ %w{ hello world }.zip(p).join, 'HelloWorld' ]
+            } +
+            [ ' ', '-', '_' ].permutation(3).collect { |p|
+              [ %w{ hello world foo bar }.zip(p).join, 'HelloWorldFooBar' ]
+            } +
+            [ [ 'foo', 'Foo' ],
+              [ 'hello World', 'HelloWorld' ],
+              [ 'hello-World', 'HelloWorld' ]
+            ]
+          ]
+    
+    Examples.each do |input, output|
+      it "converts #{input.inspect} to #{output.inspect}" do
+        expect(input.camelize).to eql(output)
+      end
+    end
+  end
+
+  describe '#decamelize' do
+    Examples =
+      Hash[ [
+             [ 'HelloWorld', 'hello world' ],
+             [ 'hello-world', 'hello world' ],
+             [ 'hello_world', 'hello world' ],
+             ]
+          ]
+    
+    Examples.each do |input, output|
+      it "converts #{input.inspect} to #{output.inspect}" do
+        expect(input.decamelize).to eql(output)
+      end
+    end
+  end
+
+  describe '#hyphenate' do
+    Examples =
+      Hash[ [
+             [ 'HelloWorld', 'hello-world' ],
+             [ 'hello-world', 'hello-world' ],
+             [ 'hello_world', 'hello-world' ],
+             ]
+          ]
+    
+    Examples.each do |input, output|
+      it "converts #{input.inspect} to #{output.inspect}" do
+        expect(input.hyphenate).to eql(output)
+      end
+    end
+  end
+
+  describe '#underscore' do
+    Examples =
+      Hash[ [
+             [ 'HelloWorld', 'hello_world' ],
+             [ 'hello-world', 'hello_world' ],
+             [ 'hello_world', 'hello_world' ],
+             ]
+          ]
+    
+    Examples.each do |input, output|
+      it "converts #{input.inspect} to #{output.inspect}" do
+        expect(input.underscore).to eql(output)
+      end
+    end
+  end
+
+  describe '#to_bool' do
+    %w{ t true y yes Yes YEs 1 1111 1234 }.each do |value|
+      it "truths #{value.inspect}" do
+        expect(value.to_bool).to be(true)
+      end
+    end
+    %w{ f false n no noooo No NOOO 0 0000 }.each do |value|
+      it "falsifies #{value.inspect}" do
+        expect(value.to_bool).to be(false)
+      end
+    end
+  end
+end

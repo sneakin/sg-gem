@@ -1,42 +1,44 @@
 module SG::Ext
   refine ::String do
     def blank?
-      empty?
+      empty? || !!(/\A\s+\Z/ =~ self)
     end
-    
+
+    # fixme potato?
     def pluralize
       case self
-      when 'foot' then 'feet'
-      when /(.*)[aoeui]y$/ then self + "s"
-      when /(.*[^aoeui])y$/ then $1 + "ies"
-      when /ch$/ then self + 'es'
-      when /(.*[^f])f$/ then $1 + 'ves'
-      when /(.*[^f])fe$/ then $1 + 'ves'
-      when /[^s]$/ then self + 's'
+      when /(.*)(fish|sheep)\Z/ then self
+      when /(.*)(foot)\Z/ then $1 + 'feet'
+      when /(.*)oose\Z/ then $1 + 'eese'
+      when /(.*)[aoeui]y\Z/ then self + "s"
+      when /(.*[^aoeui])y\Z/ then $1 + "ies"
+      when /(ch|to)\Z/ then self + 'es'
+      when /(.*[^if])f\Z/ then $1 + 'ves'
+      when /(.*[^f])fe\Z/ then $1 + 'ves'
+      when /[^s]\Z/ then self + 's'
       else self
       end
     end
 
     def titleize
-      if size > 0
-        self[0].upcase + self[1..-1]
-      else
-        self
-      end
+      # upcase post-space, underscore, hypens, and slashes
+      gsub(/(\A|\s+|[-_\\\/]+)[[:lower:]]/) { |m| m.upcase }
     end
 
     # fixme 'hello world' -> 'HelloWorld', 'Hello World' -> 'HelloWorld'
     def camelize
       # capitalize and join the words
       gsub(/[[:upper:]]+/) { |m| m.capitalize }.
-        gsub(/((?:^|\s+|[-_]+)[[:lower:]]+)/) { |m| m = m.gsub(/[-_]|\s/, ''); "%s%s" % [ m[0].upcase, m[1..-1].downcase ] }
+        gsub(/((?:\A|\s+|[-_]+)[[:alnum:]]+)/) { |m|
+        m.gsub(/[-_]|\s+/, '').capitalize
+      }
     end
 
-    def decamelize delim: '_'
+    def decamelize delim: ' '
       # replace case transitions, spaces, and hyphens with ~delim~
       gsub(/[[:upper:]]+/) { |m| m.capitalize }.
-        gsub(/(\s|-)+/, delim).
-        gsub(/((?:^|[[:lower:]])[[:upper:]])/) { |m| m[1] ? "%s%s%s" % [ m[0].downcase, delim, m[1].downcase ] : m.downcase }
+        gsub(/(\s|[-_])+/, delim).
+        gsub(/((?:\A|[[:lower:]])[[:upper:]])/) { |m| m[1] ? "%s%s%s" % [ m[0].downcase, delim, m[1].downcase ] : m.downcase }
     end
 
     def underscore
@@ -50,7 +52,7 @@ module SG::Ext
     end
 
     def to_bool
-      !(self =~ /^((no*)|(f(alse)?)|0*$)/i)
+      !(self =~ /\A((no*)|(f(alse)?)|0*\Z)/i)
     end
 
     def split_at n
