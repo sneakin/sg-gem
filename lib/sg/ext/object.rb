@@ -1,3 +1,5 @@
+require 'sg/converter'
+
 module SG::Ext
   refine ::Object.singleton_class do
     def delegate(*methods, to:)

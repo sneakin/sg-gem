@@ -1,5 +1,6 @@
 require 'forwardable'
 require 'singleton'
+require 'json'
 require 'sg/ext'
 require 'sg/graph'
 require 'sg/method_cache'
@@ -59,6 +60,8 @@ module SG
         raise NoConverterError.new(from, to) unless names
         edges.collect(&:data).collect(&:fn).reduce(Ignored.new, &:*)
       end
+    rescue NoMethodError
+      raise NoConverterError.new(from, to)
     end
 
     def convert obj, to, *args
@@ -100,3 +103,49 @@ module SG
     end
   end
 end
+
+#
+# Monkey patch Object
+#
+
+module SG::Ext
+  refine ::Object do
+    include SG::Convertible
+  end
+end
+
+#
+# Basic type conversions
+#
+
+SG::Converter.register(String, Integer, &:to_i)
+SG::Converter.register(String, Float, &:to_f)
+SG::Converter.register(String, Complex) do |s|
+  case s
+  when /\A([-+]?[^-+,]+)\s*([-+, ])?\s*([^i]+)i?/ then
+    Complex.rect($1.to_f, $3.to_f.then { |n| $2 == '-' ? -n : n })
+  else raise ArgumentError, "#{s.inspect} not Complex"
+  end
+end
+
+SG::Converter.register(Integer, String, &:to_s)
+SG::Converter.register(Integer, Float, &:to_f)
+SG::Converter.register(Integer, Complex) { |x| Complex.rect(x, 0) }
+    
+SG::Converter.register(Float, String, &:to_s)
+SG::Converter.register(Float, Integer, &:to_f)
+SG::Converter.register(Float, Complex) { |x| Complex.rect(x, 0) }
+
+SG::Converter.register(Complex, String, &:to_s)
+SG::Converter.register(Complex, Integer, &:real)
+SG::Converter.register(Complex, Float, &:real)
+
+SG::Converter.register(Array, String, &:inspect)
+#SG::Converter.register(String, Array) { |s| eval(s) }
+
+SG::Converter.register(Hash, String, &:inspect)
+#SG::Converter.register(String, Hash) { |s| eval(s) }
+
+SG::Converter.register(Hash, JSON, &:to_json)
+SG::Converter.register(Array, JSON, &:to_json)
+SG::Converter.register(String, JSON) { |s| JSON.load(s) }
