@@ -193,7 +193,7 @@ module SG::Terminstry::Terminals
     @global ||= make_tty
   end
   
-  def self.make_tty io = $stdout, opts = nil
+  def self.make_tty io = $stdout, **opts
     opts = {
       force_term: false,
       term: false,

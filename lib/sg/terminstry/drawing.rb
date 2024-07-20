@@ -7,30 +7,44 @@ require 'sg/ext'
 using SG::Ext
 
 module SG::Terminstry::Drawing
-  def self.tabbox title, content, size: SG::Terminstry.tty_size, bg: 9, fg: 9, borderbg: 9, borderfg: fg, titlefg: fg
-    border = "\e[0;%i;%im" % [ 30 + borderfg, 40 + borderbg ]
-    color = "\e[0;%i;%im" % [ 30 + fg, 40 + bg ]
-    title_color = "\e[0;%i;%im" % [ 30 + titlefg, 40 + bg ]
-    bordcol = "\e[0;%i;%im" % [ 30 + borderfg, 40 + bg ]
+  # Returns a string that prints lines into an outlined box.
+  # The box looks like:
+  # <pre>
+  # ▁▁▁▁▁▁▁▁▁
+  # ▌ Title ▐▁▁▁▁▁
+  # ▌ Content    ▐
+  # ▌ Content    ▐
+  # ▌ Content    ▐
+  # ▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+  # </pre>
+  def self.tabbox(title, content,
+                  tty: SG::Terminstry::Terminals.global,
+                  size: [ SG::Terminstry.tty_size[0], 0 ],
+                  bg: nil, fg: nil,
+                  borderbg: nil, borderfg: fg,
+                  titlefg: fg)
+    normal = tty.normal
+    bold = tty.bold
+    border = normal + tty.fgbg(borderfg, borderbg)
+    color = normal + tty.fgbg(fg, bg)
+    title_color = normal + tty.fgbg(titlefg, bg)
+    bordcol = normal + tty.fgbg(borderfg, bg)
     title = title.truncate(size[0] - 4)
     s = []
-    s << "\e[0m%s%s\n" % [ border, '▁' * (title.screen_size + 4) ]
-    s << "%s▌%s \e[1m%s \e[0m%s▐%s%s\e[0m\n" % [ bordcol, title_color, title, bordcol, border, '▁' * [ 0, (size[0] - title.screen_size - 4) ].max ]
-    #parts = content.scan(/[^\n]{0,#{size[0] - 5}}\n?/)
-    #$stderr.puts(parts.to_a.inspect)
+    s << "%s%s\n" % [ border, '▁' * (title.screen_size + 4) ]
+    s << "%s▌%s %s%s %s%s▐%s%s%s\n" % [ bordcol, title_color, bold, title, normal, bordcol, border, '▁' * [ 0, (size[0] - title.screen_size - 4) ].max, border ]
     parts = []
-    content.split("\n").each do |l|
-      #VisualWidth.each_width(l, size[0] - 5) do |p|
+    content.each_line do |l|
       l.each_visual_slice(size[0] - 4) do |p|
         parts << p
       end
     end
+    [ 0, (size[1] - parts.size) ].max.times { |_n| parts << '' }
     s += parts.collect do |l|
       l = l.rstrip
-      "%s▌%s %s%s%s▐\e[0m\n" % [ bordcol, color, l, ' ' * [ (size[0] - 3 - l.screen_size), 0 ].max, bordcol ]
+      "%s▌%s %s%s%s▐%s\n" % [ bordcol, color, l, ' ' * [ (size[0] - 3 - l.screen_size), 0 ].max, bordcol, border ]
     end
-    s << '%s%s' % [ border, '▔' * size[0] ]
-    s << "\e[0m"
+    s << '%s%s%s' % [ border, '▔' * size[0], border ]
     s.join
   end
 end

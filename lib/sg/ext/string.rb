@@ -1,3 +1,6 @@
+require 'unicode/display_width/string_ext'
+require 'unicode/emoji'
+
 module SG::Ext
   refine ::String do
     def blank?
