@@ -60,8 +60,6 @@ module SG
         raise NoConverterError.new(from, to) unless names
         edges.collect(&:data).collect(&:fn).reduce(Ignored.new, &:*)
       end
-    rescue NoMethodError
-      raise NoConverterError.new(from, to)
     end
 
     def convert obj, to, *args

@@ -8,6 +8,14 @@ module SG
     class Base
       include SG::Convertible
 
+      def eql? other
+        self == other
+      end
+
+      def equal? other
+        self == other
+      end
+      
       def clamp; self; end
       def clamp!; self; end
     end
@@ -31,6 +39,11 @@ module SG
         Gray.new(1.0 - level)
       end
 
+      def == other
+        self.class === other &&
+          level == other.level
+      end
+      
       def clamp!
         @level = @level.clamp(0, 1)
         self
@@ -82,6 +95,8 @@ module SG
         h[name.to_s] = color.code
         h
       end
+
+      attr_reader :color
       
       def initialize i, attr = nil
         case i
@@ -137,6 +152,11 @@ module SG
       def + other
         (to(RGB) + other).to(self.class)
       end
+
+      def == other
+        self.class === other &&
+          color == other.color
+      end
     end
 
     class HSL < Base
@@ -182,6 +202,11 @@ module SG
       #  other = SG::Converter.convert(other, self.class)
       #  self.class.new(*@c.zip(other.to_a).collect { |(a,b)| a - b })
       #end
+
+      def == other
+        self.class === other &&
+          to_a == other.to_a
+      end
 
       def clamp!
         @c[0] = @c[0] % 360
@@ -269,6 +294,11 @@ module SG
         end
       end
       
+      def == other
+        self.class === other &&
+          to_a == other.to_a
+      end
+
       def clamp!
         @c = @c.collect { |n| n.clamp(0, 255) }
         self
@@ -401,13 +431,13 @@ module SG
       rgb.to_i
     end
     
-    SG::Converter.register(Array, RGB) do |arr|
-      RGB.new(*arr)
-    end
+    # SG::Converter.register(Array, RGB) do |arr|
+    #   RGB.new(*arr)
+    # end
     
-    SG::Converter.register(RGB, Array) do |rgb|
-      rgb.to_a
-    end
+    # SG::Converter.register(RGB, Array) do |rgb|
+    #   rgb.to_a
+    # end
     
     SG::Converter.register(RGB, HSL) do |rgb, maxed = false|
       r, g, b = rgb.to_a.collect { |c| c.to_f / 255.0 }

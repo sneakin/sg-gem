@@ -1,3 +1,6 @@
+require 'sg/ext'
+using SG::Ext
+
 module SG
   class MethodCache
     class Builder
