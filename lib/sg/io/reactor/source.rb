@@ -14,6 +14,10 @@ class SG::IO::Reactor
     def eof?
       io.eof?
     end
+
+    def tty?
+      io.tty?
+    end
     
     def needs_processing?
       false
