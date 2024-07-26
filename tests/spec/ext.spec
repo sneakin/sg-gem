@@ -26,6 +26,54 @@ shared_examples 'inheritable attributes' do
   end
 end
 
+describe FalseClass do
+  subject { false }
+
+  describe '#true?' do
+    it { expect(subject.true?).to be(false) }
+  end
+
+  describe '#false?' do
+    it { expect(subject.false?).to be(true) }
+  end
+
+  describe '#blank?' do
+    it { expect(subject.blank?).to be(true) }
+  end
+end
+
+describe NilClass do
+  subject { nil }
+
+  describe '#true?' do
+    it { expect(subject.true?).to be(false) }
+  end
+
+  describe '#false?' do
+    it { expect(subject.false?).to be(true) }
+  end
+
+  describe '#blank?' do
+    it { expect(subject.blank?).to be(true) }
+  end
+end
+
+describe TrueClass do
+  subject { true }
+
+  describe '#true?' do
+    it { expect(subject.true?).to be(true) }
+  end
+
+  describe '#false?' do
+    it { expect(subject.false?).to be(false) }
+  end
+
+  describe '#blank?' do
+    it { expect(subject.blank?).to be(false) }
+  end
+end
+
 describe Object do
   describe '.inheritable_attr' do
     let(:klass) do
@@ -35,6 +83,14 @@ describe Object do
     end
 
     it_behaves_like 'inheritable attributes'
+  end
+
+  describe '#true?' do
+    it { expect(subject.true?).to be(true) }
+  end
+
+  describe '#false?' do
+    it { expect(subject.false?).to be(false) }
   end
 end
 
@@ -169,6 +225,41 @@ describe String do
     end
   end
 
+  %w{ space upper lower
+      alnum alpha digit xdigit
+      cntrl graph print
+      punct word ascii
+      empty
+    }.each do |pred|
+    describe "\##{pred}" do
+      [ [ '', [ :empty ] ],
+        [ " \n\t", [ :space, :ascii ] ],
+        [ "abc", [ :lower, :alpha, :alnum, :ascii, :xdigit, :word, :print, :graph ] ],
+        [ "ABC", [ :upper, :alpha, :alnum, :ascii, :xdigit, :word, :print, :graph ] ],
+        [ "xyz123", [ :alnum, :ascii, :word, :print, :graph ] ],
+        [ "ABcd", [ :alpha, :alnum, :xdigit, :ascii, :word, :print, :graph ] ],
+        [ "123", [ :digit, :alnum, :xdigit, :ascii, :word, :print, :graph ] ],
+        [ "12ab", [ :xdigit, :alnum, :ascii, :word, :print, :graph ] ],
+        [ ".!?", [ :punct, :ascii, :print, :graph ] ],
+        [ "\n\t\e", [ :cntrl, :ascii ] ]
+      ].each do |(input, char_class)|
+        if char_class.include?(pred.to_sym)
+          instance_eval <<-EOT
+          it 'matches #{input.inspect}' do
+            expect(input.#{pred}?).to be(true)
+          end
+EOT
+        else
+          instance_eval <<-EOT
+          it 'does not match #{input.inspect}' do
+            expect(input.#{pred}?).to be(false)
+          end
+EOT
+        end
+      end
+    end
+  end
+  
   describe '#pluralize' do
     Examples = {
       'foot' => 'feet',

@@ -52,6 +52,8 @@ EOT
 
     def to_bool; true; end
 
+    def true?; true; end
+    def false?; false; end
     def blank?; false; end
   end
 end

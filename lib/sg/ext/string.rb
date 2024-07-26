@@ -7,7 +7,18 @@ module SG::Ext
       empty? || !!(/\A\s+\Z/ =~ self)
     end
 
-    # fixme potato?
+    %w{ space upper lower
+        alnum alpha digit xdigit
+        cntrl graph print
+        punct word ascii
+    }.each do |cc|
+      class_eval <<-EOT
+        def #{cc}?
+          !!(self =~ /\\A[[:#{cc}:]]+\\Z/)
+        end
+EOT
+    end
+
     def pluralize
       case self
       when /(.*)(fish|sheep)\Z/ then self

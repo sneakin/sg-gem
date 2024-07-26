@@ -4,6 +4,8 @@ module SG::Ext
       nil
     end
 
+    def true?; false; end
+    def false?; true; end
     def blank?; true; end
 
     def to_bool; false; end
