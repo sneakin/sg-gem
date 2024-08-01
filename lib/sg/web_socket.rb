@@ -297,8 +297,8 @@ EOT
 
     def close
       send_close
-      io.close
-    rescue IOError # already closed?
+    rescue IOError, Errno::EPIPE # already closed?
+    ensure
       io.close
     end
     
