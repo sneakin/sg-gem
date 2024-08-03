@@ -26,7 +26,7 @@ EOT
       when /(.*)oose\Z/ then $1 + 'eese'
       when /(.*)[aoeui]y\Z/ then self + "s"
       when /(.*[^aoeui])y\Z/ then $1 + "ies"
-      when /(ch|to)\Z/ then self + 'es'
+      when /(ch|to|cho)\Z/ then self + 'es'
       when /(.*[^if])f\Z/ then $1 + 'ves'
       when /(.*[^f])fe\Z/ then $1 + 'ves'
       when /[^s]\Z/ then self + 's'

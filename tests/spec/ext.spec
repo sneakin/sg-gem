@@ -281,7 +281,8 @@ EOT
       'sheep' => 'sheep',
       'peep' => 'peeps',
       'potato' => 'potatoes',
-      'taco' => 'tacos'
+      'taco' => 'tacos',
+      'echo' => 'echoes'
     }
     Examples.each do |input, output|
       it "converts #{input.inspect} to #{output.inspect}" do
