@@ -134,5 +134,14 @@ EOT
     def truncate len
       visual_slice(len).first
     end
+
+    def to_proc
+      lambda do |*args|
+        self % case args
+               in [ Array ] then args[0]
+               else args
+               end
+      end
+    end
   end
 end

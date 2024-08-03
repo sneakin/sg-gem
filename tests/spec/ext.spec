@@ -386,4 +386,20 @@ EOT
       end
     end
   end
+
+  describe '#to_proc' do
+    subject { 'Int: %i Float: %.1f'.to_proc }
+    it { expect(subject).to be_kind_of(Proc) }
+    it 'formats the arguments' do
+      expect(subject.(123, 456)).to eql('Int: 123 Float: 456.0')
+    end
+    
+    it 'deconstructs arguments in an array' do
+      expect(subject.([123, 456])).to eql('Int: 123 Float: 456.0')
+    end
+    
+    it 'works over enumerables' do
+      expect([ [ 1, 2 ], [ 3, 4 ] ].collect(&'%i %.1f')).to eql([ '1 2.0', '3 4.0' ])
+    end
+  end
 end
