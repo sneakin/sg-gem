@@ -237,8 +237,17 @@ class SG::TablePrinter
     first_line_headers = false
     decorator = nil
     skip_lines = 0
-
+    delimeter = nil
+    
     args = OptionParser.new do |o|
+      o.banner = <<-EOT
+#{$0} [options] columns...
+
+Print out a tabulated data set into columns. Data is read
+from standard input.
+
+EOT
+      
       o.on('--width N', Integer) do |v|
         table_width = v
       end
@@ -254,25 +263,39 @@ class SG::TablePrinter
       o.on('--style STYLE') do |v|
         decorator = SG::TablePrinter::Decorator.new(v.underscore.to_sym)
       end
+      
+      o.on('--delimeter REGEXP') do |v|
+        delimeter = Regexp.new(v)
+      end
+      
+      o.separator <<-EOT
+
+Columns are specified by: name:strategy:align:width:formatter
+
+Only name is required. Strategy is one of fitted, fixed, percent,
+or fill. Align can be left, center, or right. Width depends on
+the strategy. Literally the width of fixed columns. Fitted uses
+as a minimum. Percent uses it as a weight between 0.0 and 1.0.
+EOT
     end.parse(args)
 
     first_line = nil
     tbl = SG::TablePrinter.new(decorator: decorator)
     if args.empty?
       if first_line_headers
-        line = $stdin.readline.split
+        line = $stdin.readline.split(delimeter).collect(&:strip)
         line.each do |col|
           tbl.add_column(title: col)
         end
       else
-        first_line = $stdin.readline.split
+        first_line = $stdin.readline.split(delimeter).collect(&:strip)
         first_line.each_with_index do |col, n|
           tbl.add_column(title: n.to_s)
         end
       end
     else
       args.each do |arg|
-        name, strategy, width, align, formatter = arg.split(':').collect { |a| a.blank? ? nil : a }
+        name, strategy, align, width, formatter = arg.split(':').collect { |a| a.blank? ? nil : a }
         tbl.add_column(title: name,
                        strategy: strategy,
                        align: align&.to_sym,
@@ -287,9 +310,9 @@ class SG::TablePrinter
       first_line = nil
     end
 
-    data = data.collect(&:split)
+    data = data.collect { |r| r.split(delimeter).collect(&:strip) }
     if skip_lines <= 0 && args.empty? && first_line
-      data = [ first_line ] + data
+      data = [ first_line ].each + data
     end
     #tbl.resize_columns(data.dup, full_width: table_width)
     tbl.print(data, width: table_width)
