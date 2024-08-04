@@ -212,7 +212,11 @@ class SG::TablePrinter
   end
   
   def shrink_columns_to_fit widths, full_width
-    while widths.reject(&:nil?).sum >= full_width
+    last_sum = nil
+    while (this_sum = widths.reject(&:nil?).sum) >= full_width
+      break if last_sum && last_sum == this_sum
+      last_sum = this_sum
+      
       widths = columns.zip(widths).collect do |col, width|
         next width if width == nil || widths.reject(&:nil?).sum < full_width
         case col.strategy.to_s
