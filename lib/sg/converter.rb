@@ -108,7 +108,15 @@ end
 
 module SG::Ext
   refine ::Object do
-    import_methods SG::Convertible
+    begin
+      import_methods SG::Convertible
+    rescue NoMethodError
+      begin
+        include SG::Convertible
+      rescue TypeError
+        warn("SG::Convertible unavailable.")
+      end
+    end
   end
 end
 
