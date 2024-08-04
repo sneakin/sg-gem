@@ -108,7 +108,7 @@ end
 
 module SG::Ext
   refine ::Object do
-    include SG::Convertible
+    import_methods SG::Convertible
   end
 end
 

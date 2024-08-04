@@ -1,6 +1,7 @@
 #!/usr/bin/env -S ruby -W:no-experimental
 # -*- coding: utf-8 -*-
 require 'bundler/setup'
+require 'io/console'
 require 'sg/ext'
 using SG::Ext
 
