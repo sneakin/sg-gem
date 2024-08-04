@@ -168,6 +168,8 @@ class SG::TablePrinter
     io.write(finalizer)
     io.write("\n")
   rescue NoMatchingPatternError
+    io.write("\n") if style == :bar
+  ensure
   end
   
   protected
