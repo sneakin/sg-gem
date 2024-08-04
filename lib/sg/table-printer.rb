@@ -17,18 +17,22 @@ class SG::TablePrinter
       @formatter = (formatter || :to_s).to_proc
     end
 
-    def format value
+    def format value, align: true
       v = formatter.call(value)
-      align(v)
+      if align
+        align(v)
+      else
+        v
+      end
     end
 
-    def align v, align: alignment
-      s = (v || '').truncate(real_width)
-      if s.size < real_width
+    def align v, align: alignment, width: real_width
+      s = (v || '').truncate(width)
+      if width && s.size < width
         case align
-        when :center then s = s.center(real_width)
-        when :right then s = s.rjust(real_width)
-        else s = s.ljust(real_width)
+        when :center then s = s.center(width)
+        when :right then s = s.rjust(width)
+        else s = s.ljust(width)
         end
       end
       s
@@ -169,7 +173,9 @@ class SG::TablePrinter
       case col.strategy.to_s
       when 'fixed' then col.width
       when 'fitted' then [ col.width || 0,
-                           data.collect { |row| row[n]&.size || 0 }.max
+                           data.collect { |row|
+                             col.format(row[n], align: false)&.size || 0
+                           }.max
                          ].max
       when 'percent' then full_width * [ 1.0, col.width ].min
       else nil
