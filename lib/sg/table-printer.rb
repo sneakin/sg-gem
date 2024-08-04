@@ -112,7 +112,11 @@ class SG::TablePrinter
     print_headers
     print_bar(:bar)
     data.each do |row|
-      print_row(row)
+      if row.blank? || row.all?(&:blank?)
+        print_bar
+      else
+        print_row(row)
+      end
     end
     print_bar(:bottom_bar)
   end
