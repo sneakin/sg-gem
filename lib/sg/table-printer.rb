@@ -106,7 +106,7 @@ class SG::TablePrinter
     self
   end
 
-  def print data, width: nil, resize: true
+  def print data, width: true, resize: true
     resize_columns(data, full_width: width) if resize
     print_bar(:top_bar)
     print_headers
@@ -134,14 +134,24 @@ class SG::TablePrinter
   
   alias << print_row
 
-  def resize_columns data, full_width: nil
-    full_width ||= IO.console.winsize[1]
-    full_width -= decorator.decor_width(:row, columns.size)
+  # todo tables with no width: everything is fitted
+  def resize_columns data, full_width: true
+    if full_width == true
+      full_width = IO.console.winsize[1]
+    end
+    
+    if full_width
+      full_width -= decorator.decor_width(:row, columns.size)
+    end
 
-    widths = initial_column_widths(data, full_width)
-    widths = shrink_columns_to_fit(widths, full_width)
-    widths = size_any_size_columns(widths, full_width)
-    widths = expand_columns_to_fit(widths, full_width)
+    if full_width
+      widths = sized_initial_column_widths(data, full_width)
+      widths = shrink_columns_to_fit(widths, full_width)
+      widths = size_any_size_columns(widths, full_width)
+      widths = expand_columns_to_fit(widths, full_width)
+    else
+      widths = fitted_initial_column_widths(data)
+    end
 
     columns.zip(widths).each do |col, w|
       col.real_width = w
@@ -173,19 +183,32 @@ class SG::TablePrinter
     io.write("\n")
   end
 
-  def initial_column_widths data, full_width
+  def sized_initial_column_widths data, full_width
     columns.each_with_index.collect do |col, n|
       case col.strategy.to_s
       when 'fixed' then col.width
-      when 'fitted' then [ col.width || 0,
-                           data.collect { |row|
-                             col.format(row[n], align: false)&.size || 0
-                           }.max
-                         ].max
+      when 'fitted' then fitted_column_width(col, n, data)
       when 'percent' then full_width * [ 1.0, col.width ].min
       else nil
       end
     end
+  end
+  
+  def fitted_initial_column_widths data
+    columns.each_with_index.collect do |col, n|
+      case col.strategy.to_s
+      when 'fixed' then col.width
+      else fitted_column_width(col, n, data)
+      end
+    end
+  end
+  
+  def fitted_column_width col, col_num, data
+    [ col.width || 0,
+      data.collect { |row|
+        col.format(row[col_num], align: false)&.size || 0
+      }.max
+    ].max
   end
   
   def shrink_columns_to_fit widths, full_width
@@ -237,7 +260,7 @@ class SG::TablePrinter
   def self.run(args = ARGV)
     require 'optparse'
     
-    table_width = nil
+    table_width = true
     first_line_headers = false
     decorator = nil
     skip_lines = 0
@@ -253,7 +276,7 @@ from standard input.
 EOT
       
       o.on('--width N', Integer) do |v|
-        table_width = v
+        table_width = v <= 0 ? nil : v
       end
 
       o.on('--skip N', Integer) do |v|
