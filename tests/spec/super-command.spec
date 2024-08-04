@@ -110,20 +110,24 @@ EOT
     describe 'with no arguments' do
       subject { super_cmd('opts') }
       it { expect(subject).to eql(<<-EOT) }
+Hello!
 Option command []
 long? false
 verbose? false
 #<MatchData "opts" 1:nil>
+Bye.
 EOT
     end
 
     describe 'with arguments' do
       subject { super_cmd('options', '-l', '-v', 'abc', 'cde') }
       it { expect(subject).to eql(<<-EOT) }
+Hello!
 Option command ["abc", "cde"]
 long? true
 verbose? true
 #<MatchData "options" 1:"ion">
+Bye.
 EOT
     end
   end
@@ -131,19 +135,19 @@ EOT
   describe 'with various kinds of matches' do
     describe 'word' do
       subject { super_cmd('zero') }
-      it { expect(subject).to eql("0\n") }
+      it { expect(subject).to eql("Hello!\n0\nBye.\n") }
     end
 
     describe 'list' do
       subject { super_cmd('one') }
-      it { expect(subject).to eql("1\n") }
+      it { expect(subject).to eql("Hello!\n1\nBye.\n") }
     end
 
     describe 'regexp' do
       %w{ 3 \\-3 }.each do |n|
         describe "to match #{n}" do
           subject { super_cmd(n.to_s) }
-          it { expect(subject).to eql("many\n") }
+          it { expect(subject).to eql("Hello!\nmany\nBye.\n") }
         end
       end
     end

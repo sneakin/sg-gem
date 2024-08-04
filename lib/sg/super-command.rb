@@ -104,9 +104,9 @@ EOT
       if @help
         print_help(mode)
       else
-        run_callbacks(@before)
+        run_callbacks(@before) unless cmd.name == 'help'
         cmd.call(env, rest)
-        run_callbacks(@after)
+        run_callbacks(@after) unless cmd.name == 'help'
       end
     end
 
