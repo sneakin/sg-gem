@@ -98,6 +98,7 @@ class SG::TablePrinter
 
   def add_column **opts
     @columns << Column.new(**opts)
+    self
   end
 
   def print data, width: nil, resize: true
