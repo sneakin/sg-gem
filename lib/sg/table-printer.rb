@@ -109,8 +109,10 @@ class SG::TablePrinter
   def print data, width: true, resize: true
     resize_columns(data, full_width: width) if resize
     print_bar(:top_bar)
-    print_headers
-    print_bar(:bar)
+    unless columns.all? { |c| c.title.blank? }
+      print_headers
+      print_bar(:bar)
+    end
     data.each do |row|
       if row.blank? || row.all?(&:blank?)
         print_bar
@@ -322,8 +324,8 @@ EOT
         end
       else
         first_line = $stdin.readline.split(delimeter).collect(&:strip)
-        first_line.each_with_index do |col, n|
-          tbl.add_column(title: n.to_s)
+        first_line.each do |col|
+          tbl.add_column()
         end
       end
     else
