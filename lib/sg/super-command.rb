@@ -21,6 +21,8 @@ module SG
       @commands = Assoc.new(key: :name)
       @default_command = default
       @tty = tty
+      @before = []
+      @after = []
       add_default_commands
     end
 
@@ -102,7 +104,9 @@ EOT
       if @help
         print_help(mode)
       else
+        run_callbacks(@before)
         cmd.call(env, rest)
+        run_callbacks(@after)
       end
     end
 
@@ -112,6 +116,14 @@ EOT
       self
     end
 
+    def before &cb
+      @before << cb
+    end
+    
+    def after &cb
+      @after << cb
+    end
+    
     def print_help cmd_name
       tty_styles => { heading: h, normal: r, bold: b }
 
@@ -142,6 +154,10 @@ EOT
           print_help(args[0])
         end
       end
+    end
+    
+    def run_callbacks arr
+      arr.each { |cb| cb.call }
     end
   end
 end
@@ -225,6 +241,14 @@ if $0 == __FILE__
       end
     end
   end
+
+  scmd.before do
+    puts("Hello!")
+  end
   
+  scmd.after do
+    puts("Bye.")
+  end
+    
   scmd.run()
 end
