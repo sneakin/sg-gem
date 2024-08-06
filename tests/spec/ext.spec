@@ -403,3 +403,46 @@ EOT
     end
   end
 end
+
+describe Enumerable do
+  describe '#aggregate' do
+    context 'two zipped ranges' do
+      subject { (0..5).each.zip(10..15) }
+      it { expect(subject.aggregate([0, 0], &:+)).to eql([15, 75]) }
+      it do
+        expect(subject.aggregate([[], []], &:<<)).
+        to eql([[0,1,2,3,4,5],
+                [10,11,12,13,14,15]])
+      end
+    end
+  end
+
+  describe '#nth' do
+    subject { 5.times.each }
+    5.times do |n|
+      it { expect(subject.nth(n)).to be(subject.drop(n).first) }
+      it { expect(subject.nth(n, 2)).to eql(subject.drop(n).first(2)) }
+    end
+  end
+
+  describe '#second' do
+    subject { 5.times.each }
+    it { expect(subject.second).to eql(1) }
+    it { expect(subject.second(1)).to eql([1]) }
+    it { expect(subject.second(2)).to eql([1, 2]) }
+  end
+
+  describe '#third' do
+    subject { 5.times.each }
+    it { expect(subject.third).to eql(2) }
+    it { expect(subject.third(1)).to eql([2]) }
+    it { expect(subject.third(2)).to eql([2, 3]) }
+  end
+
+  describe '#fourth' do
+    subject { 5.times.each }
+    it { expect(subject.fourth).to eql(3) }
+    it { expect(subject.fourth(1)).to eql([3]) }
+    it { expect(subject.fourth(2)).to eql([3,4]) }
+  end
+end
