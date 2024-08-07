@@ -109,6 +109,11 @@ class SG::TablePrinter
   end
 
   def print data, width: true, resize: true
+    if columns.empty?
+      raise ArgumentError.new("No data columns and rows to print.") if data.empty?
+      (data&.first.size || 1).times { |n| add_column }
+    end
+    
     resize_columns(data, full_width: width) if resize
     print_bar(:top_bar)
     unless columns.all? { |c| c.title.blank? }
