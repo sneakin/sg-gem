@@ -302,7 +302,7 @@ EOT
       end
       
       o.on('--delimeter REGEXP') do |v|
-        delimeter = Regexp.new(v)
+        delimeter = v =~ /\A\/(.*)\/\Z/ ? Regexp.new($1) : v
       end
       
       o.separator <<-EOT
