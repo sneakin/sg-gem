@@ -1,6 +1,7 @@
 module SG::Ext
   refine ::NilClass do
     def try meth = nil, *args, **opts, &block
+      warn("Deprecated since Ruby added &.")
       nil
     end
 

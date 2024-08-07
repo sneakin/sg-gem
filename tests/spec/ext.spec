@@ -92,6 +92,27 @@ describe Object do
   describe '#false?' do
     it { expect(subject.false?).to be(false) }
   end
+
+
+  describe '#skip_unless' do
+    subject { 'hey' }
+
+    it { expect(subject.skip_unless(true).upcase).to eql('HEY') }
+    it { expect(subject.skip_unless(false).upcase).to eql(subject) }
+
+    it { expect(subject.skip_unless { true }.upcase).to eql('HEY') }
+    it { expect(subject.skip_unless { false }.upcase).to eql(subject) }
+  end
+
+  describe '#skip_when' do
+    subject { 'hey' }
+
+    it { expect(subject.skip_when(true).upcase).to eql(subject) }
+    it { expect(subject.skip_when(false).upcase).to eql('HEY') }
+
+    it { expect(subject.skip_when { true }.upcase).to eql(subject) }
+    it { expect(subject.skip_when { false }.upcase).to eql('HEY') }
+  end
 end
 
 describe Module do
@@ -389,7 +410,9 @@ EOT
 
   describe '#to_proc' do
     subject { 'Int: %i Float: %.1f'.to_proc }
+
     it { expect(subject).to be_kind_of(Proc) }
+
     it 'formats the arguments' do
       expect(subject.(123, 456)).to eql('Int: 123 Float: 456.0')
     end
@@ -444,5 +467,48 @@ describe Enumerable do
     it { expect(subject.fourth).to eql(3) }
     it { expect(subject.fourth(1)).to eql([3]) }
     it { expect(subject.fourth(2)).to eql([3,4]) }
+  end
+
+  describe '#skip_unless' do
+    subject { 10.times.each }
+    let(:evens) { subject.select(&:even?) }
+    
+    it { expect(subject.skip_unless(true).select(&:even?)).to eql(evens) }
+    it { expect(subject.skip_unless(false).select(&:even?)).to eql(subject) }
+
+    it { expect(subject.skip_unless { |x| x.size == 10 }.select(&:even?)).to eql(evens) }
+    it { expect(subject.skip_unless { |x| x.size < 10 }.select(&:even?)).to eql(subject) }
+
+    it { expect(subject.skip_unless(true) { |x| x.size == 10 }.select(&:even?)).to eql(evens) }
+    it { expect(subject.skip_unless(false) { |x| x.size == 10 }.select(&:even?)).to eql(subject) }
+  end
+
+  describe '#skip_when' do
+    subject { 10.times.each }
+    let(:evens) { subject.select(&:even?) }
+    
+    it { expect(subject.skip_when(false).select(&:even?)).to eql(evens) }
+    it { expect(subject.skip_when(true).select(&:even?)).to eql(subject) }
+
+    it { expect(subject.skip_when { |x| x.size < 10 }.select(&:even?)).to eql(evens) }
+    it { expect(subject.skip_when { |x| x.size == 10 }.select(&:even?)).to eql(subject) }
+
+    it { expect(subject.skip_when(false) { |x| x.size < 10 }.select(&:even?)).to eql(evens) }
+    it { expect(subject.skip_when(true) { |x| x.size < 10 }.select(&:even?)).to eql(subject) }
+  end
+  
+end
+
+describe Proc do
+  describe '#not' do
+    subject { lambda { |a| a } }
+    it { expect(subject.not.call(true)).to eql(false) }
+    it { expect(subject.not.call(false)).to eql(true) }
+  end
+
+  describe '#~' do
+    subject { lambda { |a| a } }
+    it { expect((~subject).call(true)).to eql(false) }
+    it { expect((~subject).call(false)).to eql(true) }
   end
 end
