@@ -29,13 +29,20 @@ module SG::Units
       
       attr_writer :name
       def name
-        @name ||= self.classname.split('::')[-1]
+        @name ||= self.classname&.split('::')&.[](-1)
       end
 
       attr_writer :abbrev
       def abbrev
         @abbrev ||= name[0]
       end
+
+      def derive name, base = self, abbrev = nil
+        k = Class.new(base)
+        k.name = name
+        k.abbrev = abbrev || name
+        k
+      end      
     end
     
     class Per < Unit
@@ -176,10 +183,7 @@ module SG::Units
 
   def self.scaled_unit name, base, factor, offset = 0
     k = TransformedUnit.derive(base, name)
-    SG::Converter.register(k, base,
-                           &lambda { |c| base.new((c.value + offset) * factor)})
-    SG::Converter.register(base, k,
-                           &lambda { |f| k.new((f.value / factor) - offset) })
+    SG::Converter.register_scaler(k, base, factor, offset)
     k
   end
   

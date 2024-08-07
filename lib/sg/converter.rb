@@ -84,6 +84,15 @@ module SG
           mc.cache(:for)
         end
       end
+
+      def register_scaler from, to, factor, offset = 0
+        register(from, to) do |c|
+          to.new((c.value + offset) * factor)
+        end
+        register(to, from) do |f|
+          from.new((f.value / factor) - offset)
+        end
+      end
     end
   end
 
