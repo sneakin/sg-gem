@@ -48,15 +48,17 @@ class SG::TablePrinter
       #bottom_bar: { filler: ' ', leader: '', separator: ' ', finalizer: '' }
     }
     Ascii = {
+      top_bar: { filler: '-', leader: '+-', separator: '-+-', finalizer: '-+' },
       row: { leader: '| ', separator: ' | ', finalizer: ' |' },
       bar: { filler: '-', leader: '+-', separator: '-+-', finalizer: '-+' },
-      top_bar: { filler: '-', leader: '+-', separator: '-+-', finalizer: '-+' },
       bottom_bar: { filler: '-', leader: '+-', separator: '-+-', finalizer: '-+' }
     }
     Box = {
+      top_bar: { filler: '─', leader: '┌─', separator: '─┬─', finalizer: '─┐' },
+      header_row: { leader: '│ ', separator: ' │ ', finalizer: ' │' },
+      header_bar: { filler: '─', leader: '├─', separator: '─┼─', finalizer: '─┤' },
       row: { leader: '│ ', separator: ' │ ', finalizer: ' │' },
       bar: { filler: '─', leader: '├─', separator: '─┼─', finalizer: '─┤' },
-      top_bar: { filler: '─', leader: '┌─', separator: '─┬─', finalizer: '─┐' },
       bottom_bar: { filler: '─', leader: '└─', separator: '─┴─', finalizer: '─┘' }
     }
 
@@ -111,7 +113,7 @@ class SG::TablePrinter
     print_bar(:top_bar)
     unless columns.all? { |c| c.title.blank? }
       print_headers
-      print_bar(:bar)
+      print_bar(:header_bar)
     end
     data.each do |row|
       if row.blank? || row.all?(&:blank?)
@@ -177,7 +179,7 @@ class SG::TablePrinter
   protected
   
   def print_headers
-    decorator[:row] => { leader:, separator:, finalizer: }
+    (decorator[:header_row] || decorator[:row]) => { leader:, separator:, finalizer: }
     io.write(leader)
     columns.each_with_index do |col, n|
       io.write(col.align(col.title, align: :center))
