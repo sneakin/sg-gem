@@ -102,6 +102,36 @@ describe Object do
 
     it { expect(subject.skip_unless { true }.upcase).to eql('HEY') }
     it { expect(subject.skip_unless { false }.upcase).to eql(subject) }
+
+    context 'doubled up' do
+      it { expect(subject.skip_unless(true).skip_unless(true).upcase).to eql('HEY') }
+      it { expect(subject.skip_unless(true).skip_unless(false).upcase).to eql(subject) }
+      it { expect(subject.skip_unless(false).skip_unless(true).upcase).to eql('HEY') }
+      it { expect(subject.skip_unless(false).skip_unless(false).upcase).to eql(subject) }
+    end
+
+    context 'tripled up' do
+      let(:results) do
+        { true => {
+            true => {true => 'HEY', false => 'hey' },
+            false => {true => 'HEY', false => 'hey'}
+          },
+          false => {
+            true => {true => 'HEY', false => 'hey'},
+            false => {true => 'hey', false => 'hey'}
+          }
+        }
+      end
+      
+      [ true, false ].repeated_permutation(3) do |(a, b, c)|
+        it "for #{a}, #{b}, #{c}" do
+          expect(subject.
+                 skip_unless(a).
+                 skip_unless(b).
+                 skip_unless(c). upcase).to eql(results.dig(a, b, c))
+        end
+      end
+    end
   end
 
   describe '#skip_when' do
@@ -112,6 +142,45 @@ describe Object do
 
     it { expect(subject.skip_when { true }.upcase).to eql(subject) }
     it { expect(subject.skip_when { false }.upcase).to eql('HEY') }
+
+    context 'doubled up' do
+      it { expect(subject.skip_when(true).skip_when(true).upcase).to eql(subject) }
+      it { expect(subject.skip_when(true).skip_when(false).upcase).to eql('HEY') }
+      it { expect(subject.skip_when(false).skip_when(true).upcase).to eql(subject) }
+      it { expect(subject.skip_when(false).skip_when(false).upcase).to eql('HEY') }
+    end
+
+    context 'tripled up' do
+      let(:results) do
+        { true => {
+            true => {true => 'hey', false => 'hey' },
+            false => {true => 'hey', false => 'HEY'}
+          },
+          false => {
+            true => {true => 'hey', false => 'HEY'},
+            false => {true => 'hey', false => 'HEY'}
+          }
+        }
+      end
+      
+      [ true, false ].repeated_permutation(3) do |(a, b, c)|
+        it "for #{a}, #{b}, #{c}" do
+          expect(subject.
+                 skip_when(a).
+                 skip_when(b).
+                 skip_when(c).upcase).to eql(results.dig(a, b, c))
+        end
+      end
+
+      [ true, false ].repeated_permutation(3) do |(a, b, c)|
+        it "for #{a}, #{b}, #{c}" do
+          expect(subject.
+                 skip_when { a }.
+                 skip_when { b }.
+                 skip_when { c }.upcase).to eql(results.dig(a, b, c))
+        end
+      end
+    end
   end
 end
 
@@ -175,40 +244,91 @@ describe Array do
       end
     end
 
+    describe 'two items' do
+      context 'strings' do
+        subject { [ 'foo', 'bar' ] }
+        it 'calls the block for every variast of every item' do
+          expect do |b|
+            subject.permutate_with([ :upcase, :downcase,
+                                     lambda { |s| s.capitalize }
+                                   ], &b)
+          end.to yield_successive_args(["FOO", "BAR"],
+                                       ["FOO", "bar"],
+                                       ["FOO", "Bar"],
+                                       ["foo", "BAR"],
+                                       ["foo", "bar"],
+                                       ["foo", "Bar"],
+                                       ["Foo", "BAR"],
+                                       ["Foo", "bar"],
+                                       ["Foo", "Bar"])
+        end
+      end
+      
+      context 'bools' do
+        subject { [ true, true ] }
+        it 'calls the block for every variast of every item' do
+          expect do |b|
+            subject.permutate_with([ :identity, :! ], &b)
+          end.to yield_successive_args([true, true],
+                                        [true, false],
+                                        [false, true],
+                                        [false, false])
+        end
+      end
+    end
+    
     describe 'many items' do
-      subject { [ 'hello', 'world', 'foo' ] }
-      it 'calls the block for every variast of every item' do
-        expect do |b|
-          subject.permutate_with([ :upcase, :downcase,
-                                   lambda { |s| s.capitalize }
-                                 ], &b)
-        end.to yield_successive_args(["HELLO", "WORLD", "FOO"],
-                                     ["HELLO", "WORLD", "foo"],
-                                     ["HELLO", "WORLD", "Foo"],
-                                     ["HELLO", "world", "FOO"],
-                                     ["HELLO", "world", "foo"],
-                                     ["HELLO", "world", "Foo"],
-                                     ["HELLO", "World", "FOO"],
-                                     ["HELLO", "World", "foo"],
-                                     ["HELLO", "World", "Foo"],
-                                     ["hello", "WORLD", "FOO"],
-                                     ["hello", "WORLD", "foo"],
-                                     ["hello", "WORLD", "Foo"],
-                                     ["hello", "world", "FOO"],
-                                     ["hello", "world", "foo"],
-                                     ["hello", "world", "Foo"],
-                                     ["hello", "World", "FOO"],
-                                     ["hello", "World", "foo"],
-                                     ["hello", "World", "Foo"],
-                                     ["Hello", "WORLD", "FOO"],
-                                     ["Hello", "WORLD", "foo"],
-                                     ["Hello", "WORLD", "Foo"],
-                                     ["Hello", "world", "FOO"],
-                                     ["Hello", "world", "foo"],
-                                     ["Hello", "world", "Foo"],
-                                     ["Hello", "World", "FOO"],
-                                     ["Hello", "World", "foo"],
-                                     ["Hello", "World", "Foo"])
+      context 'bools' do
+        subject { [ true, true, true ] }
+        it 'calls the block for every variast of every item' do
+          expect do |b|
+            subject.permutate_with([ :identity, :! ], &b)
+          end.to yield_successive_args([true, true, true],
+                                       [true, true, false],
+                                       [true, false, true],
+                                       [true, false, false],
+                                       [false, true, true],
+                                       [false, true, false],
+                                       [false, false, true],
+                                       [false, false, false])
+        end
+      end
+
+      context 'equal number variants' do
+        subject { [ 'hello', 'world', 'foo' ] }
+        it 'calls the block for every variast of every item' do
+          expect do |b|
+            subject.permutate_with([ :upcase, :downcase,
+                                     lambda { |s| s.capitalize }
+                                   ], &b)
+          end.to yield_successive_args(["HELLO", "WORLD", "FOO"],
+                                       ["HELLO", "WORLD", "foo"],
+                                       ["HELLO", "WORLD", "Foo"],
+                                       ["HELLO", "world", "FOO"],
+                                       ["HELLO", "world", "foo"],
+                                       ["HELLO", "world", "Foo"],
+                                       ["HELLO", "World", "FOO"],
+                                       ["HELLO", "World", "foo"],
+                                       ["HELLO", "World", "Foo"],
+                                       ["hello", "WORLD", "FOO"],
+                                       ["hello", "WORLD", "foo"],
+                                       ["hello", "WORLD", "Foo"],
+                                       ["hello", "world", "FOO"],
+                                       ["hello", "world", "foo"],
+                                       ["hello", "world", "Foo"],
+                                       ["hello", "World", "FOO"],
+                                       ["hello", "World", "foo"],
+                                       ["hello", "World", "Foo"],
+                                       ["Hello", "WORLD", "FOO"],
+                                       ["Hello", "WORLD", "foo"],
+                                       ["Hello", "WORLD", "Foo"],
+                                       ["Hello", "world", "FOO"],
+                                       ["Hello", "world", "foo"],
+                                       ["Hello", "world", "Foo"],
+                                       ["Hello", "World", "FOO"],
+                                       ["Hello", "World", "foo"],
+                                       ["Hello", "World", "Foo"])
+        end
       end
       
       describe 'with no block' do

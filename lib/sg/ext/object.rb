@@ -27,6 +27,8 @@ EOT
   end
 
   refine ::Object do
+    def identity; self; end
+    
     def recurse(m, top = true)
       r = send(m)
       if r
