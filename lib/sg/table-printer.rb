@@ -52,6 +52,7 @@ class SG::TablePrinter
     }
     Ascii = {
       top_bar: { filler: '-', leader: '+-', separator: '-+-', finalizer: '-+' },
+      header_bar: { filler: '-', leader: '+-', separator: '-+-', finalizer: '-+' },
       row: { leader: '| ', separator: ' | ', finalizer: ' |' },
       bar: { filler: '-', leader: '+-', separator: '-+-', finalizer: '-+' },
       bottom_bar: { filler: '-', leader: '+-', separator: '-+-', finalizer: '-+' }
