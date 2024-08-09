@@ -112,17 +112,19 @@ class SG::TablePrinter
   end
 
   def print data, width: true, resize: true
+    data = data.each unless Enumerator === data
+    
     if columns.empty?
-      raise ArgumentError.new("No data columns and rows to print.") if data.empty?
-      (data&.first.size || 1).times { |n| add_column }
+      line = data.first
+      (line.size || 1).times { |n| add_column }
+      if Enumerator::Lazy === data
+        data = [ line ].each + data
+      end
     end
     
     resize_columns(data, full_width: width) if resize
     print_bar(:top_bar)
-    unless columns.all? { |c| c.title.blank? }
-      print_headers
-      print_bar(:header_bar)
-    end
+    print_headers unless columns.all? { |c| c.title.blank? }
     data.each do |row|
       if row.blank? || row.all?(&:blank?)
         print_bar
@@ -147,6 +149,8 @@ class SG::TablePrinter
     end
     io.write(finalizer)
     io.write("\n")
+    io.flush
+    self
   end
   
   alias << print_row
@@ -173,6 +177,8 @@ class SG::TablePrinter
     columns.zip(widths).each do |col, w|
       col.real_width = w
     end
+
+    self
   end
 
   def print_bar style = :bar
@@ -184,12 +190,11 @@ class SG::TablePrinter
     end
     io.write(finalizer)
     io.write("\n")
+    self
   rescue NoMatchingPatternError
     io.write("\n") if style == :bar
   ensure
   end
-  
-  protected
   
   def print_headers
     (decorator[:header_row] || decorator[:row]) => { leader:, separator:, finalizer: }
@@ -200,8 +205,12 @@ class SG::TablePrinter
     end
     io.write(finalizer)
     io.write("\n")
+    print_bar(:header_bar)
+    self
   end
 
+  protected
+  
   def sized_initial_column_widths data, full_width
     columns.each_with_index.collect do |col, n|
       case col.strategy.to_s
@@ -288,6 +297,7 @@ class SG::TablePrinter
     decorator = nil
     skip_lines = 0
     delimeter = nil
+    follow_mode = false
     
     args = OptionParser.new do |o|
       o.banner = <<-EOT
@@ -317,6 +327,10 @@ EOT
       o.on('--delimeter REGEXP') do |v|
         delimeter = v =~ /\A\/(.*)\/\Z/ ? Regexp.new($1) : v
       end
+
+      o.on('-f', '--[no-]follow') do |v|
+        follow_mode = v
+      end
       
       o.separator <<-EOT
 
@@ -333,13 +347,11 @@ EOT
     tbl = SG::TablePrinter.new(decorator: decorator)
     if args.empty?
       if first_line_headers
-        line = $stdin.readline.split(delimeter).collect(&:strip)
-        line.each do |col|
+        line = $stdin.readline.split(delimeter).collect(&:strip).each do |col|
           tbl.add_column(title: col)
         end
       else
-        first_line = $stdin.readline.split(delimeter).collect(&:strip)
-        first_line.each do |col|
+        first_line = $stdin.readline.split(delimeter).collect(&:strip).each do |col|
           tbl.add_column()
         end
       end
@@ -354,7 +366,7 @@ EOT
       end
     end
 
-    data = $stdin.readlines
+    data = $stdin.each_line.skip_unless(follow_mode).lazy
     if skip_lines > 0
       data = data.drop(skip_lines - (first_line ? 1 : 0))
       first_line = nil
@@ -364,7 +376,7 @@ EOT
     if skip_lines <= 0 && args.empty? && first_line
       data = [ first_line ].each + data
     end
-    #tbl.resize_columns(data.dup, full_width: table_width)
+    
     tbl.print(data, width: table_width)
   end
 end
