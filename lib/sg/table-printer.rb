@@ -5,6 +5,8 @@ require 'io/console'
 require 'sg/ext'
 using SG::Ext
 
+# todo multiline cells
+
 class SG::TablePrinter
   class Column
     attr_accessor :title, :width, :strategy, :formatter, :alignment
@@ -28,12 +30,13 @@ class SG::TablePrinter
     end
 
     def align v, align: alignment, width: real_width
+      return v if width == nil
       s = (v || '').truncate(width)
-      if width && s.size < width
+      if s.screen_size < width
         case align
-        when :center then s = s.center(width)
-        when :right then s = s.rjust(width)
-        else s = s.ljust(width)
+        when :center then s = s.center_visually(width)
+        when :right then s = s.rjust_visually(width)
+        else s = s.ljust_visually(width)
         end
       end
       s
@@ -42,7 +45,7 @@ class SG::TablePrinter
 
   class Decorator
     None = {
-      row: { leader: '', separator: ' ', finalizer: '' },
+      row: { leader: '', separator: '  ', finalizer: '' },
       #bar: { filler: ' ', leader: '', separator: ' ', finalizer: '' },
       #top_bar: { filler: ' ', leader: '', separator: ' ', finalizer: '' },
       #bottom_bar: { filler: ' ', leader: '', separator: ' ', finalizer: '' }
@@ -91,16 +94,16 @@ class SG::TablePrinter
 
     def decor_width style, columns
       decor[style] => { leader:, separator: , finalizer: }
-      leader.size + separator.size * columns + finalizer.size
+      leader.screen_size + separator.screen_size * columns + finalizer.screen_size
     end
   end
 
   attr_reader :columns, :io, :decorator
   
-  def initialize io: $stdout, decorator: nil
+  def initialize io: $stdout, decorator: nil, style: nil
     @columns = []
     @io = io
-    @decorator = decorator || Decorator.new
+    @decorator = decorator || Decorator.new(style)
   end
 
   def add_column **opts
@@ -134,8 +137,13 @@ class SG::TablePrinter
     decorator[:row] => { leader:, separator:, finalizer: }
     io.write(leader)
     columns.each_with_index do |col, n|
-      io.write(col.format(row[n]))
-      io.write(separator) if col != columns[-1]
+      is_last_col = col == columns[-1]
+      if is_last_col
+        io.write(finalizer.blank? ? row[n] : col.format(row[n]))
+      else
+        io.write(col.format(row[n]))
+        io.write(separator)
+      end
     end
     io.write(finalizer)
     io.write("\n")
@@ -217,7 +225,7 @@ class SG::TablePrinter
   def fitted_column_width col, col_num, data
     [ col.width || 0,
       data.collect { |row|
-        col.format(row[col_num], align: false)&.size || 0
+        col.format(row[col_num], align: false)&.screen_size || 0
       }.max
     ].max
   end

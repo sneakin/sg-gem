@@ -91,12 +91,15 @@ EOT
       strip_escapes.display_width
     end
 
+    # todo use Terministry::Decoder
+    # todo keep or remove escapes after the slice?
     def visual_slice len
-      if screen_size < len
+      if screen_size == size && screen_size <= len
         [ self, nil ]
       else
         part = ''
         width = 0
+        saw_escape = false
         in_escape = false
         each_char do |c|
           if width >= len
@@ -104,13 +107,17 @@ EOT
           end
           if c == "\e"
             in_escape = true
-          elsif in_escape && (Range.new('a'.ord, 'z'.ord).include?(c.ord) || Range.new('A'.ord, 'Z'.ord).include?(c.ord))
+          elsif in_escape && c.alpha?
             in_escape = false
+            if c == 'm'
+              saw_escape = !(part =~ /[\[;]0+\Z/)
+            end
           elsif !in_escape
             width += Unicode::DisplayWidth.of(c)
           end
           part += c
         end
+        part += "\e[0m" if saw_escape
         return [ part, self[part.size..-1] ]
       end
     end
@@ -130,11 +137,45 @@ EOT
 
       self
     end
-    
+
     def truncate len
       visual_slice(len).first
     end
 
+    def cycled n
+      return '' if n <= 0 || empty?
+      return self if n == size
+      return self[0, n.ceil] if n < size
+      (self * (n / size.to_f).ceil)[0, n.ceil] 
+    end
+    
+    def cycle_visually n
+      return '' if n <= 0 || empty?
+      return truncate(n) if n <= screen_size
+      (self * (n / screen_size.to_f).ceil).truncate(n)
+    end
+    
+    def center_visually len, pad = nil
+      pad ||= ' '
+      padding = (len - screen_size)
+      padding <= 0 ? self : pad.cycled(size + padding).
+        tap { |s| s[padding / 2, size] = self }
+    end
+
+    def ljust_visually len, pad = nil
+      pad ||= ' '
+      padding = (len - screen_size)
+      padding <= 0 ? self : pad.cycled(size + padding).
+        tap { |s| s[0, size] = self }
+    end
+    
+    def rjust_visually len, pad = nil
+      pad ||= ' '
+      padding = (len - screen_size)
+      padding <= 0 ? self : pad.cycled(size + padding).
+        tap { |s| s[-size, size] = self }
+    end
+  
     def to_proc
       lambda do |*args|
         self % case args

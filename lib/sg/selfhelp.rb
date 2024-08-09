@@ -1,4 +1,8 @@
 require 'sg/terminstry'
+require 'sg/table-printer'
+require 'sg/ext'
+
+using SG::Ext
 
 module SG
   module SelfHelp
@@ -37,21 +41,24 @@ module SG
       io.puts("%sCommands:%s" % [ heading, normal ])
       cmds = scan_for_commands
       cells = cmds.collect do |(cmd, desc, args)|
-        has_args = args && !args.empty?
+        has_args = !args.blank?
         if has_args
-          cmd = cmd + " " + italic + args
+          cmd = "%s %s%s%s" % [ cmd, italic, args, normal ]
         end
         [ cmd, desc,
           cmd.bytesize - (has_args ? italic.bytesize + 1 : 0),
           has_args
         ]
       end
-      max_cmd = 2 + cells.max { |a, b| a[2] <=> b[2] }[2]
-      fmt = "%%s%%%is%%s  %%s" % [ max_cmd ]
-      fmt2 = "%%s%%%is%%s  %%s" % [ 4 + max_cmd ] # factor in that #% counted the escaped bytes
-      cells.each do |(cmd, desc, size, has_args)|
-        io.puts((has_args ? fmt2 : fmt) % [ bold, cmd, normal, desc ])
-      end
+      io.write(normal)
+      SG::TablePrinter.new(io: io, style: :none).
+        add_column(align: :right, strategy: :fitted, width: 16).
+        add_column.
+        print(cells.collect { |(cmd, desc, size, has_args)|
+                [ "%s%s" % [ bold, cmd ],
+                  "%s%s" % [ normal, desc ]
+                ]
+              })
     end
   end
 end

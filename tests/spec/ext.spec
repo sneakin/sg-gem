@@ -545,6 +545,127 @@ EOT
       expect([ [ 1, 2 ], [ 3, 4 ] ].collect(&'%i %.1f')).to eql([ '1 2.0', '3 4.0' ])
     end
   end
+
+  describe '#cycled' do
+    it { expect('foo'.cycled(10)).to eql('foofoofoof') }
+    it { expect('foo'.cycled(0.5)).to eql('f') }
+    it { expect('foo'.cycled(3)).to eql('foo') }
+    it { expect('foo'.cycled(4)).to eql('foof') }
+    it { expect(''.cycled(4)).to eql('') }
+  end
+  
+  describe '#cycle_visually' do
+    it { expect("\e[31;43mfoo".cycle_visually(10)).to eql("\e[31;43mfoo\e[31;43mfoo\e[31;43mfoo\e[31;43mf\e[0m") }
+    it { expect("\e[31;43mfoo".cycle_visually(1.5)).to eql("\e[31;43mfo\e[0m") }
+    it { expect("\e[31;43mfoo".cycle_visually(0.75)).to eql("\e[31;43mf\e[0m") }
+    it { expect("\e[31;43mfoo".cycle_visually(0.45)).to eql("\e[31;43mf\e[0m") }
+    it { expect("\e[31;43mfoo".cycle_visually(3)).to eql("\e[31;43mfoo\e[0m") }
+    it { expect("\e[31;43mfoo".cycle_visually(4)).to eql("\e[31;43mfoo\e[31;43mf\e[0m") }
+    it { expect("".cycle_visually(4)).to eql("") }
+  end
+  
+  describe '#truncate' do
+    [ [ '', 5, '', 0 ],
+      [ "hello", 10, "hello", 5 ],
+      [ "hello", 2, "he" ],
+      [ "hello", 5, "hello" ],
+      [ "\e[31;1mhello\e[0m", 10, "\e[31;1mhello\e[0m", 5 ],
+      [ "\e[31;1mhello\e[0m", 2, "\e[31;1mhe\e[0m" ],
+      [ "\e[31;1mhello\e[0m", 5, "\e[31;1mhello\e[0m" ],
+      [ "\e[31mh\e[0mello", 2, "\e[31mh\e[0me" ],
+      [ "\e[31;0mhello", 2, "\e[31;0mhe" ],
+      [ "\e[31mh\e[1;0mello", 2, "\e[31mh\e[1;0me" ],
+      [ "\e[31mh\e[1;0000mello", 2, "\e[31mh\e[1;0000me" ],
+    ].each do |(input, isize, output, osize)|
+      it "truncates #{input.inspect} as #{output.inspect}" do
+        expect(input.truncate(isize)).to eql(output)
+      end
+      it "limits to the printable screen size" do
+        expect(input.truncate(isize).screen_size).to eql(osize || isize)
+      end
+    end
+  end
+
+  describe '#center_visually' do
+    [ [ '', 5, '     ' ],
+      [ "hello", 10, "  hello   " ],
+      [ "hello", 2, "hello", 5 ],
+      [ "hello", 5, "hello" ],
+      [ "\e[31;1mhello\e[0m", 10, "  \e[31;1mhello\e[0m   " ],
+      [ "\e[31;1mhello\e[0m", 2, "\e[31;1mhello\e[0m", 5 ],
+      [ "\e[31;1mhello\e[0m", 5, "\e[31;1mhello\e[0m" ],
+    ].each do |(input, isize, output, osize)|
+      context "#{input.inspect} at #{isize}" do
+        subject { input.center_visually(isize) }
+        
+        it "centers as #{output.inspect}" do
+          expect(subject).to eql(output)
+        end
+        it "limits to the printable screen size" do
+          expect(subject.screen_size).to eql(osize || isize)
+        end
+      end
+    end
+
+    it { expect(''.center_visually(10, 'xy')).to eql('xyxyxyxyxy') }
+    it { expect('hello'.center_visually(10, 'xy')).to eql('xyhelloyxy') }
+    it { expect('hello'.center_visually(10, 'x')).to eql('xxhelloxxx') }
+    it { expect('hello'.center_visually(10, 'xyz')).to eql('xyhelloyzx') }
+  end
+
+  describe '#ljust_visually' do
+    [ [ '', 5, '     ' ],
+      [ "hello", 10, "hello     " ],
+      [ "hello", 2, "hello", 5 ],
+      [ "hello", 5, "hello" ],
+      [ "\e[31;1mhello\e[0m", 10, "\e[31;1mhello\e[0m     " ],
+      [ "\e[31;1mhello\e[0m", 2, "\e[31;1mhello\e[0m", 5 ],
+      [ "\e[31;1mhello\e[0m", 5, "\e[31;1mhello\e[0m" ],
+    ].each do |(input, isize, output, osize)|
+      context "#{input.inspect} at #{isize}" do
+        subject { input.ljust_visually(isize) }
+        
+        it "pads as #{output.inspect}" do
+          expect(subject).to eql(output)
+        end
+        it "limits to the printable screen size" do
+          expect(subject.screen_size).to eql(osize || isize)
+        end
+      end
+    end
+
+    it { expect(''.ljust_visually(10, 'xy')).to eql('xyxyxyxyxy') }
+    it { expect('hello'.ljust_visually(10, 'xy')).to eql('helloyxyxy') }
+    it { expect('hello'.ljust_visually(10, 'x')).to eql('helloxxxxx') }
+    it { expect('hello'.ljust_visually(10, 'xyz')).to eql('hellozxyzx') }
+  end
+
+  describe '#rjust_visually' do
+    [ [ '', 5, '     ' ],
+      [ "hello", 10, "     hello" ],
+      [ "hello", 2, "hello", 5 ],
+      [ "hello", 5, "hello" ],
+      [ "\e[31;1mhello\e[0m", 10, "     \e[31;1mhello\e[0m" ],
+      [ "\e[31;1mhello\e[0m", 2, "\e[31;1mhello\e[0m", 5 ],
+      [ "\e[31;1mhello\e[0m", 5, "\e[31;1mhello\e[0m" ],
+    ].each do |(input, isize, output, osize)|
+      context "#{input.inspect} at #{isize}" do
+        subject { input.rjust_visually(isize) }
+        
+        it "pads as #{output.inspect}" do
+          expect(input.rjust_visually(isize)).to eql(output)
+        end
+        it "limits to the printable screen size" do
+          expect(input.rjust_visually(isize).screen_size).to eql(osize || isize)
+        end
+      end
+    end
+
+    it { expect(''.rjust_visually(10, 'xy')).to eql('xyxyxyxyxy') }
+    it { expect('hello'.rjust_visually(10, 'xy')).to eql('xyxyxhello') }
+    it { expect('hello'.rjust_visually(10, 'x')).to eql('xxxxxhello') }
+    it { expect('hello'.rjust_visually(10, 'xyz')).to eql('xyzxyhello') }
+  end
 end
 
 describe Enumerable do
