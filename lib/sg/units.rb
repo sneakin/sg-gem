@@ -37,10 +37,11 @@ module SG::Units
         @abbrev ||= name[0]
       end
 
-      def derive name, base = self, abbrev = nil
+      def derive name, base = self, abbrev = nil, dimension = nil
         k = Class.new(base)
         k.name = name
         k.abbrev = abbrev || name
+        k.dimension = dimension || self.dimension
         k
       end      
     end
