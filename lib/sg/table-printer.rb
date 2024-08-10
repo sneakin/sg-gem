@@ -238,7 +238,7 @@ class SG::TablePrinter
     [ col.width || 0,
       data.collect { |row|
         col.format(row[col_num], align: false)&.screen_size || 0
-      }.max
+      }.max || 0
     ].max
   end
   
