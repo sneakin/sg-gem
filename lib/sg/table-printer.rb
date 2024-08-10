@@ -22,18 +22,18 @@ class SG::TablePrinter
 
     def format value, align: true, stripped: false
       v = formatter.call(value)
-      v = align(v) if align && (!stripped && alignment != :left)
+      v = align(v, stripped: stripped) if align
       v
     end
 
-    def align v, align: alignment, width: real_width
+    def align v, align: alignment, width: real_width, stripped: false
       return v if width == nil
       s = (v || '').truncate(width)
       if s.screen_size < width
         case align
-        when :center then s = s.center_visually(width)
+        when :center then s = s.center_visually(width).skip_unless(stripped).rstrip
         when :right then s = s.rjust_visually(width)
-        else s = s.ljust_visually(width)
+        else s = stripped ? s : s.ljust_visually(width)
         end
       end
       s
@@ -198,8 +198,13 @@ class SG::TablePrinter
     (decorator[:header_row] || decorator[:row]) => { leader:, separator:, finalizer: }
     io.write(leader)
     columns.each_with_index do |col, n|
-      io.write(col.align(col.title, align: :center))
-      io.write(separator) if col != columns[-1]
+      is_last_col = col == columns[-1]
+      if is_last_col
+        io.write(col.align(col.title, align: :center, stripped: finalizer.blank?))
+      else
+        io.write(col.align(col.title, align: :center))
+        io.write(separator)
+      end
     end
     io.write(finalizer)
     io.write("\n")
