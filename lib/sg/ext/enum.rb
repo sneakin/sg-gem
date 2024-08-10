@@ -41,6 +41,14 @@ module SG::Ext
       end
     end
 
+    def pluck_attrs *keys
+      collect { |e| e.pick_attrs(*keys) }
+    end
+
+    def pluck *keys
+      collect { |e| e.pick(*keys) }
+    end
+
     def aggregate initials, &fn
       reduce(initials) do |acc, row|
         row.zip(acc).collect do |el, el_acc|

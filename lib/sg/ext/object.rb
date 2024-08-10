@@ -74,5 +74,13 @@ EOT
       # is always called.
       SG::SkipUnless.new(!test, self, &b&.not)
     end
+
+    def pick *keys
+      keys.collect(&method(:[]))
+    end
+
+    def pick_attrs *keys
+      keys.collect(&method(:send))
+    end
   end
 end

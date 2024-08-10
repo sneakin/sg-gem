@@ -182,6 +182,36 @@ describe Object do
       end
     end
   end
+
+  describe '#pick' do
+    context 'array' do
+      subject { [ 2, 3, 4 ] }
+      it { expect(subject.pick(1)).to eql([3]) }
+      it { expect(subject.pick(0,2)).to eql([2, 4]) }
+      it { expect(subject.pick(10)).to eql([nil]) }
+    end
+
+    context 'hash' do
+      subject { { a: 2, b: 3, c: 4 } }
+      it { expect(subject.pick(:b)).to eql([3]) }
+      it { expect(subject.pick(:a, :c)).to eql([2, 4]) }
+    end
+  end
+
+  describe '#pick_attrs' do
+    context 'array' do
+      subject { [ 2, 3, 4 ] }
+      it { expect(subject.pick_attrs(:first)).to eql([2]) }
+      it { expect(subject.pick_attrs(:first, :size)).to eql([2, 3]) }
+      it { expect { subject.pick_attrs(:boom) }.to raise_error(NoMethodError) }
+    end
+
+    context 'hash' do
+      subject { { a: 2, b: 3, c: 4 } }
+      it { expect(subject.pick_attrs(:keys, :values)).to eql([[:a, :b, :c], [2, 3, 4]]) }
+      it { expect{ subject.pick_attrs(:a, :c) }.to raise_error(NoMethodError) }
+    end
+  end
 end
 
 describe Module do
@@ -669,6 +699,37 @@ EOT
 end
 
 describe Enumerable do
+  describe '#pluck' do
+    context 'arrays' do
+      subject { 9.times.each_slice(3).to_a }
+      it { expect(subject.pluck(0)).to eql([[0],[3],[6]]) }
+      it { expect(subject.pluck(0, 2)).to eql([[0,2],[3,5],[6,8]]) }
+      it { expect(subject.pluck(0, 2, 10)).to eql([[0,2,nil],[3,5,nil],[6,8,nil]]) }
+      it { expect(subject.pluck()).to eql([[],[],[]]) }
+    end
+    context 'hashes' do
+      subject { [ { a: 1, b: 2, c: 3 },
+                  { a: 3, b: 4, c: 5 }
+                ] }
+      it { expect(subject.pluck(:b)).to eql([[2],[4]]) }
+      it { expect(subject.pluck(:a, :c)).to eql([[1,3],[3,5]]) }
+      it { expect(subject.pluck(:a, :c, :d)).to eql([[1,3,nil],[3,5,nil]]) }
+      it { expect(subject.pluck()).to eql([[],[]]) }
+    end
+  end
+  
+  describe '#pluck_attrs' do
+    context 'structs' do
+      let(:struct) { Struct.new(:a, :b, :c) }
+      subject { [ struct.new(1, 2, 3),
+                  struct.new(3, 4, 5)
+                ] }
+      it { expect(subject.pluck_attrs(:b)).to eql([[2],[4]]) }
+      it { expect(subject.pluck_attrs(:a, :c)).to eql([[1,3],[3,5]]) }
+      it { expect(subject.pluck_attrs()).to eql([[],[]]) }
+    end
+  end
+
   describe '#aggregate' do
     context 'two zipped ranges' do
       subject { (0..5).each.zip(10..15) }
