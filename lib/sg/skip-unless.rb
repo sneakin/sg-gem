@@ -32,9 +32,15 @@ module SG
       s._test_passes?? @src : s
     end
 
-    def skip_when test = false, &b
-      s = SG::SkipUnless.new(!test, self, &b&.not)
+    def skip_when test = true, &b
+      s = SG::SkipWhen.new(test, self, &b)
       s._test_passes?? @src : s
+    end
+  end
+
+  class SkipWhen < SkipUnless
+    def _test_passes?
+      !super
     end
   end
 end

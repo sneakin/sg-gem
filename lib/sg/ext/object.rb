@@ -65,14 +65,16 @@ EOT
       # Returns an enumerator that calls the following chained method
       # call when `test` is not `nil`. The chained call after that is
       # always called.
-      SG::SkipUnless.new(test, self, &b)
+      s = SG::SkipUnless.new(test, self, &b)
+      s._test_passes?? self : s
     end
 
-    def skip_when test = false, &b
+    def skip_when test = true, &b
       # Returns an enumerator that calls the following chained method
       # call when `test` is nil or false. The chained call after that
       # is always called.
-      SG::SkipUnless.new(!test, self, &b&.not)
+      s = SG::SkipWhen.new(test, self, &b)
+      s._test_passes?? self : s
     end
 
     def pick *keys

@@ -103,6 +103,11 @@ describe Object do
     it { expect(subject.skip_unless { true }.upcase).to eql('HEY') }
     it { expect(subject.skip_unless { false }.upcase).to eql(subject) }
 
+    it { expect(subject.skip_unless(true) { true }.upcase).to eql('HEY') }
+    it { expect(subject.skip_unless(false) { true }.upcase).to eql(subject) }
+    it { expect(subject.skip_unless(true) { false }.upcase).to eql(subject) }
+    it { expect(subject.skip_unless(false) { false }.upcase).to eql(subject) }
+
     context 'doubled up' do
       it { expect(subject.skip_unless(true).skip_unless(true).upcase).to eql('HEY') }
       it { expect(subject.skip_unless(true).skip_unless(false).upcase).to eql(subject) }
@@ -143,6 +148,11 @@ describe Object do
     it { expect(subject.skip_when { true }.upcase).to eql(subject) }
     it { expect(subject.skip_when { false }.upcase).to eql('HEY') }
 
+    it { expect(subject.skip_when(true) { true }.upcase).to eql(subject) }
+    it { expect(subject.skip_when(false) { false }.upcase).to eql('HEY') }
+    it { expect(subject.skip_when(false) { true }.upcase).to eql('HEY') }
+    it { expect(subject.skip_when(true) { false }.upcase).to eql('HEY') }
+    
     context 'doubled up' do
       it { expect(subject.skip_when(true).skip_when(true).upcase).to eql(subject) }
       it { expect(subject.skip_when(true).skip_when(false).upcase).to eql('HEY') }
@@ -796,7 +806,9 @@ describe Enumerable do
     it { expect(subject.skip_when { |x| x.size == 10 }.select(&:even?)).to eql(subject) }
 
     it { expect(subject.skip_when(false) { |x| x.size < 10 }.select(&:even?)).to eql(evens) }
-    it { expect(subject.skip_when(true) { |x| x.size < 10 }.select(&:even?)).to eql(subject) }
+    it { expect(subject.skip_when(true) { |x| x.size < 10 }.select(&:even?)).to eql(evens) }
+    it { expect(subject.skip_when(true) { |x| x.size <= 10 }.select(&:even?)).to eql(subject) }
+    it { expect(subject.skip_when(true) { |x| x.equal?(subject) }.select(&:even?)).to eql(subject) }
   end
   
 end
