@@ -67,9 +67,6 @@ module SG
     end
 
     class << self
-      extend Forwardable
-      def_delegators :instance, :register
-
       def for from, to
         caching_instance.for(from, to)
       end
@@ -85,6 +82,13 @@ module SG
         end
       end
 
+      def register from, to, weight = 1, &block
+        caching_instance.
+          invalidate_cache(:for, from, to).
+          invalidate_cache(:for, to, from)
+        instance.register(from, to, weight, &block)
+      end
+      
       def register_scaler from, to, factor, offset = 0
         register(from, to) do |c|
           to.new((c.value + offset) * factor)
