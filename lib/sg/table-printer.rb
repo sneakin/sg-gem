@@ -20,13 +20,10 @@ class SG::TablePrinter
       @formatter = (formatter || :to_s).to_proc
     end
 
-    def format value, align: true
+    def format value, align: true, stripped: false
       v = formatter.call(value)
-      if align
-        align(v)
-      else
-        v
-      end
+      v = align(v) if align && (!stripped && alignment != :left)
+      v
     end
 
     def align v, align: alignment, width: real_width
@@ -142,7 +139,7 @@ class SG::TablePrinter
     columns.each_with_index do |col, n|
       is_last_col = col == columns[-1]
       if is_last_col
-        io.write(finalizer.blank? ? row[n] : col.format(row[n]))
+        io.write(col.format(row[n], stripped: finalizer.blank?))
       else
         io.write(col.format(row[n]))
         io.write(separator)
