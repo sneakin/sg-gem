@@ -23,6 +23,10 @@ module SG::Units
       self.class.name
     end
 
+    def coerce other
+      [ Unit.new(other), self ]
+    end
+    
     class << self
       attr_accessor :dimension
       alias_method :classname, :name
@@ -55,7 +59,7 @@ module SG::Units
         end
 
         def abbrev
-          "%s / %s" % [ numerator.abbrev, denominator.abbrev ]
+          "%s/%s" % [ numerator.abbrev, denominator.abbrev ]
         end
         
         def dimension

@@ -105,13 +105,13 @@ module SG
       Converter.convert(self, klass, *args)
     end
 
-    def coerce other
-      begin
-        [ Converter.convert(other, self.class), self ]
-      rescue Converter::NoConverterError
-        [ other, self.to(other.class) ]
-      end
-    end
+    # def coerce other
+    #   begin
+    #     [ Converter.convert(other, self.class), self ]
+    #   rescue Converter::NoConverterError
+    #     [ other, self.to(other.class) ]
+    #   end
+    # end
   end
 end
 
