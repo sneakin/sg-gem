@@ -16,11 +16,15 @@ module SG::Units
     end
 
     def to_s
-      "%s %s" % [ value.to_s, value.abs <= 1 ? name : name.pluralize ]
+      "%s %s" % [ value.to_s, abbrev ? abbrev : (value.abs <= 1 ? name : name.pluralize) ]
     end
 
     def name
       self.class.name
+    end
+
+    def abbrev
+      self.class.abbrev
     end
 
     def coerce other
@@ -38,13 +42,13 @@ module SG::Units
 
       attr_writer :abbrev
       def abbrev
-        @abbrev ||= name[0]
+        @abbrev
       end
 
-      def derive name, base = self, abbrev = nil, dimension = nil
-        k = Class.new(base)
+      def derive name, abbrev = nil, dimension = nil
+        k = Class.new(self)
         k.name = name
-        k.abbrev = abbrev || name
+        k.abbrev = abbrev
         k.dimension = dimension || self.dimension
         k
       end      
@@ -105,6 +109,10 @@ module SG::Units
       other = other.to(self.class)
       self.class.new(value + other.value)
     end
+
+    def -@
+      self.class.new(-value)
+    end
     
     def - other
       other = other.to(self.class)
@@ -152,7 +160,7 @@ module SG::Units
       k = Class.new(base)
       k.include(self)
       k.name = name
-      k.abbrev = abbrev || name[0]
+      k.abbrev = abbrev
       k
     end
     
@@ -167,8 +175,8 @@ module SG::Units
     end
   end
 
-  def self.transformed_unit name, base, from_conv, to_conv = nil
-    k = TransformedUnit.derive(base, name)
+  def self.transformed_unit name, base, from_conv, to_conv = nil, abbrev: nil
+    k = TransformedUnit.derive(base, name, abbrev)
     factor = from_conv
     unless from_conv.kind_of?(Proc)
       if to_conv == nil
@@ -186,8 +194,8 @@ module SG::Units
     k
   end
 
-  def self.scaled_unit name, base, factor, offset = 0
-    k = TransformedUnit.derive(base, name)
+  def self.scaled_unit name, base, factor, offset = 0, abbrev: nil
+    k = TransformedUnit.derive(base, name, abbrev)
     SG::Converter.register_scaler(k, base, factor, offset)
     k
   end
@@ -216,11 +224,15 @@ module SG::Units
     self.dimension = Length
 
     def self.name
-      "meter"
+      super || "meter"
+    end
+
+    def self.abbrev
+      super || name[0]
     end
   end
 
-  Inch = scaled_unit('meter', Meter, 0.0254)
+  Inch = scaled_unit('inch', Meter, 0.0254, abbrev: 'in')
   Foot = scaled_unit('foot', Inch, 12.0)
   Mile = scaled_unit('mile', Foot, 5280.0)
 
