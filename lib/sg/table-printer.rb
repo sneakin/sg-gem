@@ -27,7 +27,7 @@ class SG::TablePrinter
     end
 
     def align v, align: alignment, width: real_width, stripped: false
-      return v if width == nil
+      return v if width == nil || stripped == :fully
       s = (v || '').truncate(width)
       if s.screen_size < width
         case align
@@ -42,6 +42,7 @@ class SG::TablePrinter
 
   class Decorator
     None = {
+      flags: [ :stripped ],
       row: { leader: '', separator: '  ', finalizer: '' },
       #bar: { filler: ' ', leader: '', separator: ' ', finalizer: '' },
       #top_bar: { filler: ' ', leader: '', separator: ' ', finalizer: '' },
@@ -67,12 +68,20 @@ class SG::TablePrinter
       bar: { filler: '─', leader: '├─', separator: '─┼─', finalizer: '─┤' },
       bottom_bar: { filler: '─', leader: '└─', separator: '─┴─', finalizer: '─┘' }
     }
+    HTML = {
+      flags: [ :stripped, :noalign ],
+      top_bar: { filler: '', leader: '<table>', separator: '', finalizer: '' },
+      header_row: { leader: '<thead><tr><th>', separator: '</th><th>', finalizer: '</th></tr></thead>' },
+      row: { leader: '<tr><td>', separator: '</td><td>', finalizer: '</td></tr>' },
+      bottom_bar: { filler: '', leader: '', separator: '', finalizer: '</table>' }
+    }
 
     Styles = {
       none: None,
       ascii: Ascii,
       org: Org,
-      box: Box
+      box: Box,
+      html: HTML
     }
 
     attr_reader :decor
@@ -99,6 +108,10 @@ class SG::TablePrinter
     def decor_width style, columns
       decor[style] => { leader:, separator: , finalizer: }
       leader.screen_size + separator.screen_size * columns + finalizer.screen_size
+    end
+
+    def has_flag? name
+      decor[:flags]&.include?(name)
     end
   end
 
@@ -145,9 +158,11 @@ class SG::TablePrinter
     columns.each_with_index do |col, n|
       is_last_col = col == columns[-1]
       if is_last_col
-        io.write(col.format(row[n], stripped: finalizer.blank?))
+        io.write(col.format(row[n],
+                            stripped: decorator.has_flag?(:noalign) ? :fully :
+                            (finalizer.blank? || decorator.has_flag?(:stripped))))
       else
-        io.write(col.format(row[n]))
+        io.write(col.format(row[n], stripped: decorator.has_flag?(:noalign) ? :fully : false))
         io.write(separator)
       end
     end
@@ -206,7 +221,7 @@ class SG::TablePrinter
     columns.each_with_index do |col, n|
       is_last_col = col == columns[-1]
       if is_last_col
-        io.write(col.align(col.title, align: :center, stripped: finalizer.blank?))
+        io.write(col.align(col.title, align: :center, stripped: decorator.has_flag?(:noalign) ? :fully : (finalizer.blank? || decorator.has_flag?(:stripped))))
       else
         io.write(col.align(col.title, align: :center))
         io.write(separator)
