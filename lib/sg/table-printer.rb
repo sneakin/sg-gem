@@ -54,6 +54,11 @@ class SG::TablePrinter
       bar: { filler: '-', leader: '+-', separator: '-+-', finalizer: '-+' },
       bottom_bar: { filler: '-', leader: '+-', separator: '-+-', finalizer: '-+' }
     }
+    Org = {
+      header_bar: { filler: '-', leader: '|-', separator: '-+-', finalizer: '-|' },
+      row: { leader: '| ', separator: ' | ', finalizer: ' |' },
+      bar: { filler: '-', leader: '|-', separator: '-+-', finalizer: '-|' },
+    }
     Box = {
       top_bar: { filler: '─', leader: '┌─', separator: '─┬─', finalizer: '─┐' },
       header_row: { leader: '│ ', separator: ' │ ', finalizer: ' │' },
@@ -66,6 +71,7 @@ class SG::TablePrinter
     Styles = {
       none: None,
       ascii: Ascii,
+      org: Org,
       box: Box
     }
 
