@@ -27,7 +27,8 @@ class SG::TablePrinter
     end
 
     def align v, align: alignment, width: real_width, stripped: false
-      return v if width == nil || stripped == :fully
+      return v if width == nil
+      return v.strip if stripped == :fully
       s = (v || '').truncate(width)
       if s.screen_size < width
         case align
