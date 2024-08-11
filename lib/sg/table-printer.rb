@@ -1,7 +1,7 @@
 #!/usr/bin/env -S ruby -W:no-experimental
 # -*- coding: utf-8 -*-
 require 'bundler/setup'
-require 'io/console'
+require 'sg/terminstry/util'
 require 'sg/ext'
 using SG::Ext
 
@@ -156,7 +156,7 @@ class SG::TablePrinter
   # todo tables with no width: everything is fitted
   def resize_columns data, full_width: true
     if full_width == true
-      full_width = IO.console.winsize[1]
+      full_width = SG::Terminstry.tty_size&.first
     end
     
     if full_width
