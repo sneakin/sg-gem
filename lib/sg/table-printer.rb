@@ -177,6 +177,8 @@ class SG::TablePrinter
 
   # todo tables with no width: everything is fitted
   def resize_columns data, full_width: true
+    full_width = nil if decorator.has_flag?(:noalign)
+    
     if full_width == true
       full_width = SG::Terminstry.tty_size&.first
     end
@@ -224,7 +226,7 @@ class SG::TablePrinter
       if is_last_col
         io.write(col.align(col.title, align: :center, stripped: decorator.has_flag?(:noalign) ? :fully : (finalizer.blank? || decorator.has_flag?(:stripped))))
       else
-        io.write(col.align(col.title, align: :center))
+        io.write(col.align(col.title, align: :center, stripped: decorator.has_flag?(:noalign) ? :fully : false))
         io.write(separator)
       end
     end
