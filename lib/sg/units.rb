@@ -16,7 +16,7 @@ module SG::Units
     end
 
     def to_s
-      "%s %s" % [ value.to_s, abbrev ? abbrev : (value.abs <= 1 ? name : name.pluralize) ]
+      "%s %s" % [ value_string, abbrev ? abbrev : (value.abs <= 1 ? name : name.pluralize) ]
     end
 
     def name
@@ -25,6 +25,10 @@ module SG::Units
 
     def abbrev
       self.class.abbrev
+    end
+
+    def value_string
+      value.to_s
     end
 
     def coerce other
