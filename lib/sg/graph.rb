@@ -101,22 +101,23 @@ module SG
       @edges[fr][to]
     end
 
-    def route from, to, max_depth = 6
+    def route from, to, max_depth = 4
       paths = route_for(from, to, max_depth)
       paths.each_slice(2)
     end
 
-    def shortest_routes from, to, max_depth = 6
+    def shortest_routes from, to, max_depth = 4
       route(from, to, max_depth).sort_by { |p| p[0].size }
     end
 
-    def shortest_route from, to, max_depth = 6
+    def shortest_route from, to, max_depth = 4
       route(from, to, max_depth).min { |p| p[0].size }
     end
 
-    def route_for root, dest, max_depth = 6, depth = 0, seen = [], path = []
+    def route_for root, dest, max_depth = 4, depth = 0, seen = [], path = []
       # for the case when there is a from and an indirect to:
       #  All the conversions for FROM need to be checked for an indirect conversions to DEST
+      #puts "#{root} #{dest} #{depth} #{max_depth}"
       return [] if root == dest
       return nil if depth == max_depth || seen.include?(root)
       new_seen = seen + [ root ]
