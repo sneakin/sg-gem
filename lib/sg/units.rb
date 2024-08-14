@@ -109,6 +109,10 @@ module SG::Units
       k
     end
 
+    def abs
+      self.class.new(value.abs)
+    end
+    
     def + other
       other = other.to(self.class)
       self.class.new(value + other.value)
