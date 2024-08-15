@@ -463,7 +463,8 @@ EOT
       'peep' => 'peeps',
       'potato' => 'potatoes',
       'taco' => 'tacos',
-      'echo' => 'echoes'
+      'echo' => 'echoes',
+      'choose' => 'chooses'
     }
     Examples.each do |input, output|
       it "converts #{input.inspect} to #{output.inspect}" do

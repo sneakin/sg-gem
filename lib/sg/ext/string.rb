@@ -23,6 +23,7 @@ EOT
       case self
       when /(.*)(fish|sheep)\Z/ then self
       when /(.*)(foot)\Z/ then $1 + 'feet'
+      when /(.*choose)\Z/ then $1 + 's'
       when /(.*)oose\Z/ then $1 + 'eese'
       when /(.*)[aoeui]y\Z/ then self + "s"
       when /(.*[^aoeui])y\Z/ then $1 + "ies"
@@ -34,6 +35,21 @@ EOT
       end
     end
 
+    def singularize
+      case self
+      when /(.*)(fish|sheep|cheese)\Z/ then self
+      when /(.*)(feet)\Z/ then $1 + 'foot'
+      when /(.*)eese\Z/ then $1 + 'oose'
+      when /(.*[aoeui]y)s\Z/ then $1
+      when /(.*[^aoeui])ies\Z/ then $1 + "y"
+      when /(ch|to|cho)es\Z/ then $1
+      when /(.*[^if])ves\Z/ then $1 + 'f'
+      when /(.*[^f])ves\Z/ then $1 + 'fe'
+      when /(.+)[s]\Z/ then $1
+      else self
+      end
+    end
+    
     def titleize
       # upcase post-space, underscore, hypens, and slashes
       gsub(/(\A|\s+|[-_\\\/]+)[[:lower:]]/) { |m| m.upcase }
