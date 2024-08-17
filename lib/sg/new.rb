@@ -7,7 +7,7 @@ module SG
     attr_reader :maker
     
     def initialize klass = nil, &maker
-      raise ArgumentError if xlass == nil && maker == nil
+      raise ArgumentError if klass == nil && maker == nil
       @maker = maker || lambda { |*a, **o, &b| klass.new(*a, **o, &b) }
     end
 
