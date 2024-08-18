@@ -2,6 +2,18 @@ require 'sg/ext'
 using SG::Ext
 
 module SG::Is
+  module NewBracket
+    module ClassMethods
+      def [] *a, **o, &cb
+        new(*a, **o, &cb)
+      end
+    end
+
+    def self.included base
+      base.extend(ClassMethods)
+    end
+  end
+  
   module LogicOps
     def &(other)
       And[self, other]
@@ -17,9 +29,7 @@ module SG::Is
   end
   
   class And
-    def self.[] *cases
-      new(*cases)
-    end
+    include NewBracket
 
     def initialize *cases
       @cases = cases
@@ -29,13 +39,15 @@ module SG::Is
       @cases.all? { |c| c === other }
     end
 
+    def to_s
+      "%s[%s]" % [ self.class.name, cases.collect(&:to_s).join(', ') ]
+    end
+
     include LogicOps
   end
 
   class Or
-    def self.[] *cases
-      new(*cases)
-    end
+    include NewBracket
 
     def initialize *cases
       @cases = cases
@@ -45,13 +57,15 @@ module SG::Is
       @cases.any? { |c| c === other }
     end
 
+    def to_s
+      "%s[%s]" % [ self.class.name, cases.collect(&:to_s).join(', ') ]
+    end
+
     include LogicOps
   end
 
   class Not
-    def self.[] p
-      new(p)
-    end
+    include NewBracket
 
     def initialize pred
       @pred = pred
@@ -59,6 +73,10 @@ module SG::Is
 
     def === other
       !(@pred === other)
+    end
+
+    def to_s
+      "%s[%s]" % [ self.class.name, @pred ]
     end
 
     include LogicOps
@@ -80,18 +98,6 @@ module SG::Is
     include LogicOps
   end
 
-  module NewBracket
-    module ClassMethods
-      def [] *a, **o, &cb
-        new(*a, **o, &cb)
-      end
-    end
-
-    def self.included base
-      base.extend(ClassMethods)
-    end
-  end
-  
   class ResponsiveTo
     include NewBracket
 
