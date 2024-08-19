@@ -21,7 +21,7 @@ EOT
 
     def pluralize
       case self
-      when /(.*)(fish|sheep)\Z/ then self
+      when /(.*)(fish|sheep|feet|eese)\Z/ then self
       when /(.*)(foot)\Z/ then $1 + 'feet'
       when /(.*choose)\Z/ then $1 + 's'
       when /(.*)oose\Z/ then $1 + 'eese'
@@ -30,6 +30,7 @@ EOT
       when /(ch|to|cho)\Z/ then self + 'es'
       when /(.*[^if])f\Z/ then $1 + 'ves'
       when /(.*[^f])fe\Z/ then $1 + 'ves'
+      when /ss\Z/ then self + 'es'
       when /[^s]\Z/ then self + 's'
       else self
       end
@@ -42,10 +43,13 @@ EOT
       when /(.*)eese\Z/ then $1 + 'oose'
       when /(.*[aoeui]y)s\Z/ then $1
       when /(.*[^aoeui])ies\Z/ then $1 + "y"
-      when /(ch|to|cho)es\Z/ then $1
+      when /(.*[aoeui]se)s\Z/ then $1
+      when /(.*)fives\Z/ then $1 + 'five'
       when /(.*[^if])ves\Z/ then $1 + 'f'
       when /(.*[^f])ves\Z/ then $1 + 'fe'
-      when /(.+)[s]\Z/ then $1
+      when /(.*ss)es\Z/ then $1
+      when /(.+)es\Z/ then $1
+      when /(.*[^s])s\Z/ then $1
       else self
       end
     end

@@ -507,7 +507,7 @@ EOT
     end
   end
   
-  describe '#pluralize' do
+  describe 'plural words' do
     Examples = {
       'foot' => 'feet',
       'day' => 'days',
@@ -530,11 +530,22 @@ EOT
       'potato' => 'potatoes',
       'taco' => 'tacos',
       'echo' => 'echoes',
-      'choose' => 'chooses'
+      'choose' => 'chooses',
+      'address' => 'addresses',
+      'dress' => 'dresses'
     }
     Examples.each do |input, output|
-      it "converts #{input.inspect} to #{output.inspect}" do
+      it "\#pluralize converts #{input.inspect} to #{output.inspect}" do
         expect(input.pluralize).to eql(output)
+      end
+      it "\#pluralize converts #{output.inspect} to #{output.inspect}" do
+        expect(output.pluralize).to eql(output)
+      end
+      it "\#singularize converts #{output.inspect} to #{input.inspect}" do
+        expect(output.singularize).to eql(input)
+      end
+      it "\#singularize converts #{input.inspect} to #{input.inspect}" do
+        expect(input.singularize).to eql(input)
       end
     end
   end
