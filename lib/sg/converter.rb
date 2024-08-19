@@ -119,20 +119,20 @@ end
 # Monkey patch Object
 #
 
-if false
 module SG::Ext
-  refine ::Object do
-    begin
-      import_methods SG::Convertible
-    rescue NoMethodError
+  [ ::String, ::Integer, ::Float ].each do |klass|
+    refine klass do
       begin
-        include SG::Convertible
-      rescue TypeError
-        warn("SG::Convertible unavailable.")
+        import_methods SG::Convertible
+      rescue NoMethodError
+        begin
+          include SG::Convertible
+        rescue TypeError
+          warn("SG::Convertible unavailable.")
+        end
       end
     end
   end
-end
 end
 
 #
