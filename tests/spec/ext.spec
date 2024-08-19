@@ -74,7 +74,54 @@ describe TrueClass do
   end
 end
 
+shared_examples 'delegated x, y, z' do |klass|
+  let(:alpha) { double('alpha') }
+  let(:beta) { double('beta') }
+  subject { klass.new(alpha, beta) }
+  context 'alpha delegates' do
+    it do
+      expect(alpha).to receive(:x).and_return(123)
+      expect(subject.x).to eql(123)
+    end
+
+    it do
+      expect(alpha).to receive(:x).with(1, 2, 3, boo: :who).and_return(123)
+      expect(subject.x(1, 2, 3, boo: :who)).to eql(123)
+    end
+  end
+
+  context 'beta delegates' do
+    [ :y, :z ].each do |msg|
+      it do
+        expect(beta).to receive(msg).and_return(123)
+        expect(subject.send(msg)).to eql(123)
+      end
+
+      it do
+        expect(beta).to receive(msg).with(1, 2, 3, boo: :who).and_return(123)
+        expect(subject.send(msg, 1, 2, 3, boo: :who)).to eql(123)
+      end
+    end
+  end
+end
+
 describe Object do
+  describe '.delegate' do
+    klass = Class.new do
+      delegate :x, to: :alpha
+      delegate :y, :z, to: :beta
+
+      attr_accessor :alpha, :beta
+
+      def initialize a, b
+        @alpha = a
+        @beta = b
+      end
+    end
+
+    it_should_behave_like 'delegated x, y, z', klass
+  end
+  
   describe '.inheritable_attr' do
     let(:klass) do
       Class.new do
@@ -225,6 +272,25 @@ describe Object do
 end
 
 describe Module do
+  describe '.delegate' do
+    mod = Module.new do
+      delegate :x, to: :alpha
+      delegate :y, :z, to: :beta
+
+      attr_accessor :alpha, :beta
+
+      def initialize a, b
+        @alpha = a
+        @beta = b
+      end
+    end
+    klass = Class.new do
+      include mod
+    end
+
+    it_should_behave_like 'delegated x, y, z', klass
+  end
+
   describe '.mattr_accessor' do
     let(:mod) do
       Module.new do
