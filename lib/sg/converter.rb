@@ -119,6 +119,7 @@ end
 # Monkey patch Object
 #
 
+if false
 module SG::Ext
   refine ::Object do
     begin
@@ -131,6 +132,7 @@ module SG::Ext
       end
     end
   end
+end
 end
 
 #
