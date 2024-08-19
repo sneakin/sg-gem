@@ -893,3 +893,17 @@ describe Proc do
     it { expect((~subject).call(false)).to eql(true) }
   end
 end
+
+describe Range do
+  [ [ (0..10), [ 0, 11 ] ],
+    [ (0...10), [ 0, 10 ] ],
+    [ (-5..0), [ -5, 6 ] ],
+    [ (-5...0), [ -5, 5 ] ],
+    [ (0..-5), [ -5, 6 ] ],
+    [ (0...-5), [ -5, 5 ] ],
+  ].each do |(r, idx)|
+    it "#{r} -> #{idx.inspect}" do
+      expect(r.to_array_index).to eql(idx)
+    end
+  end
+end
