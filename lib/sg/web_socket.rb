@@ -304,9 +304,9 @@ EOT
     
     def self.connect host, port = 80, path = '/', ssl: port == 443, ssl_options: nil, ssl_params: nil
       if String === host && host =~ /^[^ ]+:/
-        host = URI.parse(host)
+        host = ::URI.parse(host)
       end
-      if URI === host
+      if ::URI === host
         path = host.path
         path = '/' if path.empty?
         ssl = host.scheme == 'wss'
