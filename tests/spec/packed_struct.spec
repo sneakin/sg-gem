@@ -2,20 +2,20 @@ require 'sg/packed_struct'
 require_relative 'packed_struct/data'
 
 describe SG::PackedStruct do
-  Alpha = PackedStructSpec::Alpha
-  Beta = PackedStructSpec::Beta
+  alpha = PackedStructSpec::Alpha
+  beta = PackedStructSpec::Beta
   
   let(:pack_str) { 'CS<s>lQ<C4a5a10a10a10' }
   let(:values) { [ 1, 2, 3, 4, 5,
                    'heyo'.unpack('C*'),
                    'world',
-                   Beta.new(30, 0x1122334455677788),
-                   [ Beta.new(10, 0x1234), Beta.new(20, 0x4567) ]
+                   beta.new(30, 0x1122334455677788),
+                   [ beta.new(10, 0x1234), beta.new(20, 0x4567) ]
                  ] }
   
   describe '.minsize' do
     it 'returns the minimum bytes for a packed instance' do
-      expect(Alpha.bytesize).to eq(27)
+      expect(alpha.bytesize).to eq(27)
     end
   end
 
@@ -35,7 +35,7 @@ describe SG::PackedStruct do
   end
 
   describe 'without initial values' do
-    subject { Alpha.new }
+    subject { alpha.new }
     
     it 'uses init_value when provided' do
       expect(subject.c).to eq(123)
@@ -47,7 +47,7 @@ describe SG::PackedStruct do
   end
   
   describe 'initialized by array' do
-    subject { Alpha.new(*values) }
+    subject { alpha.new(*values) }
 
     describe '#bytesize' do
       it 'returns the number of bytes for a packed instance' do
@@ -119,7 +119,7 @@ describe SG::PackedStruct do
 
   describe 'field type' do
     # todo way to set default endian
-    Data = {
+    data = {
       int8: [ 0x7b, "\x7b" ],
       int16: [ 0x7b, "\x7b\x00" ],
       int16l: [ 0x7b, "\x7b\x00" ],
@@ -138,11 +138,11 @@ describe SG::PackedStruct do
       float64b: [ 1.23, "?\xF3\xAE\x14z\xE1G\xAE" ],
     }
     # Add unsigned ints
-    Data.
+    data.
       select { |k,v| k.to_s =~ /^int/ }.
-      each { |k, v| Data["u#{k}".to_sym] = v }
+      each { |k, v| data["u#{k}".to_sym] = v }
 
-    Data.each do |type, (value, packed)|
+    data.each do |type, (value, packed)|
       packed.force_encoding('ASCII-8BIT')
       describe "a #{type} of #{value}" do
         let(:klass) do
@@ -167,22 +167,22 @@ describe SG::PackedStruct do
       { a: 1, b: 2, c: 3, d: 4, e: 5,
         f: 'hmm.'.unpack('C*'),
         g: 'world',
-        h: Beta.new(type: 30, value: 0x1122334455667788),
-        i: [ Beta.new(10, 0x1234), Beta.new(20, 0x4567) ]
+        h: beta.new(type: 30, value: 0x1122334455667788),
+        i: [ beta.new(10, 0x1234), beta.new(20, 0x4567) ]
       }
     end
-    let(:alpha) { Alpha.new(values) }
+    let(:inst) { alpha.new(values) }
 
     it 'assigns the attributes' do
-      expect(alpha.a).to eq(values[:a])
-      expect(alpha.b).to eq(values[:b])
-      expect(alpha.c).to eq(values[:c])
-      expect(alpha.d).to eq(values[:d])
-      expect(alpha.e).to eq(values[:e])
-      expect(alpha.f).to eq(values[:f])
-      expect(alpha.g).to eq(values[:g])
-      expect(alpha.h).to eq(values[:h])
-      expect(alpha.i).to eq(values[:i])
+      expect(inst.a).to eq(values[:a])
+      expect(inst.b).to eq(values[:b])
+      expect(inst.c).to eq(values[:c])
+      expect(inst.d).to eq(values[:d])
+      expect(inst.e).to eq(values[:e])
+      expect(inst.f).to eq(values[:f])
+      expect(inst.g).to eq(values[:g])
+      expect(inst.h).to eq(values[:h])
+      expect(inst.i).to eq(values[:i])
     end
   end
 
@@ -190,11 +190,11 @@ describe SG::PackedStruct do
     describe 'with valid data' do
       before(:each) do
         bin = pack_values(values) + 'And more.'
-        @alpha, @leftover = Alpha.unpack(bin)
+        @alpha, @leftover = alpha.unpack(bin)
       end
       
       it 'returns an instance' do
-        expect(@alpha).to be_kind_of(Alpha)
+        expect(@alpha).to be_kind_of(alpha)
       end
 
       it 'returns the left overs' do
@@ -214,7 +214,7 @@ describe SG::PackedStruct do
       end
 
       it 'unpacked the beta field' do
-        expect(@alpha.h).to be_kind_of(Beta)
+        expect(@alpha.h).to be_kind_of(beta)
       end
       
       it 'unpacked the basic array with the right length' do
@@ -237,7 +237,7 @@ describe SG::PackedStruct do
       end
 
       it 'raises an error' do
-        expect { Alpha.unpack(bin) }.
+        expect { alpha.unpack(bin) }.
           to raise_error(SG::PackedStruct::NoDataError)
       end
     end
@@ -247,44 +247,44 @@ describe SG::PackedStruct do
     let(:io) { StringIO.new(pack_values(values) + ' and more') }
     
     it 'returns an instance and remaining data' do
-      expect(Alpha.read(io)).to be_kind_of(Alpha)
+      expect(alpha.read(io)).to be_kind_of(alpha)
     end
 
-    let(:alpha) { Alpha.read(io) }
+    let(:inst) { alpha.read(io) }
     
     it 'assigns the attributes' do
-      expect(alpha.a).to eq(values[0])
-      expect(alpha.b).to eq(values[1])
-      expect(alpha.c).to eq(values[2])
-      expect(alpha.d).to eq(values[3])
-      expect(alpha.e).to eq(values[4])
-      expect(alpha.f).to eq(values[5])
-      expect(alpha.g).to eq(values[6])
-      expect(alpha.h).to eq(values[7])
-      expect(alpha.i).to eq(values[8])
+      expect(inst.a).to eq(values[0])
+      expect(inst.b).to eq(values[1])
+      expect(inst.c).to eq(values[2])
+      expect(inst.d).to eq(values[3])
+      expect(inst.e).to eq(values[4])
+      expect(inst.f).to eq(values[5])
+      expect(inst.g).to eq(values[6])
+      expect(inst.h).to eq(values[7])
+      expect(inst.i).to eq(values[8])
     end
 
     it 'leaves the stream in position' do
-      expect(alpha && io.read).to eq(' and more')
+      expect(inst && io.read).to eq(' and more')
     end
   end
 
   describe 'a statically sized struct' do
-    let(:beta) do
-      Beta.new(type: 123,
+    let(:inst) do
+      beta.new(type: 123,
                value: 789)
     end
 
     describe '.unpack' do
       it 'works' do
-        expect(Beta.unpack(beta.pack)).to eq([beta,''])
+        expect(beta.unpack(inst.pack)).to eq([inst,''])
       end
     end
 
     describe '.read' do
       it 'works' do
-        io = StringIO.new(beta.pack)
-        expect(Beta.read(io)).to eq(beta)
+        io = StringIO.new(inst.pack)
+        expect(beta.read(io)).to eq(inst)
       end
     end
   end
@@ -307,7 +307,7 @@ describe SG::PackedStruct do
 
   describe 'subclassing w/o :super' do
     let(:subclass) do
-      c = Class.new(Beta) do
+      c = Class.new(beta) do
         define_packing([:desc, :stringz],
                        [:ranking, :float32])
       end
@@ -319,8 +319,8 @@ describe SG::PackedStruct do
       subject { subclass }
       
       it 'has a subclassed Packer class' do
-        expect(subject.packer_class).to_not eq(Beta.packer_class)
-        expect(subject.packer_class).to be_kind_of(Beta.packer_class.class)
+        expect(subject.packer_class).to_not eq(beta.packer_class)
+        expect(subject.packer_class).to be_kind_of(beta.packer_class.class)
       end
       
       it 'has the parent attributes' do

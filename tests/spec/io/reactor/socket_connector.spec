@@ -3,10 +3,10 @@ require 'sg/io/reactor'
 describe SG::IO::Reactor::SocketConnector do
   using SG::Ext
   
-  Port = 2000 + rand(1000)
+  port = 2000 + rand(1000)
   
   subject do
-    described_class.new(host: 'localhost', port: Port) do |io|
+    described_class.new(host: 'localhost', port: port) do |io|
       @connected_to = io
     end.but(Errno::ECONNREFUSED) do |ex|
       @connected_to = ex
@@ -17,7 +17,7 @@ describe SG::IO::Reactor::SocketConnector do
   
   describe 'connection happens' do
     let(:reactor) { SG::IO::Reactor.new }
-    let(:server) { TCPServer.new(Port).tap { |s| s.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, 1); s.listen(1) } }
+    let(:server) { TCPServer.new(port).tap { |s| s.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, 1); s.listen(1) } }
     let(:clients) { [] }
     
     before do
@@ -67,7 +67,7 @@ describe SG::IO::Reactor::SocketConnector do
 
     describe 'without the error callback' do
       subject do
-        described_class.new(host: 'localhost', port: Port) do |io|
+        described_class.new(host: 'localhost', port: port) do |io|
           @connected_to = io
         end
 

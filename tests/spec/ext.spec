@@ -508,7 +508,7 @@ EOT
   end
   
   describe 'plural words' do
-    Examples = {
+    examples = {
       'foot' => 'feet',
       'day' => 'days',
       'fey' => 'feys',
@@ -534,7 +534,7 @@ EOT
       'address' => 'addresses',
       'dress' => 'dresses'
     }
-    Examples.each do |input, output|
+    examples.each do |input, output|
       it "\#pluralize converts #{input.inspect} to #{output.inspect}" do
         expect(input.pluralize).to eql(output)
       end
@@ -551,13 +551,13 @@ EOT
   end
   
   describe '#titleize' do
-    Examples = {
+    examples = {
       'hello world' => 'Hello World',
       'hello-world' => 'Hello-World',
       'hello_world' => 'Hello_World',
       'hello World' => 'Hello World',
     }
-    Examples.each do |input, output|
+    examples.each do |input, output|
       it "converts #{input.inspect} to #{output.inspect}" do
         expect(input.titleize).to eql(output)
       end
@@ -565,7 +565,7 @@ EOT
   end
   
   describe '#camelize' do
-    Examples =
+    examples =
       Hash[ [ ' ', '-', '_' ].permutation(1).collect { |p|
               [ %w{ hello world }.zip(p).join, 'HelloWorld' ]
             } +
@@ -578,7 +578,7 @@ EOT
             ]
           ]
     
-    Examples.each do |input, output|
+    examples.each do |input, output|
       it "converts #{input.inspect} to #{output.inspect}" do
         expect(input.camelize).to eql(output)
       end
@@ -586,7 +586,7 @@ EOT
   end
 
   describe '#decamelize' do
-    Examples =
+    examples =
       Hash[ [
              [ 'HelloWorld', 'hello world' ],
              [ 'hello-world', 'hello world' ],
@@ -594,7 +594,7 @@ EOT
              ]
           ]
     
-    Examples.each do |input, output|
+    examples.each do |input, output|
       it "converts #{input.inspect} to #{output.inspect}" do
         expect(input.decamelize).to eql(output)
       end
@@ -602,7 +602,7 @@ EOT
   end
 
   describe '#hyphenate' do
-    Examples =
+    examples =
       Hash[ [
              [ 'HelloWorld', 'hello-world' ],
              [ 'hello-world', 'hello-world' ],
@@ -610,7 +610,7 @@ EOT
              ]
           ]
     
-    Examples.each do |input, output|
+    examples.each do |input, output|
       it "converts #{input.inspect} to #{output.inspect}" do
         expect(input.hyphenate).to eql(output)
       end
@@ -618,7 +618,7 @@ EOT
   end
 
   describe '#underscore' do
-    Examples =
+    examples =
       Hash[ [
              [ 'HelloWorld', 'hello_world' ],
              [ 'hello-world', 'hello_world' ],
@@ -626,7 +626,7 @@ EOT
              ]
           ]
     
-    Examples.each do |input, output|
+    examples.each do |input, output|
       it "converts #{input.inspect} to #{output.inspect}" do
         expect(input.underscore).to eql(output)
       end
