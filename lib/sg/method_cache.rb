@@ -48,5 +48,10 @@ module SG
         @obj.send(mid, *args, &block)
       end
     end
+
+    def invalidate_cache mid, *args
+      @cache[mid].delete(args + [ nil ])
+      self
+    end
   end
 end

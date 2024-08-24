@@ -74,7 +74,54 @@ describe TrueClass do
   end
 end
 
+shared_examples 'delegated x, y, z' do |klass|
+  let(:alpha) { double('alpha') }
+  let(:beta) { double('beta') }
+  subject { klass.new(alpha, beta) }
+  context 'alpha delegates' do
+    it do
+      expect(alpha).to receive(:x).and_return(123)
+      expect(subject.x).to eql(123)
+    end
+
+    it do
+      expect(alpha).to receive(:x).with(1, 2, 3, boo: :who).and_return(123)
+      expect(subject.x(1, 2, 3, boo: :who)).to eql(123)
+    end
+  end
+
+  context 'beta delegates' do
+    [ :y, :z ].each do |msg|
+      it do
+        expect(beta).to receive(msg).and_return(123)
+        expect(subject.send(msg)).to eql(123)
+      end
+
+      it do
+        expect(beta).to receive(msg).with(1, 2, 3, boo: :who).and_return(123)
+        expect(subject.send(msg, 1, 2, 3, boo: :who)).to eql(123)
+      end
+    end
+  end
+end
+
 describe Object do
+  describe '.delegate' do
+    klass = Class.new do
+      delegate :x, to: :alpha
+      delegate :y, :z, to: :beta
+
+      attr_accessor :alpha, :beta
+
+      def initialize a, b
+        @alpha = a
+        @beta = b
+      end
+    end
+
+    it_should_behave_like 'delegated x, y, z', klass
+  end
+  
   describe '.inheritable_attr' do
     let(:klass) do
       Class.new do
@@ -92,9 +139,158 @@ describe Object do
   describe '#false?' do
     it { expect(subject.false?).to be(false) }
   end
+
+
+  describe '#skip_unless' do
+    subject { 'hey' }
+
+    it { expect(subject.skip_unless(true).upcase).to eql('HEY') }
+    it { expect(subject.skip_unless(false).upcase).to eql(subject) }
+
+    it { expect(subject.skip_unless { true }.upcase).to eql('HEY') }
+    it { expect(subject.skip_unless { false }.upcase).to eql(subject) }
+
+    it { expect(subject.skip_unless(true) { true }.upcase).to eql('HEY') }
+    it { expect(subject.skip_unless(false) { true }.upcase).to eql(subject) }
+    it { expect(subject.skip_unless(true) { false }.upcase).to eql(subject) }
+    it { expect(subject.skip_unless(false) { false }.upcase).to eql(subject) }
+
+    context 'doubled up' do
+      it { expect(subject.skip_unless(true).skip_unless(true).upcase).to eql('HEY') }
+      it { expect(subject.skip_unless(true).skip_unless(false).upcase).to eql(subject) }
+      it { expect(subject.skip_unless(false).skip_unless(true).upcase).to eql('HEY') }
+      it { expect(subject.skip_unless(false).skip_unless(false).upcase).to eql(subject) }
+    end
+
+    context 'tripled up' do
+      let(:results) do
+        { true => {
+            true => {true => 'HEY', false => 'hey' },
+            false => {true => 'HEY', false => 'hey'}
+          },
+          false => {
+            true => {true => 'HEY', false => 'hey'},
+            false => {true => 'hey', false => 'hey'}
+          }
+        }
+      end
+      
+      [ true, false ].repeated_permutation(3) do |(a, b, c)|
+        it "for #{a}, #{b}, #{c}" do
+          expect(subject.
+                 skip_unless(a).
+                 skip_unless(b).
+                 skip_unless(c). upcase).to eql(results.dig(a, b, c))
+        end
+      end
+    end
+  end
+
+  describe '#skip_when' do
+    subject { 'hey' }
+
+    it { expect(subject.skip_when(true).upcase).to eql(subject) }
+    it { expect(subject.skip_when(false).upcase).to eql('HEY') }
+
+    it { expect(subject.skip_when { true }.upcase).to eql(subject) }
+    it { expect(subject.skip_when { false }.upcase).to eql('HEY') }
+
+    it { expect(subject.skip_when(true) { true }.upcase).to eql(subject) }
+    it { expect(subject.skip_when(false) { false }.upcase).to eql('HEY') }
+    it { expect(subject.skip_when(false) { true }.upcase).to eql('HEY') }
+    it { expect(subject.skip_when(true) { false }.upcase).to eql('HEY') }
+    
+    context 'doubled up' do
+      it { expect(subject.skip_when(true).skip_when(true).upcase).to eql(subject) }
+      it { expect(subject.skip_when(true).skip_when(false).upcase).to eql('HEY') }
+      it { expect(subject.skip_when(false).skip_when(true).upcase).to eql(subject) }
+      it { expect(subject.skip_when(false).skip_when(false).upcase).to eql('HEY') }
+    end
+
+    context 'tripled up' do
+      let(:results) do
+        { true => {
+            true => {true => 'hey', false => 'hey' },
+            false => {true => 'hey', false => 'HEY'}
+          },
+          false => {
+            true => {true => 'hey', false => 'HEY'},
+            false => {true => 'hey', false => 'HEY'}
+          }
+        }
+      end
+      
+      [ true, false ].repeated_permutation(3) do |(a, b, c)|
+        it "for #{a}, #{b}, #{c}" do
+          expect(subject.
+                 skip_when(a).
+                 skip_when(b).
+                 skip_when(c).upcase).to eql(results.dig(a, b, c))
+        end
+      end
+
+      [ true, false ].repeated_permutation(3) do |(a, b, c)|
+        it "for #{a}, #{b}, #{c}" do
+          expect(subject.
+                 skip_when { a }.
+                 skip_when { b }.
+                 skip_when { c }.upcase).to eql(results.dig(a, b, c))
+        end
+      end
+    end
+  end
+
+  describe '#pick' do
+    context 'array' do
+      subject { [ 2, 3, 4 ] }
+      it { expect(subject.pick(1)).to eql([3]) }
+      it { expect(subject.pick(0,2)).to eql([2, 4]) }
+      it { expect(subject.pick(10)).to eql([nil]) }
+    end
+
+    context 'hash' do
+      subject { { a: 2, b: 3, c: 4 } }
+      it { expect(subject.pick(:b)).to eql([3]) }
+      it { expect(subject.pick(:a, :c)).to eql([2, 4]) }
+    end
+  end
+
+  describe '#pick_attrs' do
+    context 'array' do
+      subject { [ 2, 3, 4 ] }
+      it { expect(subject.pick_attrs(:first)).to eql([2]) }
+      it { expect(subject.pick_attrs(:first, :size)).to eql([2, 3]) }
+      it { expect { subject.pick_attrs(:boom) }.to raise_error(NoMethodError) }
+    end
+
+    context 'hash' do
+      subject { { a: 2, b: 3, c: 4 } }
+      it { expect(subject.pick_attrs(:keys, :values)).to eql([[:a, :b, :c], [2, 3, 4]]) }
+      it { expect{ subject.pick_attrs(:a, :c) }.to raise_error(NoMethodError) }
+    end
+  end
 end
 
 describe Module do
+  describe '.delegate' do
+    mod = Module.new do
+      delegate :x, to: :alpha
+      delegate :y, :z, to: :beta
+
+      attr_accessor :alpha, :beta
+
+      def initialize a, b
+        @alpha = a
+        @beta = b
+      end
+    end
+    klass = Class.new do
+      include mod
+    end
+
+    it_should_behave_like 'delegated x, y, z', klass
+  end
+
   describe '.mattr_accessor' do
     let(:mod) do
       Module.new do
@@ -154,40 +350,91 @@ describe Array do
       end
     end
 
+    describe 'two items' do
+      context 'strings' do
+        subject { [ 'foo', 'bar' ] }
+        it 'calls the block for every variast of every item' do
+          expect do |b|
+            subject.permutate_with([ :upcase, :downcase,
+                                     lambda { |s| s.capitalize }
+                                   ], &b)
+          end.to yield_successive_args(["FOO", "BAR"],
+                                       ["FOO", "bar"],
+                                       ["FOO", "Bar"],
+                                       ["foo", "BAR"],
+                                       ["foo", "bar"],
+                                       ["foo", "Bar"],
+                                       ["Foo", "BAR"],
+                                       ["Foo", "bar"],
+                                       ["Foo", "Bar"])
+        end
+      end
+      
+      context 'bools' do
+        subject { [ true, true ] }
+        it 'calls the block for every variast of every item' do
+          expect do |b|
+            subject.permutate_with([ :identity, :! ], &b)
+          end.to yield_successive_args([true, true],
+                                        [true, false],
+                                        [false, true],
+                                        [false, false])
+        end
+      end
+    end
+    
     describe 'many items' do
-      subject { [ 'hello', 'world', 'foo' ] }
-      it 'calls the block for every variast of every item' do
-        expect do |b|
-          subject.permutate_with([ :upcase, :downcase,
-                                   lambda { |s| s.capitalize }
-                                 ], &b)
-        end.to yield_successive_args(["HELLO", "WORLD", "FOO"],
-                                     ["HELLO", "WORLD", "foo"],
-                                     ["HELLO", "WORLD", "Foo"],
-                                     ["HELLO", "world", "FOO"],
-                                     ["HELLO", "world", "foo"],
-                                     ["HELLO", "world", "Foo"],
-                                     ["HELLO", "World", "FOO"],
-                                     ["HELLO", "World", "foo"],
-                                     ["HELLO", "World", "Foo"],
-                                     ["hello", "WORLD", "FOO"],
-                                     ["hello", "WORLD", "foo"],
-                                     ["hello", "WORLD", "Foo"],
-                                     ["hello", "world", "FOO"],
-                                     ["hello", "world", "foo"],
-                                     ["hello", "world", "Foo"],
-                                     ["hello", "World", "FOO"],
-                                     ["hello", "World", "foo"],
-                                     ["hello", "World", "Foo"],
-                                     ["Hello", "WORLD", "FOO"],
-                                     ["Hello", "WORLD", "foo"],
-                                     ["Hello", "WORLD", "Foo"],
-                                     ["Hello", "world", "FOO"],
-                                     ["Hello", "world", "foo"],
-                                     ["Hello", "world", "Foo"],
-                                     ["Hello", "World", "FOO"],
-                                     ["Hello", "World", "foo"],
-                                     ["Hello", "World", "Foo"])
+      context 'bools' do
+        subject { [ true, true, true ] }
+        it 'calls the block for every variast of every item' do
+          expect do |b|
+            subject.permutate_with([ :identity, :! ], &b)
+          end.to yield_successive_args([true, true, true],
+                                       [true, true, false],
+                                       [true, false, true],
+                                       [true, false, false],
+                                       [false, true, true],
+                                       [false, true, false],
+                                       [false, false, true],
+                                       [false, false, false])
+        end
+      end
+
+      context 'equal number variants' do
+        subject { [ 'hello', 'world', 'foo' ] }
+        it 'calls the block for every variast of every item' do
+          expect do |b|
+            subject.permutate_with([ :upcase, :downcase,
+                                     lambda { |s| s.capitalize }
+                                   ], &b)
+          end.to yield_successive_args(["HELLO", "WORLD", "FOO"],
+                                       ["HELLO", "WORLD", "foo"],
+                                       ["HELLO", "WORLD", "Foo"],
+                                       ["HELLO", "world", "FOO"],
+                                       ["HELLO", "world", "foo"],
+                                       ["HELLO", "world", "Foo"],
+                                       ["HELLO", "World", "FOO"],
+                                       ["HELLO", "World", "foo"],
+                                       ["HELLO", "World", "Foo"],
+                                       ["hello", "WORLD", "FOO"],
+                                       ["hello", "WORLD", "foo"],
+                                       ["hello", "WORLD", "Foo"],
+                                       ["hello", "world", "FOO"],
+                                       ["hello", "world", "foo"],
+                                       ["hello", "world", "Foo"],
+                                       ["hello", "World", "FOO"],
+                                       ["hello", "World", "foo"],
+                                       ["hello", "World", "Foo"],
+                                       ["Hello", "WORLD", "FOO"],
+                                       ["Hello", "WORLD", "foo"],
+                                       ["Hello", "WORLD", "Foo"],
+                                       ["Hello", "world", "FOO"],
+                                       ["Hello", "world", "foo"],
+                                       ["Hello", "world", "Foo"],
+                                       ["Hello", "World", "FOO"],
+                                       ["Hello", "World", "foo"],
+                                       ["Hello", "World", "Foo"])
+        end
       end
       
       describe 'with no block' do
@@ -260,8 +507,8 @@ EOT
     end
   end
   
-  describe '#pluralize' do
-    Examples = {
+  describe 'plural words' do
+    examples = {
       'foot' => 'feet',
       'day' => 'days',
       'fey' => 'feys',
@@ -282,23 +529,35 @@ EOT
       'peep' => 'peeps',
       'potato' => 'potatoes',
       'taco' => 'tacos',
-      'echo' => 'echoes'
+      'echo' => 'echoes',
+      'choose' => 'chooses',
+      'address' => 'addresses',
+      'dress' => 'dresses'
     }
-    Examples.each do |input, output|
-      it "converts #{input.inspect} to #{output.inspect}" do
+    examples.each do |input, output|
+      it "\#pluralize converts #{input.inspect} to #{output.inspect}" do
         expect(input.pluralize).to eql(output)
+      end
+      it "\#pluralize converts #{output.inspect} to #{output.inspect}" do
+        expect(output.pluralize).to eql(output)
+      end
+      it "\#singularize converts #{output.inspect} to #{input.inspect}" do
+        expect(output.singularize).to eql(input)
+      end
+      it "\#singularize converts #{input.inspect} to #{input.inspect}" do
+        expect(input.singularize).to eql(input)
       end
     end
   end
   
   describe '#titleize' do
-    Examples = {
+    examples = {
       'hello world' => 'Hello World',
       'hello-world' => 'Hello-World',
       'hello_world' => 'Hello_World',
       'hello World' => 'Hello World',
     }
-    Examples.each do |input, output|
+    examples.each do |input, output|
       it "converts #{input.inspect} to #{output.inspect}" do
         expect(input.titleize).to eql(output)
       end
@@ -306,7 +565,7 @@ EOT
   end
   
   describe '#camelize' do
-    Examples =
+    examples =
       Hash[ [ ' ', '-', '_' ].permutation(1).collect { |p|
               [ %w{ hello world }.zip(p).join, 'HelloWorld' ]
             } +
@@ -319,7 +578,7 @@ EOT
             ]
           ]
     
-    Examples.each do |input, output|
+    examples.each do |input, output|
       it "converts #{input.inspect} to #{output.inspect}" do
         expect(input.camelize).to eql(output)
       end
@@ -327,7 +586,7 @@ EOT
   end
 
   describe '#decamelize' do
-    Examples =
+    examples =
       Hash[ [
              [ 'HelloWorld', 'hello world' ],
              [ 'hello-world', 'hello world' ],
@@ -335,7 +594,7 @@ EOT
              ]
           ]
     
-    Examples.each do |input, output|
+    examples.each do |input, output|
       it "converts #{input.inspect} to #{output.inspect}" do
         expect(input.decamelize).to eql(output)
       end
@@ -343,7 +602,7 @@ EOT
   end
 
   describe '#hyphenate' do
-    Examples =
+    examples =
       Hash[ [
              [ 'HelloWorld', 'hello-world' ],
              [ 'hello-world', 'hello-world' ],
@@ -351,7 +610,7 @@ EOT
              ]
           ]
     
-    Examples.each do |input, output|
+    examples.each do |input, output|
       it "converts #{input.inspect} to #{output.inspect}" do
         expect(input.hyphenate).to eql(output)
       end
@@ -359,7 +618,7 @@ EOT
   end
 
   describe '#underscore' do
-    Examples =
+    examples =
       Hash[ [
              [ 'HelloWorld', 'hello_world' ],
              [ 'hello-world', 'hello_world' ],
@@ -367,7 +626,7 @@ EOT
              ]
           ]
     
-    Examples.each do |input, output|
+    examples.each do |input, output|
       it "converts #{input.inspect} to #{output.inspect}" do
         expect(input.underscore).to eql(output)
       end
@@ -389,7 +648,9 @@ EOT
 
   describe '#to_proc' do
     subject { 'Int: %i Float: %.1f'.to_proc }
+
     it { expect(subject).to be_kind_of(Proc) }
+
     it 'formats the arguments' do
       expect(subject.(123, 456)).to eql('Int: 123 Float: 456.0')
     end
@@ -400,6 +661,260 @@ EOT
     
     it 'works over enumerables' do
       expect([ [ 1, 2 ], [ 3, 4 ] ].collect(&'%i %.1f')).to eql([ '1 2.0', '3 4.0' ])
+    end
+  end
+
+  describe '#cycled' do
+    it { expect('foo'.cycled(10)).to eql('foofoofoof') }
+    it { expect('foo'.cycled(0.5)).to eql('f') }
+    it { expect('foo'.cycled(3)).to eql('foo') }
+    it { expect('foo'.cycled(4)).to eql('foof') }
+    it { expect(''.cycled(4)).to eql('') }
+  end
+  
+  describe '#cycle_visually' do
+    it { expect("\e[31;43mfoo".cycle_visually(10)).to eql("\e[31;43mfoo\e[31;43mfoo\e[31;43mfoo\e[31;43mf\e[0m") }
+    it { expect("\e[31;43mfoo".cycle_visually(1.5)).to eql("\e[31;43mfo\e[0m") }
+    it { expect("\e[31;43mfoo".cycle_visually(0.75)).to eql("\e[31;43mf\e[0m") }
+    it { expect("\e[31;43mfoo".cycle_visually(0.45)).to eql("\e[31;43mf\e[0m") }
+    it { expect("\e[31;43mfoo".cycle_visually(3)).to eql("\e[31;43mfoo\e[0m") }
+    it { expect("\e[31;43mfoo".cycle_visually(4)).to eql("\e[31;43mfoo\e[31;43mf\e[0m") }
+    it { expect("".cycle_visually(4)).to eql("") }
+  end
+  
+  describe '#truncate' do
+    [ [ '', 5, '', 0 ],
+      [ "hello", 10, "hello", 5 ],
+      [ "hello", 2, "he" ],
+      [ "hello", 5, "hello" ],
+      [ "\e[31;1mhello\e[0m", 10, "\e[31;1mhello\e[0m", 5 ],
+      [ "\e[31;1mhello\e[0m", 2, "\e[31;1mhe\e[0m" ],
+      [ "\e[31;1mhello\e[0m", 5, "\e[31;1mhello\e[0m" ],
+      [ "\e[31mh\e[0mello", 2, "\e[31mh\e[0me" ],
+      [ "\e[31;0mhello", 2, "\e[31;0mhe" ],
+      [ "\e[31mh\e[1;0mello", 2, "\e[31mh\e[1;0me" ],
+      [ "\e[31mh\e[1;0000mello", 2, "\e[31mh\e[1;0000me" ],
+    ].each do |(input, isize, output, osize)|
+      it "truncates #{input.inspect} as #{output.inspect}" do
+        expect(input.truncate(isize)).to eql(output)
+      end
+      it "limits to the printable screen size" do
+        expect(input.truncate(isize).screen_size).to eql(osize || isize)
+      end
+    end
+  end
+
+  describe '#center_visually' do
+    [ [ '', 5, '     ' ],
+      [ "hello", 10, "  hello   " ],
+      [ "hello", 2, "hello", 5 ],
+      [ "hello", 5, "hello" ],
+      [ "\e[31;1mhello\e[0m", 10, "  \e[31;1mhello\e[0m   " ],
+      [ "\e[31;1mhello\e[0m", 2, "\e[31;1mhello\e[0m", 5 ],
+      [ "\e[31;1mhello\e[0m", 5, "\e[31;1mhello\e[0m" ],
+    ].each do |(input, isize, output, osize)|
+      context "#{input.inspect} at #{isize}" do
+        subject { input.center_visually(isize) }
+        
+        it "centers as #{output.inspect}" do
+          expect(subject).to eql(output)
+        end
+        it "limits to the printable screen size" do
+          expect(subject.screen_size).to eql(osize || isize)
+        end
+      end
+    end
+
+    it { expect(''.center_visually(10, 'xy')).to eql('xyxyxyxyxy') }
+    it { expect('hello'.center_visually(10, 'xy')).to eql('xyhelloyxy') }
+    it { expect('hello'.center_visually(10, 'x')).to eql('xxhelloxxx') }
+    it { expect('hello'.center_visually(10, 'xyz')).to eql('xyhelloyzx') }
+  end
+
+  describe '#ljust_visually' do
+    [ [ '', 5, '     ' ],
+      [ "hello", 10, "hello     " ],
+      [ "hello", 2, "hello", 5 ],
+      [ "hello", 5, "hello" ],
+      [ "\e[31;1mhello\e[0m", 10, "\e[31;1mhello\e[0m     " ],
+      [ "\e[31;1mhello\e[0m", 2, "\e[31;1mhello\e[0m", 5 ],
+      [ "\e[31;1mhello\e[0m", 5, "\e[31;1mhello\e[0m" ],
+    ].each do |(input, isize, output, osize)|
+      context "#{input.inspect} at #{isize}" do
+        subject { input.ljust_visually(isize) }
+        
+        it "pads as #{output.inspect}" do
+          expect(subject).to eql(output)
+        end
+        it "limits to the printable screen size" do
+          expect(subject.screen_size).to eql(osize || isize)
+        end
+      end
+    end
+
+    it { expect(''.ljust_visually(10, 'xy')).to eql('xyxyxyxyxy') }
+    it { expect('hello'.ljust_visually(10, 'xy')).to eql('helloyxyxy') }
+    it { expect('hello'.ljust_visually(10, 'x')).to eql('helloxxxxx') }
+    it { expect('hello'.ljust_visually(10, 'xyz')).to eql('hellozxyzx') }
+  end
+
+  describe '#rjust_visually' do
+    [ [ '', 5, '     ' ],
+      [ "hello", 10, "     hello" ],
+      [ "hello", 2, "hello", 5 ],
+      [ "hello", 5, "hello" ],
+      [ "\e[31;1mhello\e[0m", 10, "     \e[31;1mhello\e[0m" ],
+      [ "\e[31;1mhello\e[0m", 2, "\e[31;1mhello\e[0m", 5 ],
+      [ "\e[31;1mhello\e[0m", 5, "\e[31;1mhello\e[0m" ],
+    ].each do |(input, isize, output, osize)|
+      context "#{input.inspect} at #{isize}" do
+        subject { input.rjust_visually(isize) }
+        
+        it "pads as #{output.inspect}" do
+          expect(input.rjust_visually(isize)).to eql(output)
+        end
+        it "limits to the printable screen size" do
+          expect(input.rjust_visually(isize).screen_size).to eql(osize || isize)
+        end
+      end
+    end
+
+    it { expect(''.rjust_visually(10, 'xy')).to eql('xyxyxyxyxy') }
+    it { expect('hello'.rjust_visually(10, 'xy')).to eql('xyxyxhello') }
+    it { expect('hello'.rjust_visually(10, 'x')).to eql('xxxxxhello') }
+    it { expect('hello'.rjust_visually(10, 'xyz')).to eql('xyzxyhello') }
+  end
+end
+
+describe Enumerable do
+  describe '#pluck' do
+    context 'arrays' do
+      subject { 9.times.each_slice(3).to_a }
+      it { expect(subject.pluck(0)).to eql([[0],[3],[6]]) }
+      it { expect(subject.pluck(0, 2)).to eql([[0,2],[3,5],[6,8]]) }
+      it { expect(subject.pluck(0, 2, 10)).to eql([[0,2,nil],[3,5,nil],[6,8,nil]]) }
+      it { expect(subject.pluck()).to eql([[],[],[]]) }
+    end
+    context 'hashes' do
+      subject { [ { a: 1, b: 2, c: 3 },
+                  { a: 3, b: 4, c: 5 }
+                ] }
+      it { expect(subject.pluck(:b)).to eql([[2],[4]]) }
+      it { expect(subject.pluck(:a, :c)).to eql([[1,3],[3,5]]) }
+      it { expect(subject.pluck(:a, :c, :d)).to eql([[1,3,nil],[3,5,nil]]) }
+      it { expect(subject.pluck()).to eql([[],[]]) }
+    end
+  end
+  
+  describe '#pluck_attrs' do
+    context 'structs' do
+      let(:struct) { Struct.new(:a, :b, :c) }
+      subject { [ struct.new(1, 2, 3),
+                  struct.new(3, 4, 5)
+                ] }
+      it { expect(subject.pluck_attrs(:b)).to eql([[2],[4]]) }
+      it { expect(subject.pluck_attrs(:a, :c)).to eql([[1,3],[3,5]]) }
+      it { expect(subject.pluck_attrs()).to eql([[],[]]) }
+    end
+  end
+
+  describe '#aggregate' do
+    context 'two zipped ranges' do
+      subject { (0..5).each.zip(10..15) }
+      it { expect(subject.aggregate([0, 0], &:+)).to eql([15, 75]) }
+      it do
+        expect(subject.aggregate([[], []], &:<<)).
+        to eql([[0,1,2,3,4,5],
+                [10,11,12,13,14,15]])
+      end
+    end
+  end
+
+  describe '#nth' do
+    subject { 5.times.each }
+    5.times do |n|
+      it { expect(subject.nth(n)).to be(subject.drop(n).first) }
+      it { expect(subject.nth(n, 2)).to eql(subject.drop(n).first(2)) }
+    end
+  end
+
+  describe '#second' do
+    subject { 5.times.each }
+    it { expect(subject.second).to eql(1) }
+    it { expect(subject.second(1)).to eql([1]) }
+    it { expect(subject.second(2)).to eql([1, 2]) }
+  end
+
+  describe '#third' do
+    subject { 5.times.each }
+    it { expect(subject.third).to eql(2) }
+    it { expect(subject.third(1)).to eql([2]) }
+    it { expect(subject.third(2)).to eql([2, 3]) }
+  end
+
+  describe '#fourth' do
+    subject { 5.times.each }
+    it { expect(subject.fourth).to eql(3) }
+    it { expect(subject.fourth(1)).to eql([3]) }
+    it { expect(subject.fourth(2)).to eql([3,4]) }
+  end
+
+  describe '#skip_unless' do
+    subject { 10.times.each }
+    let(:evens) { subject.select(&:even?) }
+    
+    it { expect(subject.skip_unless(true).select(&:even?)).to eql(evens) }
+    it { expect(subject.skip_unless(false).select(&:even?)).to eql(subject) }
+
+    it { expect(subject.skip_unless { |x| x.size == 10 }.select(&:even?)).to eql(evens) }
+    it { expect(subject.skip_unless { |x| x.size < 10 }.select(&:even?)).to eql(subject) }
+
+    it { expect(subject.skip_unless(true) { |x| x.size == 10 }.select(&:even?)).to eql(evens) }
+    it { expect(subject.skip_unless(false) { |x| x.size == 10 }.select(&:even?)).to eql(subject) }
+  end
+
+  describe '#skip_when' do
+    subject { 10.times.each }
+    let(:evens) { subject.select(&:even?) }
+    
+    it { expect(subject.skip_when(false).select(&:even?)).to eql(evens) }
+    it { expect(subject.skip_when(true).select(&:even?)).to eql(subject) }
+
+    it { expect(subject.skip_when { |x| x.size < 10 }.select(&:even?)).to eql(evens) }
+    it { expect(subject.skip_when { |x| x.size == 10 }.select(&:even?)).to eql(subject) }
+
+    it { expect(subject.skip_when(false) { |x| x.size < 10 }.select(&:even?)).to eql(evens) }
+    it { expect(subject.skip_when(true) { |x| x.size < 10 }.select(&:even?)).to eql(evens) }
+    it { expect(subject.skip_when(true) { |x| x.size <= 10 }.select(&:even?)).to eql(subject) }
+    it { expect(subject.skip_when(true) { |x| x.equal?(subject) }.select(&:even?)).to eql(subject) }
+  end
+  
+end
+
+describe Proc do
+  describe '#not' do
+    subject { lambda { |a| a } }
+    it { expect(subject.not.call(true)).to eql(false) }
+    it { expect(subject.not.call(false)).to eql(true) }
+  end
+
+  describe '#~' do
+    subject { lambda { |a| a } }
+    it { expect((~subject).call(true)).to eql(false) }
+    it { expect((~subject).call(false)).to eql(true) }
+  end
+end
+
+describe Range do
+  [ [ (0..10), [ 0, 11 ] ],
+    [ (0...10), [ 0, 10 ] ],
+    [ (-5..0), [ -5, 6 ] ],
+    [ (-5...0), [ -5, 5 ] ],
+    [ (0..-5), [ -5, 6 ] ],
+    [ (0...-5), [ -5, 5 ] ],
+  ].each do |(r, idx)|
+    it "#{r} -> #{idx.inspect}" do
+      expect(r.to_array_index).to eql(idx)
     end
   end
 end

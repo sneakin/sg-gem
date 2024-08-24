@@ -1,5 +1,15 @@
 module SG::Ext
   refine ::Module do
+    def delegate(*methods, to:)
+      methods.each do |m|
+        module_eval <<-EOT
+def #{m}(...)
+  #{to}.#{m}(...)
+end
+EOT
+      end
+    end
+
     def mattr_accessor *attrs
       attrs.each do |attr|
         module_eval <<-EOT

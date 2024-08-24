@@ -52,5 +52,11 @@ module SG::Ext
       return self unless cb
       SG::RescuedProc.new(self, *exes, &cb)
     end
+
+    def not
+      lambda { |*a, **o, &b| !self.call(*a, **o, &b) }
+    end
+
+    alias ~ not
   end
 end

@@ -5,8 +5,8 @@ require 'timeout'
 # todo defense against IO errors
 
 describe SG::IO::Reactor do
-  TimeOut = 2
-  Port = 4112
+  time_out = 2
+  port = 4112
     
   describe 'with inputs' do
     let(:pipe) { IO.pipe }
@@ -22,13 +22,13 @@ describe SG::IO::Reactor do
     describe '#process', slow: true do
       it "times out" do
         start = Time.now
-        expect(subject.process(timeout: TimeOut)).to be(subject)
+        expect(subject.process(timeout: time_out)).to be(subject)
         ending = Time.now
-        expect(ending - start).to be >= TimeOut
+        expect(ending - start).to be >= time_out
       end
       
       it "does not call the input's callback" do
-        expect { subject.process(timeout: TimeOut) }.to_not change { @has_input }
+        expect { subject.process(timeout: time_out) }.to_not change { @has_input }
       end
       
       describe 'after writing to the output' do
@@ -37,7 +37,7 @@ describe SG::IO::Reactor do
         end
         
         it "calls the input's block" do
-          expect { subject.process(timeout: TimeOut) }.to change { @has_input }
+          expect { subject.process(timeout: time_out) }.to change { @has_input }
         end
       end
     end
@@ -68,7 +68,7 @@ describe SG::IO::Reactor do
     
     describe '#process', slow: true do
       it "calls the output's callback" do
-        expect { subject.process(timeout: TimeOut) }.to change { @can_output }
+        expect { subject.process(timeout: time_out) }.to change { @can_output }
       end
       
       describe 'after filling the output' do
@@ -83,14 +83,14 @@ describe SG::IO::Reactor do
         end
         
         it "does not call the output's callback" do
-          expect { subject.process(timeout: TimeOut) }.to_not change { @can_output }
+          expect { subject.process(timeout: time_out) }.to_not change { @can_output }
         end
       
         it "times out" do
           start = Time.now
-          expect(subject.process(timeout: TimeOut)).to be(subject)
+          expect(subject.process(timeout: time_out)).to be(subject)
           ending = Time.now
-          expect(ending - start).to be >= TimeOut
+          expect(ending - start).to be >= time_out
         end
       end
     end
@@ -137,9 +137,9 @@ describe SG::IO::Reactor do
   end
 
   describe 'with OOB on a TCP socket' do  
-    let(:server) { TCPServer.new(Port).tap { |s| s.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, 1); s.listen(1) } }
+    let(:server) { TCPServer.new(port).tap { |s| s.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, 1); s.listen(1) } }
     let(:worker) { server.accept }
-    let(:client) { TCPSocket.new('localhost', Port) }
+    let(:client) { TCPSocket.new('localhost', port) }
     
     let(:needs_processing) { true }
         
@@ -160,14 +160,14 @@ describe SG::IO::Reactor do
     
     describe '#process' do
       it "does not call the error callback" do
-        expect { subject.process(timeout: TimeOut) }.to_not change { @err_input }
+        expect { subject.process(timeout: time_out) }.to_not change { @err_input }
       end
       
       it "times out", slow: true do
         start = Time.now
-        expect(subject.process(timeout: TimeOut)).to be(subject)
+        expect(subject.process(timeout: time_out)).to be(subject)
         ending = Time.now
-        expect(ending - start).to be >= TimeOut
+        expect(ending - start).to be >= time_out
       end
 
       describe 'after sending data', slow: true do
@@ -176,14 +176,14 @@ describe SG::IO::Reactor do
         end
         
         it "does not call the error callback" do
-          expect { subject.process(timeout: TimeOut) }.to_not change { @err_input }
+          expect { subject.process(timeout: time_out) }.to_not change { @err_input }
         end
       
         it "times out" do
           start = Time.now
-          expect(subject.process(timeout: TimeOut)).to be(subject)
+          expect(subject.process(timeout: time_out)).to be(subject)
           ending = Time.now
-          expect(ending - start).to be >= TimeOut
+          expect(ending - start).to be >= time_out
         end
       end
 
@@ -193,7 +193,7 @@ describe SG::IO::Reactor do
         end
         
         it "calls the error callback" do
-          expect { subject.process(timeout: TimeOut) }.to change { @err_input }
+          expect { subject.process(timeout: time_out) }.to change { @err_input }
         end
       end
     end
@@ -219,7 +219,7 @@ describe SG::IO::Reactor do
     describe '#process', slow: true do
       describe 'with no activity' do
         it 'calls the idler' do
-          expect { subject.process(timeout: TimeOut) }.to change { @idled }
+          expect { subject.process(timeout: time_out) }.to change { @idled }
         end
       end
 
@@ -231,7 +231,7 @@ describe SG::IO::Reactor do
         end
         
         it 'calls the idler' do
-          expect { subject.process(timeout: TimeOut) }.to change { @idled }
+          expect { subject.process(timeout: time_out) }.to change { @idled }
         end
       end
     end
@@ -261,6 +261,7 @@ describe SG::IO::Reactor do
         end
         @done = true
       end
+      Thread.pass
     end
 
     after do
@@ -269,22 +270,25 @@ describe SG::IO::Reactor do
 
     it { expect { subject.done!; Timeout.timeout(5) { @thread.join } }.to change { @thread.alive? }.from(true).to(false) }
     it { expect { subject.done! }.to change { subject.done? }.to(true) }
+    it { expect { subject.done!; sleep(2) }.to change { @done }.to(true) }
 
     it 'calls the block after each processing' do
-      sleep(2)
-      expect(@cb_calls).to be >= 1
+      expect { sleep(2) }.to change { @cb_calls }.from(0).to be >= 1
     end
     
     it 'uses the supplied timeout' do
       subject.done!
-      Timeout.timeout(5) { @thread.join }
+      begin
+        Timeout.timeout(5) { @thread.join }
+      rescue Timeout::Error
+      end
       ending = Time.now
-      expect(ending - @start).to be >= 1
+      expect(ending - @start).to be < 2
     end
   end
 
   describe '#add_listener' do
-    let(:server) { TCPServer.new(Port).tap { |s| s.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, 1); s.listen(1) } }
+    let(:server) { TCPServer.new(port).tap { |s| s.setsockopt(Socket::SOL_SOCKET, Socket::SO_REUSEADDR, 1); s.listen(1) } }
 
     before do
       server

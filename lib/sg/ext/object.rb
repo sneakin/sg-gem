@@ -1,3 +1,5 @@
+require 'sg/skip-unless'
+
 module SG::Ext
   refine ::Object.singleton_class do
     def delegate(*methods, to:)
@@ -25,6 +27,8 @@ EOT
   end
 
   refine ::Object do
+    def identity; self; end
+    
     def recurse(m, top = true)
       r = send(m)
       if r
@@ -43,6 +47,7 @@ EOT
     end
 
     def try meth = nil, *args, **opts, &block
+      warn("Deprecated since Ruby added &.")
       if meth
         send(meth, *args, **opts, &block)
       else
@@ -55,5 +60,29 @@ EOT
     def true?; true; end
     def false?; false; end
     def blank?; false; end
+
+    def skip_unless test = true, &b
+      # Returns an enumerator that calls the following chained method
+      # call when `test` is not `nil`. The chained call after that is
+      # always called.
+      s = SG::SkipUnless.new(test, self, &b)
+      s._test_passes?? self : s
+    end
+
+    def skip_when test = true, &b
+      # Returns an enumerator that calls the following chained method
+      # call when `test` is nil or false. The chained call after that
+      # is always called.
+      s = SG::SkipWhen.new(test, self, &b)
+      s._test_passes?? self : s
+    end
+
+    def pick *keys
+      keys.collect(&method(:[]))
+    end
+
+    def pick_attrs *keys
+      keys.collect(&method(:send))
+    end
   end
 end

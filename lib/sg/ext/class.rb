@@ -13,7 +13,7 @@ module SG::Ext
     def subclasses? klass
       return true if superclass == klass
       return false if superclass == nil
-      superclass.subclasses?(klass)
+      (ancestors & klass.ancestors).include?(klass)
     end
   end
 end

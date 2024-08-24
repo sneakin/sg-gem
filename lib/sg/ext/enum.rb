@@ -40,5 +40,34 @@ module SG::Ext
         end
       end
     end
+
+    def pluck_attrs *keys
+      collect { |e| e.pick_attrs(*keys) }
+    end
+
+    def pluck *keys
+      collect { |e| e.pick(*keys) }
+    end
+
+    def aggregate initials, &fn
+      reduce(initials) do |acc, row|
+        row.zip(acc).collect do |el, el_acc|
+          fn.call(el_acc, el)
+        end
+      end
+    end
+
+    def nth n, count = nil
+      d = drop(n)
+      if count
+        d.first(count)
+      else
+        d.first
+      end
+    end
+
+    def second count = nil; nth(1, count); end
+    def third count = nil; nth(2, count); end
+    def fourth count = nil; nth(3, count); end
   end
 end

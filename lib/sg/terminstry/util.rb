@@ -6,10 +6,10 @@ using SG::Ext
 
 module SG::Terminstry
   def self.tty_size
-    raise 'haha' if ENV['TTYSIZE'].to_bool
-    lines, cols = IO.console.winsize
-    [ cols, lines ]
-  rescue
-    [ ENV.fetch('COLUMNS', 80).to_i, ENV.fetch('LINES', 24).to_i ]
+    size = [ ENV['COLUMNS']&.to_i, ENV['LINES']&.to_i ]
+    lines, cols = IO.console.winsize rescue nil
+    size[0] ||= cols
+    size[1] ||= lines
+    size
   end
 end

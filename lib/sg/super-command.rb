@@ -2,6 +2,7 @@
 require 'bundler/setup'
 require 'optparse'
 require 'sg/terminstry'
+require 'sg/table-printer'
 require 'sg/assoc'
 require 'sg/ext'
 
@@ -131,11 +132,11 @@ EOT
         puts(options.help)
         puts
         puts("#{h}Commands#{r}")
-        tbl = commands.collect { |c| [ c.printable_name, c.desc ] }
-        maxw = tbl.max_by { |(n, d)| n.size }&.first&.size || 8
-        tbl.each do |(n, d)|
-          puts("#{b}%*s#{r}  %s" % [ maxw, n, d ])
-        end
+        SG::TablePrinter.new(style: :none).
+          add_column(align: :right, strategy: :fitted).
+          add_column.
+          print(commands.collect { |c| [ c.printable_name, c.desc ] },
+                width: nil)
       else
         begin
           cmd = Command === cmd_name ? cmd_name : commands.fetch(cmd_name)

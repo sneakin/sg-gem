@@ -1,9 +1,11 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env -S ruby -W:no-experimental
+# -*-ruby-*-
+
 require 'sg/selfhelp'
 
 if $0 == __FILE__
   case ARGV.shift
-    when 'foo bar command' then # @cmd(times) prints foo
+    when 'foo' then # @cmd(times) prints foo
       ARGV[0].to_i.times { puts('Foo') }
     when /^bar/ then # @cmd prints bar
       puts('bar')

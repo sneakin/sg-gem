@@ -1,9 +1,11 @@
 #!/usr/bin/env -S ruby -W:no-experimental
 # -*- coding: utf-8 -*-
 require 'bundler/setup'
-require 'io/console'
+require 'sg/terminstry/util'
 require 'sg/ext'
 using SG::Ext
+
+# todo multiline cells
 
 class SG::TablePrinter
   class Column
@@ -18,22 +20,21 @@ class SG::TablePrinter
       @formatter = (formatter || :to_s).to_proc
     end
 
-    def format value, align: true
+    def format value, align: true, stripped: false
       v = formatter.call(value)
-      if align
-        align(v)
-      else
-        v
-      end
+      v = align(v, stripped: stripped) if align
+      v
     end
 
-    def align v, align: alignment, width: real_width
+    def align v, align: alignment, width: real_width, stripped: false
+      return v if width == nil
+      return v.strip if stripped == :fully
       s = (v || '').truncate(width)
-      if width && s.size < width
+      if s.screen_size < width
         case align
-        when :center then s = s.center(width)
-        when :right then s = s.rjust(width)
-        else s = s.ljust(width)
+        when :center then s = s.center_visually(width).skip_unless(stripped).rstrip
+        when :right then s = s.rjust_visually(width)
+        else s = stripped ? s : s.ljust_visually(width)
         end
       end
       s
@@ -42,28 +43,46 @@ class SG::TablePrinter
 
   class Decorator
     None = {
-      row: { leader: '', separator: ' ', finalizer: '' },
+      flags: [ :stripped ],
+      row: { leader: '', separator: '  ', finalizer: '' },
       #bar: { filler: ' ', leader: '', separator: ' ', finalizer: '' },
       #top_bar: { filler: ' ', leader: '', separator: ' ', finalizer: '' },
       #bottom_bar: { filler: ' ', leader: '', separator: ' ', finalizer: '' }
     }
     Ascii = {
+      top_bar: { filler: '-', leader: '+-', separator: '-+-', finalizer: '-+' },
+      header_bar: { filler: '-', leader: '+-', separator: '-+-', finalizer: '-+' },
       row: { leader: '| ', separator: ' | ', finalizer: ' |' },
       bar: { filler: '-', leader: '+-', separator: '-+-', finalizer: '-+' },
-      top_bar: { filler: '-', leader: '+-', separator: '-+-', finalizer: '-+' },
       bottom_bar: { filler: '-', leader: '+-', separator: '-+-', finalizer: '-+' }
     }
+    Org = {
+      header_bar: { filler: '-', leader: '|-', separator: '-+-', finalizer: '-|' },
+      row: { leader: '| ', separator: ' | ', finalizer: ' |' },
+      bar: { filler: '-', leader: '|-', separator: '-+-', finalizer: '-|' },
+    }
     Box = {
+      top_bar: { filler: '─', leader: '┌─', separator: '─┬─', finalizer: '─┐' },
+      header_row: { leader: '│ ', separator: ' │ ', finalizer: ' │' },
+      header_bar: { filler: '─', leader: '├─', separator: '─┼─', finalizer: '─┤' },
       row: { leader: '│ ', separator: ' │ ', finalizer: ' │' },
       bar: { filler: '─', leader: '├─', separator: '─┼─', finalizer: '─┤' },
-      top_bar: { filler: '─', leader: '┌─', separator: '─┬─', finalizer: '─┐' },
       bottom_bar: { filler: '─', leader: '└─', separator: '─┴─', finalizer: '─┘' }
+    }
+    HTML = {
+      flags: [ :stripped, :noalign ],
+      top_bar: { filler: '', leader: '<table>', separator: '', finalizer: '' },
+      header_row: { leader: '<thead><tr><th>', separator: '</th><th>', finalizer: '</th></tr></thead>' },
+      row: { leader: '<tr><td>', separator: '</td><td>', finalizer: '</td></tr>' },
+      bottom_bar: { filler: '', leader: '', separator: '', finalizer: '</table>' }
     }
 
     Styles = {
       none: None,
       ascii: Ascii,
-      box: Box
+      org: Org,
+      box: Box,
+      html: HTML
     }
 
     attr_reader :decor
@@ -89,16 +108,20 @@ class SG::TablePrinter
 
     def decor_width style, columns
       decor[style] => { leader:, separator: , finalizer: }
-      leader.size + separator.size * columns + finalizer.size
+      leader.screen_size + separator.screen_size * columns + finalizer.screen_size
+    end
+
+    def has_flag? name
+      decor[:flags]&.include?(name)
     end
   end
 
   attr_reader :columns, :io, :decorator
   
-  def initialize io: $stdout, decorator: nil
+  def initialize io: $stdout, decorator: nil, style: nil
     @columns = []
     @io = io
-    @decorator = decorator || Decorator.new
+    @decorator = decorator || Decorator.new(style)
   end
 
   def add_column **opts
@@ -107,12 +130,19 @@ class SG::TablePrinter
   end
 
   def print data, width: true, resize: true
+    data = data.each unless Enumerator === data
+    
+    if columns.empty?
+      line = data.first
+      (line.size || 1).times { |n| add_column }
+      if Enumerator::Lazy === data
+        data = [ line ].each + data
+      end
+    end
+    
     resize_columns(data, full_width: width) if resize
     print_bar(:top_bar)
-    unless columns.all? { |c| c.title.blank? }
-      print_headers
-      print_bar(:bar)
-    end
+    print_headers unless columns.all? { |c| c.title.blank? }
     data.each do |row|
       if row.blank? || row.all?(&:blank?)
         print_bar
@@ -127,19 +157,30 @@ class SG::TablePrinter
     decorator[:row] => { leader:, separator:, finalizer: }
     io.write(leader)
     columns.each_with_index do |col, n|
-      io.write(col.format(row[n]))
-      io.write(separator) if col != columns[-1]
+      is_last_col = col == columns[-1]
+      if is_last_col
+        io.write(col.format(row[n],
+                            stripped: decorator.has_flag?(:noalign) ? :fully :
+                            (finalizer.blank? || decorator.has_flag?(:stripped))))
+      else
+        io.write(col.format(row[n], stripped: decorator.has_flag?(:noalign) ? :fully : false))
+        io.write(separator)
+      end
     end
     io.write(finalizer)
     io.write("\n")
+    io.flush
+    self
   end
   
   alias << print_row
 
   # todo tables with no width: everything is fitted
   def resize_columns data, full_width: true
+    full_width = nil if decorator.has_flag?(:noalign)
+    
     if full_width == true
-      full_width = IO.console.winsize[1]
+      full_width = SG::Terminstry.tty_size&.first
     end
     
     if full_width
@@ -158,6 +199,8 @@ class SG::TablePrinter
     columns.zip(widths).each do |col, w|
       col.real_width = w
     end
+
+    self
   end
 
   def print_bar style = :bar
@@ -169,24 +212,32 @@ class SG::TablePrinter
     end
     io.write(finalizer)
     io.write("\n")
+    self
   rescue NoMatchingPatternError
     io.write("\n") if style == :bar
   ensure
   end
   
-  protected
-  
   def print_headers
-    decorator[:row] => { leader:, separator:, finalizer: }
+    (decorator[:header_row] || decorator[:row]) => { leader:, separator:, finalizer: }
     io.write(leader)
     columns.each_with_index do |col, n|
-      io.write(col.align(col.title, align: :center))
-      io.write(separator) if col != columns[-1]
+      is_last_col = col == columns[-1]
+      if is_last_col
+        io.write(col.align(col.title, align: :center, stripped: decorator.has_flag?(:noalign) ? :fully : (finalizer.blank? || decorator.has_flag?(:stripped))))
+      else
+        io.write(col.align(col.title, align: :center, stripped: decorator.has_flag?(:noalign) ? :fully : false))
+        io.write(separator)
+      end
     end
     io.write(finalizer)
     io.write("\n")
+    print_bar(:header_bar)
+    self
   end
 
+  protected
+  
   def sized_initial_column_widths data, full_width
     columns.each_with_index.collect do |col, n|
       case col.strategy.to_s
@@ -210,8 +261,8 @@ class SG::TablePrinter
   def fitted_column_width col, col_num, data
     [ col.width || 0,
       data.collect { |row|
-        col.format(row[col_num], align: false)&.size || 0
-      }.max
+        col.format(row[col_num], align: false)&.screen_size || 0
+      }.max || 0
     ].max
   end
   
@@ -273,6 +324,7 @@ class SG::TablePrinter
     decorator = nil
     skip_lines = 0
     delimeter = nil
+    follow_mode = false
     
     args = OptionParser.new do |o|
       o.banner = <<-EOT
@@ -300,7 +352,11 @@ EOT
       end
       
       o.on('--delimeter REGEXP') do |v|
-        delimeter = Regexp.new(v)
+        delimeter = v =~ /\A\/(.*)\/\Z/ ? Regexp.new($1) : v
+      end
+
+      o.on('-f', '--[no-]follow') do |v|
+        follow_mode = v
       end
       
       o.separator <<-EOT
@@ -318,13 +374,11 @@ EOT
     tbl = SG::TablePrinter.new(decorator: decorator)
     if args.empty?
       if first_line_headers
-        line = $stdin.readline.split(delimeter).collect(&:strip)
-        line.each do |col|
+        line = $stdin.readline.split(delimeter).collect(&:strip).each do |col|
           tbl.add_column(title: col)
         end
       else
-        first_line = $stdin.readline.split(delimeter).collect(&:strip)
-        first_line.each do |col|
+        first_line = $stdin.readline.split(delimeter).collect(&:strip).each do |col|
           tbl.add_column()
         end
       end
@@ -339,7 +393,7 @@ EOT
       end
     end
 
-    data = $stdin.readlines
+    data = $stdin.each_line.skip_unless(follow_mode).lazy
     if skip_lines > 0
       data = data.drop(skip_lines - (first_line ? 1 : 0))
       first_line = nil
@@ -349,7 +403,7 @@ EOT
     if skip_lines <= 0 && args.empty? && first_line
       data = [ first_line ].each + data
     end
-    #tbl.resize_columns(data.dup, full_width: table_width)
+    
     tbl.print(data, width: table_width)
   end
 end

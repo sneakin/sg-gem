@@ -21,19 +21,39 @@ EOT
 
     def pluralize
       case self
-      when /(.*)(fish|sheep)\Z/ then self
+      when /(.*)(fish|sheep|feet|eese)\Z/ then self
       when /(.*)(foot)\Z/ then $1 + 'feet'
+      when /(.*choose)\Z/ then $1 + 's'
       when /(.*)oose\Z/ then $1 + 'eese'
       when /(.*)[aoeui]y\Z/ then self + "s"
       when /(.*[^aoeui])y\Z/ then $1 + "ies"
       when /(ch|to|cho)\Z/ then self + 'es'
       when /(.*[^if])f\Z/ then $1 + 'ves'
       when /(.*[^f])fe\Z/ then $1 + 'ves'
+      when /ss\Z/ then self + 'es'
       when /[^s]\Z/ then self + 's'
       else self
       end
     end
 
+    def singularize
+      case self
+      when /(.*)(fish|sheep|cheese)\Z/ then self
+      when /(.*)(feet)\Z/ then $1 + 'foot'
+      when /(.*)eese\Z/ then $1 + 'oose'
+      when /(.*[aoeui]y)s\Z/ then $1
+      when /(.*[^aoeui])ies\Z/ then $1 + "y"
+      when /(.*[aoeui]se)s\Z/ then $1
+      when /(.*)fives\Z/ then $1 + 'five'
+      when /(.*[^if])ves\Z/ then $1 + 'f'
+      when /(.*[^f])ves\Z/ then $1 + 'fe'
+      when /(.*ss)es\Z/ then $1
+      when /(.+)es\Z/ then $1
+      when /(.*[^s])s\Z/ then $1
+      else self
+      end
+    end
+    
     def titleize
       # upcase post-space, underscore, hypens, and slashes
       gsub(/(\A|\s+|[-_\\\/]+)[[:lower:]]/) { |m| m.upcase }
@@ -91,12 +111,15 @@ EOT
       strip_escapes.display_width
     end
 
+    # todo use Terministry::Decoder
+    # todo keep or remove escapes after the slice?
     def visual_slice len
-      if screen_size < len
+      if screen_size == size && screen_size <= len
         [ self, nil ]
       else
         part = ''
         width = 0
+        saw_escape = false
         in_escape = false
         each_char do |c|
           if width >= len
@@ -104,13 +127,17 @@ EOT
           end
           if c == "\e"
             in_escape = true
-          elsif in_escape && (Range.new('a'.ord, 'z'.ord).include?(c.ord) || Range.new('A'.ord, 'Z'.ord).include?(c.ord))
+          elsif in_escape && c.alpha?
             in_escape = false
+            if c == 'm'
+              saw_escape = !(part =~ /[\[;]0+\Z/)
+            end
           elsif !in_escape
             width += Unicode::DisplayWidth.of(c)
           end
           part += c
         end
+        part += "\e[0m" if saw_escape
         return [ part, self[part.size..-1] ]
       end
     end
@@ -130,11 +157,45 @@ EOT
 
       self
     end
-    
+
     def truncate len
       visual_slice(len).first
     end
 
+    def cycled n
+      return '' if n <= 0 || empty?
+      return self if n == size
+      return self[0, n.ceil] if n < size
+      (self * (n / size.to_f).ceil)[0, n.ceil] 
+    end
+    
+    def cycle_visually n
+      return '' if n <= 0 || empty?
+      return truncate(n) if n <= screen_size
+      (self * (n / screen_size.to_f).ceil).truncate(n)
+    end
+    
+    def center_visually len, pad = nil
+      pad ||= ' '
+      padding = (len - screen_size)
+      padding <= 0 ? self : pad.cycled(size + padding).
+        tap { |s| s[padding / 2, size] = self }
+    end
+
+    def ljust_visually len, pad = nil
+      pad ||= ' '
+      padding = (len - screen_size)
+      padding <= 0 ? self : pad.cycled(size + padding).
+        tap { |s| s[0, size] = self }
+    end
+    
+    def rjust_visually len, pad = nil
+      pad ||= ' '
+      padding = (len - screen_size)
+      padding <= 0 ? self : pad.cycled(size + padding).
+        tap { |s| s[-size, size] = self }
+    end
+  
     def to_proc
       lambda do |*args|
         self % case args
