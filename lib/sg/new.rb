@@ -1,4 +1,5 @@
 require 'sg/ext'
+require 'sg/fun'
 
 using SG::Ext
 
@@ -8,7 +9,7 @@ module SG
     
     def initialize klass = nil, &maker
       raise ArgumentError if klass == nil && maker == nil
-      @maker = maker || lambda { |*a, **o, &b| klass.new(*a, **o, &b) }
+      @maker = maker || SG::Fun.maker(klass)
     end
 
     def new *a, **o, &b

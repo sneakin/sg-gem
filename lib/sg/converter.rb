@@ -4,27 +4,13 @@ require 'json'
 require 'sg/ext'
 require 'sg/graph'
 require 'sg/method_cache'
+require 'sg/fun'
+require 'sg/ignored'
 
 using SG::Ext
 
-module SG  
+module SG
   class Converter
-    class Ignored
-      def * other
-        other
-      end
-    end    
-
-    class Identity
-      def initialize klass
-        @klass = klass
-      end
-      
-      def call inst
-        inst
-      end
-    end
-
     class NoConverterError < TypeError
       attr_reader :from, :to
       def initialize from, to
@@ -52,7 +38,7 @@ module SG
 
     def for from, to
       if from == to
-        Identity.new(from)
+        SG::Fun::Identity
       else
         names, edges = converters.route(from, to).
                          sort_by { |e| e[1].sum { |e| e.data.weight } }.
