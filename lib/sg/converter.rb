@@ -33,7 +33,12 @@ module SG
     end
 
     def register from, to, weight = 1, &block
-      converters.rm_edge(from, to).add_edge(from, to, GraphEdge.new(block, weight))
+      begin
+        converters.rm_edge(from, to)
+      rescue Graph::EdgeNotFound
+      end
+      converters.add_edge(from, to, GraphEdge.new(block, weight))
+      self
     end
 
     def for from, to

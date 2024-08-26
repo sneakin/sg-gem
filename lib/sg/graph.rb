@@ -1,10 +1,11 @@
-require 'sg/ext'
-
-using SG::Ext
+#require 'sg/ext'
+#using SG::Ext
 
 module SG
   class Graph
-    class DuplicateEdgeError < ArgumentError
+    MaxDepth = 6
+    
+    class EdgeError < ArgumentError
       attr_reader :from, :to
       
       def initialize from, to
@@ -14,7 +15,19 @@ module SG
       end
 
       def to_s
+        "EdgeError: #{from} -> #{to}"
+      end
+    end
+    
+    class DuplicateEdgeError < EdgeError
+      def to_s
         "Duplicate edge: #{from} -> #{to}"
+      end
+    end
+
+    class EdgeNotFound < EdgeError
+      def to_s
+        "Edge not found: #{from} -> #{to}"
       end
     end
     
@@ -64,6 +77,7 @@ module SG
     end
 
     def rm_edge from, to
+      raise EdgeNotFound.new(from, to) if !find(from, to)
       @edges[from].delete(to)
       self
     end
@@ -88,8 +102,11 @@ module SG
       each_edge.count
     end
     
+    def node_count
+      each_node.count
+    end
+    
     def from node
-      #each_edge.from(node)
       @edges[node].values
     end
 
@@ -101,25 +118,25 @@ module SG
       @edges[fr][to]
     end
 
-    def route from, to, max_depth = 4
+    def route from, to, max_depth = MaxDepth
       paths = route_for(from, to, max_depth)
       paths.each_slice(2)
     end
 
-    def shortest_routes from, to, max_depth = 4
+    def shortest_routes from, to, max_depth = MaxDepth
       route(from, to, max_depth).sort_by { |p| p[0].size }
     end
 
-    def shortest_route from, to, max_depth = 4
-      route(from, to, max_depth).min { |p| p[0].size }
+    def shortest_route from, to, max_depth = MaxDepth
+      route(from, to, max_depth).min_by { |p| p[0].size }
     end
 
-    def route_for root, dest, max_depth = 4, depth = 0, seen = [], path = []
+    def route_for root, dest, max_depth = MaxDepth, depth = 0, seen = [], path = []
       # for the case when there is a from and an indirect to:
       #  All the conversions for FROM need to be checked for an indirect conversions to DEST
       #puts "#{root} #{dest} #{depth} #{max_depth}"
       return [] if root == dest
-      return nil if depth == max_depth || seen.include?(root)
+      return nil if depth >= max_depth || seen.include?(root)
       new_seen = seen + [ root ]
       edge = find(root, dest)
       if edge
