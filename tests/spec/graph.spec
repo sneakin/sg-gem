@@ -115,5 +115,52 @@ describe SG::Graph do
       it { expect(subject.shortest_route('Alice', 'Edward', 1)).
         to eql(nil) }
     end
+
+  end
+
+  describe 'matrix conversion' do
+    before do
+      subject.add_edge(:a, :b, 1)
+      subject.add_edge(:b, :c, 2)
+      subject.add_edge(:c, :d, 3)
+    end
+    
+    it 'returns a Matrix using the node list to index the matrix' do
+      expect(subject.to_matrix([ :a, :b, :c, :d ])).
+        to eql(Matrix[[0, 0, 0, 0],
+                      [1, 0, 0, 0 ],
+                      [0, 2, 0, 0],
+                      [0, 0, 3, 0]])
+    end
+
+    it 'with ~use_data~ set to false the cells are set to 1' do
+      expect(subject.to_matrix([ :a, :b, :c, :d ], use_data: false)).
+        to eql(Matrix[[0, 0, 0, 0],
+                      [1, 0, 0, 0 ],
+                      [0, 1, 0, 0],
+                      [0, 0, 1, 0]])
+    end
+
+    it 'populates a graph using a matrix and a node list' do
+      expect(described_class.
+                from_matrix(Matrix[[0, 1, 0, 0],
+                                   [0, 0, 2, 0 ],
+                                   [0, 0, 0, 3],
+                                   [0, 0, 0, 0]],
+                            [ :a, :b, :c, :d ])).
+        to eql(subject)
+    end
+
+    it 'can round trip the matrices' do
+      mat = Matrix[[0, 1, 0, 0],
+                   [0, 0, 2, 0 ],
+                   [0, 0, 0, 3],
+                   [0, 0, 0, 0]]
+      expect(described_class.
+             from_matrix(mat,
+                         [ :a, :b, :c, :d ]).
+             to_matrix([ :a, :b, :c, :d ])).
+      to eql(mat)
+    end
   end
 end

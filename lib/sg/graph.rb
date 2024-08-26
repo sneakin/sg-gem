@@ -1,3 +1,5 @@
+require 'matrix'
+
 #require 'sg/ext'
 #using SG::Ext
 
@@ -118,6 +120,12 @@ module SG
       @edges[fr][to]
     end
 
+    def eql? other
+      self.class === other &&
+        edge_count == other.edge_count &&
+        each_edge.all? { |e| oe = other.find(e.to, e.from); oe && e.data.eql?(oe.data) }
+    end
+    
     def route from, to, max_depth = MaxDepth
       paths = route_for(from, to, max_depth)
       paths.each_slice(2)
@@ -148,6 +156,36 @@ module SG
                     new_seen,
                     path + [ edge ])
         end.reject(&:nil?).reduce([]) { |a, p| a + p }
+      end
+    end
+
+    def node_index indexes = nil
+      return indexes if Hash === indexes
+      (indexes || each_node).each_with_index.
+        reduce({}) { |h, (n, i)| h[n] = i; h }
+    end
+    
+    def to_matrix indexes = nil, use_data: true
+      indexes = node_index(indexes)
+      each_edge.reduce(Matrix.zero(node_count,
+                                   node_count)) do |m, e|
+        fi = indexes[e.from]
+        ti = indexes[e.to]
+        m[ti, fi] = use_data ? e.data : 1
+        m
+      end
+    end
+
+    def self.from_matrix m, nodes = nil
+      # nodes = Hash[nodes.each_with_index.collect { |n, i| [ n, i ] }] if nodes
+      self.new.tap do |g|
+        m.row_count.times do |y|
+          m.column_count.times do |x|
+            f = nodes&.[](y) || y
+            t = nodes&.[](x) || x
+            g.add_edge(f, t, m[x, y]) if m[x, y] != 0
+          end
+        end
       end
     end
 
