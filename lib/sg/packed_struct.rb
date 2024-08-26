@@ -356,7 +356,7 @@ module SG
         sz = if length
               PackedStruct.eval_length(length, inst)
             else
-              inst.send(name).try(:bytesize)
+              inst.send(name)&.bytesize
             end || 0
         PackedStruct.pad(sz, byte_align)
       end
@@ -389,7 +389,7 @@ module SG
       end
 
       def bytesize inst
-        value_size = 1 + (inst.send(name).try(:bytesize) || 0)
+        value_size = 1 + (inst.send(name)&.bytesize || 0)
         len = PackedStruct.eval_length(length, inst)
         PackedStruct.pad(len ? len : value_size, byte_align)
       end
@@ -510,7 +510,7 @@ module SG
 
       def bytesize inst
         #$stderr.puts("Array bytesize #{name} #{inst.inspect}\n\t#{self.inspect}")
-        v = inst.try(name)
+        v = inst&.send(name)
         if v && v != []
           v.collect { |e| type.bytesize(e) }.sum
         else
@@ -520,7 +520,7 @@ module SG
       
       def packer inst
         #$stderr.puts("packer #{inst}")
-        v = inst.try(name)
+        v = inst&.send(name)
         if v && v != []
           v.collect { |e| type.packer(e) }.join
         else
