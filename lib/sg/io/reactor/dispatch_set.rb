@@ -1,3 +1,6 @@
+require 'sg/ext'
+using SG::Ext
+
 class SG::IO::Reactor
   class DispatchSet
     attr_reader :ios
@@ -6,6 +9,8 @@ class SG::IO::Reactor
       @ios = {}
     end
 
+    delegate :size, to: :ios
+    
     def add actor, io = actor.io
       raise ArgumentError.new('expected a Source, not %s' % [ actor.class ]) unless Source === actor
       #raise ArgumentError.new('expected an IO, not %s' % [ io.class ]) unless ::IO === io

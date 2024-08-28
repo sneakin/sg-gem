@@ -1,4 +1,5 @@
 class SG::IO::Reactor
+  # todo sources and sinks?
   class Source
     attr_reader :io
     alias to_io io
