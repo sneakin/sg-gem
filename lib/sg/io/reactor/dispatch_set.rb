@@ -11,14 +11,13 @@ class SG::IO::Reactor
 
     delegate :size, to: :ios
     
-    def add actor, io = actor.io
-      raise ArgumentError.new('expected a Source, not %s' % [ actor.class ]) unless Source === actor
-      #raise ArgumentError.new('expected an IO, not %s' % [ io.class ]) unless ::IO === io
-      @ios[io] = actor
+    def add actor, io = nil
+      raise ArgumentError.new('expected a Source or Sink, not %s' % [ actor.class ]) unless Port === actor
+      @ios[io || actor.io] = actor
     end
 
     def delete actor
-      io = Source === actor ? actor.io : actor
+      io = Port === actor ? actor.io : actor
       @ios.delete(io)
     end
 

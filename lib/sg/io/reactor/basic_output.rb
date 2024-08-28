@@ -1,6 +1,6 @@
 # @todo needs processing needs to be redone
 class SG::IO::Reactor
-  class BasicOutput < IOutput
+  class BasicOutput < Sink
     def initialize io, needs_processing: nil, &cb
       raise ArgumentError.new('no block given') if cb == nil
       super(io)

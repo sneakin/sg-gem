@@ -6,14 +6,14 @@ describe SG::IO::Reactor::SocketConnector do
   port = 2000 + rand(1000)
   
   subject do
-    described_class.new(host: 'localhost', port: port) do |io|
+    described_class.new(host: '127.0.0.1', port: port) do |io|
       @connected_to = io
-    end.but(Errno::ECONNREFUSED) do |ex|
+    end.but(SystemCallError) do |ex|
       @connected_to = ex
     end
   end
   
-  it { expect(subject).to be_kind_of(SG::IO::Reactor::IOutput) }
+  it { expect(subject).to be_kind_of(SG::IO::Reactor::Sink) }
   
   describe 'connection happens' do
     let(:reactor) { SG::IO::Reactor.new }

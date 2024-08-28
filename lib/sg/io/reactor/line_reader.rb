@@ -1,6 +1,6 @@
 require 'sg/io/reactor'
 
-class SG::IO::Reactor::LineReader < SG::IO::Reactor::IInput
+class SG::IO::Reactor::LineReader < SG::IO::Reactor::Source
   using SG::Ext
   
   attr_reader :separator, :read_size

@@ -7,9 +7,9 @@ describe SG::IO::Reactor::Listener do
     let(:reactor) { SG::IO::Reactor.new }
     let(:srv_stream) { instance_double('TCPSocket') }
     let(:in_io) { double('IO') }
-    let(:in_stream) { Class.new(SG::IO::Reactor::IInput).new(in_io) }
+    let(:in_stream) { Class.new(SG::IO::Reactor::Source).new(in_io) }
     let(:out_io) { double('IO') }
-    let(:out_stream) { Class.new(SG::IO::Reactor::IOutput).new(out_io) }
+    let(:out_stream) { Class.new(SG::IO::Reactor::Sink).new(out_io) }
     let(:server) { instance_double('TCPServer', accept: srv_stream) }
     let(:clients) { [] }    
     
@@ -80,14 +80,14 @@ describe SG::IO::Reactor::Listener do
       context 'a bad listener block' do
         context 'bad input' do
           let(:in_stream) { 'hello' }
-          it 'raises an error when the input is not an IInput' do
+          it 'raises an error when the input is not a Source' do
             expect { subject.process }.to raise_error(RuntimeError)
           end
         end
 
         context 'bad output' do        
           let(:out_stream) { 'hello' }
-          it 'raises an error when the output is not an IOutput' do
+          it 'raises an error when the output is not a Sink' do
             expect { subject.process }.to raise_error(RuntimeError)
           end
         end

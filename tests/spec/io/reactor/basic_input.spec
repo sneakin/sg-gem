@@ -13,7 +13,7 @@ describe SG::IO::Reactor::BasicInput do
     pipe[1].puts('hello')
   end
   
-  it { expect(subject).to be_kind_of(SG::IO::Reactor::IInput) }
+  it { expect(subject).to be_kind_of(SG::IO::Reactor::Source) }
   it { expect(subject.io).to eq(pipe[0]) }
   
   describe 'before closing' do

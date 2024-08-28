@@ -2,7 +2,7 @@ require 'thread'
 require 'openssl'
 
 class SG::IO::Reactor
-  class QueuedOutput < IOutput
+  class QueuedOutput < Sink
     def initialize io, &cb
       super(io)
       @queue = []

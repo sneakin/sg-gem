@@ -5,7 +5,7 @@ require 'sg/io/reactor'
 class SG::IO::Reactor
   using SG::Ext
   
-  class SocketConnector < SG::IO::Reactor::IOutput
+  class SocketConnector < SG::IO::Reactor::Sink
     def initialize family: Socket::AF_INET, protocol: Socket::SOCK_STREAM, host:, port:, &cb
       @cb = cb
       @connected = false
@@ -13,8 +13,8 @@ class SG::IO::Reactor
       @peeraddr = Socket.sockaddr_in(port, host)
     end
 
-    def but ex, &block
-      @cb = @cb.but(ex, &block)
+    def but *ex, &block
+      @cb = @cb.but(*ex, &block)
       self
     end
     

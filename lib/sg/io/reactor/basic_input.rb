@@ -1,5 +1,5 @@
 class SG::IO::Reactor
-  class BasicInput < IInput
+  class BasicInput < Source
     def initialize io, &cb
       super(io)
       @cb = cb

@@ -7,6 +7,7 @@ end
 
 require 'sg/io/multiplexer'
 require 'sg/io/reactor/source'
+require 'sg/io/reactor/sink'
 require 'sg/io/reactor/basic_input'
 require 'sg/io/reactor/basic_output'
 require 'sg/io/reactor/queued_output'
@@ -27,9 +28,9 @@ class SG::IO::Reactor
 
   def << actor
     case actor
-    when IInput then add_input(actor)
-    when IOutput then add_output(actor)
-    else raise ArgumentError.new("Only IInput and IOutput allowed")
+    when Source then add_input(actor)
+    when Sink then add_output(actor)
+    else raise ArgumentError.new("Only Source and Sink subclasses allowed")
     end
   end
   
