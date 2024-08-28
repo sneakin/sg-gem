@@ -574,7 +574,15 @@ EOT
             } +
             [ [ 'foo', 'Foo' ],
               [ 'hello World', 'HelloWorld' ],
-              [ 'hello-World', 'HelloWorld' ]
+              [ 'hello-World', 'HelloWorld' ],
+              [ 'hello-world', 'HelloWorld' ],
+              [ 'Hello/World', 'Hello::World' ],
+              [ 'hello/good/world', 'Hello::Good::World' ],
+              #[ 'Hello/World', 'Hello/World' ],
+              [ 'hello - world', 'Hello-World' ],
+              [ 'hello _ world', 'Hello_World' ],
+              [ 'hello / world', 'Hello/World' ],
+              [ 'Hello / World', 'Hello/World' ],
             ]
           ]
     
@@ -591,6 +599,14 @@ EOT
              [ 'HelloWorld', 'hello world' ],
              [ 'hello-world', 'hello world' ],
              [ 'hello_world', 'hello world' ],
+             [ 'Hello/World', 'hello/world' ],
+             [ 'Hello / World', 'hello / world' ],
+             [ 'hello/world', 'hello/world' ],
+             [ 'Hello::World', 'hello/world' ],
+             [ 'Hello :: World', 'hello / world' ],
+             [ 'hello::world', 'hello/world' ],
+             [ 'HELLOworld', 'helloworld' ],
+             [ 'HELLOworld-hello', 'helloworld hello' ]
              ]
           ]
     
@@ -607,6 +623,7 @@ EOT
              [ 'HelloWorld', 'hello-world' ],
              [ 'hello-world', 'hello-world' ],
              [ 'hello_world', 'hello-world' ],
+             [ 'hello world', 'hello-world' ],
              ]
           ]
     
@@ -623,6 +640,7 @@ EOT
              [ 'HelloWorld', 'hello_world' ],
              [ 'hello-world', 'hello_world' ],
              [ 'hello_world', 'hello_world' ],
+             [ 'hello world', 'hello_world' ],
              ]
           ]
     

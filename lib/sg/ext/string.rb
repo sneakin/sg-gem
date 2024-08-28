@@ -62,17 +62,32 @@ EOT
     # fixme 'hello world' -> 'HelloWorld', 'Hello World' -> 'HelloWorld'
     def camelize
       # capitalize and join the words
-      gsub(/[[:upper:]]+/) { |m| m.capitalize }.
-        gsub(/((?:\A|\s+|[-_]+)[[:alnum:]]+)/) { |m|
-        m.gsub(/[-_]|\s+/, '').capitalize
-      }
+      # scan words, spaces, and delimeters
+      scan(/(?:[[:alnum:]]+|(?:\s|[-_\/\\])+)/).
+        reject { |p| p.blank? || p =~ /\A[-_]+\Z/ }.
+        collect { |p| p.capitalize }.
+        join.
+        gsub(/(.?)([-_\/\\]+)(.?)/) do
+        if $1.space?
+          # strip spaces around delimeters
+          $2 + ($3.space? ? '' : $3)
+        else
+          # no spaces so replace delimeters
+          $1 + '::' + $3
+        end
+      end
     end
 
     def decamelize delim: ' '
       # replace case transitions, spaces, and hyphens with ~delim~
-      gsub(/[[:upper:]]+/) { |m| m.capitalize }.
-        gsub(/(\s|[-_])+/, delim).
-        gsub(/((?:\A|[[:lower:]])[[:upper:]])/) { |m| m[1] ? "%s%s%s" % [ m[0].downcase, delim, m[1].downcase ] : m.downcase }
+      # scan for upper to lower transitions, careful of slashes,
+      # spaces, delimeters, and anything else.
+      gsub('::', '/').
+        scan(/(?:[[:upper:]]+(?:[\/\\][[:upper:]]|[^[:upper:]])*|\s+|[-_]+|\S+)/).
+        reject { |p| p.blank? || p =~ /\A[-_]+\Z/ }.
+        collect(&:downcase).
+        join(delim).
+        gsub(/[-_ ]+/, delim)
     end
 
     def underscore
