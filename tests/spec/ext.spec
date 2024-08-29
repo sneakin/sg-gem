@@ -936,3 +936,80 @@ describe Range do
     end
   end
 end
+
+describe Integer do
+  describe '#count_bits' do
+    it { expect { -1.count_bits }.to raise_error(ArgumentError) }
+
+    [ [ 0xFFFFFFFF, 32 ],
+      [ 1, 1 ],
+      [ 3, 2 ],
+      [ 0x100, 1 ],
+      [ 0xFF00, 8 ]
+    ].each do |(input, output)|
+      it "counts #{output} bits for 0x#{input.to_s(16)} (#{input.to_s(2)})" do
+        expect(input.count_bits).to eql(output)
+      end
+    end
+  end
+  
+  describe '#revbits' do
+    #it { expect(-1.count_bits).to raise_error(ArgumentError) }
+
+    [ [ 0xFFFFFFFF, 0xFFFFFFFF ],
+      [ 1, 0x80000000 ],
+      [ 3, 0xC0000000 ],
+      [ 0x100, 0x800000 ],
+      [ 0xFF00, 0xFF0000 ]
+    ].each do |(input, output)|
+      it "reverses 0x#{input.to_s(16)} into 0x#{output.to_s(16)}" do
+        expect(input.revbits).to eql(output)
+      end
+    end
+
+    [ [ 0xFFFFFFFF, 0xFFFF ],
+      [ 1, 0x8000 ],
+      [ 3, 0xC000 ],
+      [ 0x100, 0x80 ],
+      [ 0xFF00, 0xFF ]
+    ].each do |(input, output)|
+      it "reverses 0x#{input.to_s(16)} to 0x#{output.to_s(16)} within 16 bits" do
+        expect(input.revbits(16)).to eql(output)
+      end
+    end
+  end
+
+  describe '#nth_byte' do
+    8.times do |n|
+      output = (n + 1)*16 + (n+1)
+      it "returns 0x#{output.to_s(16)} for byte #{n}" do
+        expect(0x8877665544332211.nth_byte(n)).to eql(output)
+      end
+    end
+    it "returns 0 for byte 8" do
+      expect(0x8877665544332211.nth_byte(8)).to eql(0)
+    end
+  end
+
+  describe '#to_bitmask' do
+    it { expect { -1.to_bitmask }.to raise_error(ArgumentError) }
+    it { expect { 0.to_bitmask }.to raise_error(ArgumentError) }
+    
+    [ [ 1, 1 ],
+      [ 7, 7 ],
+      [ 6, 7 ],
+      [ 15, 0xF ],
+      [ 16, 0x1F ],
+      [ 31, 0x1F ],
+      [ 32, 0x3F ],
+      [ 255, 0xFF ],
+      [ 256, 0x1FF ],
+      [ 0x10000000, 0x1FFFFFFF ],
+      [ 0x10203040, 0x1FFFFFFF ]
+    ].each do |(input, output)|
+      it "masks 0x#{input.to_s(16)} with 0x#{output.to_s(16)}" do
+        expect(input.to_bitmask).to eql(output)
+      end
+    end
+  end
+end
