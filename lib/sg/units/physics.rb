@@ -49,15 +49,13 @@ module SG::Units
   Year = scaled_unit('year', Day, 365.242)
 
   # todo frequency as 1 / time [in a medium?]
-  Frequency = Dimension.new(:frequency)
+  Frequency = 1 / Time
 
-  class Hertz < Unit
-    self.dimension = Frequency
-    self.name = 'hertz'
-    self.abbrev = 'Hz'
+  Hertz = (1 / Second).tap do |h|
+    #self.dimension = Frequency
+    h.name = 'hertz'
+    h.abbrev = 'Hz'
   end
-
-  #Hertz = transformed_unit('hertz', Second, lambda { |x| 1 / x })
 
   Temperature = Dimension.new(:temperature)
   
@@ -124,9 +122,18 @@ module SG::Units
   Mole = scaled_unit('mole', Counted, 6.02214076e23)
   
   Energy = Force * Length
-  Joule = Newton * Meter
+
+  class Joule < Newton * Meter
+    self.name = 'Joule'
+    self.abbrev = 'J'
+  end
+  
   Power = Energy * Time
-  Watt = Joule * Second
+
+  class Watt < Joule * Second
+    self.name = 'Watt'
+    self.abbrev = 'W'
+  end
 
   Charge = Dimension.new(:charge)
 

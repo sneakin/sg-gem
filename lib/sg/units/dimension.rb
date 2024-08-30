@@ -34,10 +34,12 @@ module SG::Units
     def * other
       # a * 1
       return self if other == 1 || other == NullDimension
-      # a * x/a
-      return other.numerator if Per === other && self == other.denominator
-      # avoid products with any Per
-      return Per.new(self * other.numerator, other.denominator) if Per === other
+      if Per === other
+        # a * x/a
+        return other.numerator if self == other.denominator
+        # avoid products with any Per
+        return Per.new(self * other.numerator, other.denominator)
+      end
       Product.new(self, other)
     end
 
@@ -87,18 +89,24 @@ module SG::Units
       def * other
         # a/b * b => a
         return numerator if denominator == other
-        # a/b * x/a => x/b
-        return other.numerator / denominator if Per === other && numerator == other.denominator
+        # a/b * x/y
+        if Per === other
+          # a/b * x/a => x/b
+          return other.numerator / denominator if numerator == other.denominator
+          return (numerator * other.numerator).cancel(denominator * other.denominator)
+        end
         return Per.new(numerator * other, denominator)
       end
 
       def / other
-        # a/b / 1/b => a
-        return numerator / other.numerator if Per === other && denominator == other.denominator
         # a/b / a => a/b * 1/a => 1/b
         return NullDimension / denominator if numerator == other
-        # a/b / a/x => a/b * x/a => x/b
-        return other.numerator / denominator if Per === other && numerator == other.numerator
+        if Per === other
+          # a/b / 1/b => a
+          return numerator / other.numerator if denominator == other.denominator
+          # a/b / a/x => a/b * x/a => x/b
+          return other.numerator / denominator if numerator == other.numerator
+        end
         return Per.new(numerator.delete(other), denominator) if Product === numerator && numerator.include?(other)
         return Per.new(numerator, denominator * other)
       end
@@ -107,6 +115,7 @@ module SG::Units
     class Product < Dimension
       attr_reader :terms
       def initialize *terms
+        raise ArgumentError, 'single term' if terms.size < 2
         @terms = terms
         super(terms.collect(&:name).join('*'))
       end
@@ -143,7 +152,9 @@ module SG::Units
               Product.new(*n)
             end
           else
-            Per.new(Product.new(*n), Product.new(*d))
+            n = n.size > 1 ? Product.new(*n) : n.first
+            d = d.size > 1 ? Product.new(*d) : d.first
+            Per.new(n, d)
           end
         elsif include?(other)
           delete(other)
@@ -158,10 +169,12 @@ module SG::Units
         # a*b / b => a
         # a*b / a => b
         return delete(other) if terms.include?(other)
-        # a*b / b/x => a/x
-        return delete(other.numerator) * other.denominator if Per === other && terms.include?(other.numerator)
-        # a*b / b/y
-        return Per.new(self * other.denominator, other.numerator) if Per === other
+        if Per === other
+          # a*b / b/x => a/x
+          return delete(other.numerator) * other.denominator if terms.include?(other.numerator)
+          # a*b / b/y
+          return Per.new(self * other.denominator, other.numerator)
+        end
         # a*b * X
         return Per.new(self, other)        
       end

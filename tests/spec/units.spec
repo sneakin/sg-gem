@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 require 'sg/units'
-
+require 'sg/ext'
 using SG::Ext
 
 describe SG::Units do
+  # Currency units for testing:
   let(:usd) { SG::Units::Unit.derive('USD', 'USD') } #'$%.2f'.to_proc)
   let(:cents) { SG::Units.scaled_unit('cents', usd, 0.01, abbrev: 'US¢') } #'%i¢'.to_proc)
   let(:btc) { SG::Units::Unit.derive('BTC', 'BTC') } #'$%.2f'.to_proc)
   let(:eur) { SG::Units::Unit.derive('EUR', 'EUR') } #'$%.2f'.to_proc)
 
   before do
+    # Convert USD to BTC at $100k
     SG::Converter.register_scaler(btc, usd, 100000)    
   end
 
@@ -21,6 +23,7 @@ describe SG::Units do
     it { expect(btc.abbrev).to eq('BTC') }
     it { expect(btc.dimension.name).to eq('BTC') }
 
+    # Unit classes can be multiplied and divided to make new Units.
     it { expect(usd * btc).to be_kind_of(Class) }
     it { expect { usd / 0 }.to raise_error(ZeroDivisionError) }
     it { expect(usd / btc).to be_kind_of(Class) }
@@ -34,14 +37,20 @@ describe SG::Units do
     it { expect(usd * (btc * eur)).to eql(usd * btc * eur) }
     it { expect(usd / (btc / eur)).to eql(usd / btc * eur) }
 
+    # invert returns 1/unit
     it { expect(usd.invert).to eql(SG::Units::Unit::Per.derive(SG::Units::Unitless, usd)) }
     it { expect(usd.invert.invert).to eql(usd) }
     it { expect(usd * usd.invert).to eql(SG::Units::Unitless) }
     it { expect(usd.invert * usd).to eql(SG::Units::Unitless) }
+
+    it { expect(1 / usd).to eql(SG::Units::Unit::Per.derive(SG::Units::Unitless, usd)) }
+    it { expect(1 / (1 / usd)).to eql(usd) }
+    it { expect(usd * (1 / usd)).to eql(SG::Units::Unitless) }
+    it { expect(1 / usd * usd).to eql(SG::Units::Unitless) }
   end
 
   describe 'subclassing' do
-    context 'by of a Product' do
+    context 'by a product' do
       let(:child) do
         Class.new(usd * btc)
       end
@@ -126,6 +135,7 @@ describe SG::Units do
     it { expect(100 / usd.new(50.0)).to eq(usd.invert.new(2)) }
     it { expect(usd.new(100) / 50).to eq(usd.new(2)) }
 
+    # Units instances derive new compound unit classes:
     it {
       expect(SG::Units::Inch.new(100) / SG::Units::Second.new(30.0) * SG::Units::Gram.new(5) / SG::Units::Inch.new(3.0)).
       to be_kind_of(SG::Units::Inch / SG::Units::Second * SG::Units::Gram / SG::Units::Inch)
@@ -135,6 +145,7 @@ describe SG::Units do
       to eql((SG::Units::Inch / SG::Units::Second * SG::Units::Gram / SG::Units::Inch).new(5))
     }
 
+    # Division of a unit by Product and Per:
     it { expect(usd*btc / (usd*btc)).to eql(SG::Units::Unitless) }
     it { expect(usd.new(100)*btc.new(0.5) / (usd.new(100)*btc.new(0.5))).to eql(SG::Units::Unitless.new(1.0)) }
     it { expect(usd.new(100)*btc.new(0.5) / (usd.new(100)*btc.new(0.5))).to eql(SG::Units::Unitless.new(1.0)) }
@@ -148,9 +159,11 @@ describe SG::Units do
     it { expect(usd.new(100.0).invert.invert).to eql(usd.new(100.0)) }
   end
 
-  describe '.cancel' do
-    it { expect((usd * btc * eur).cancel(eur)).to eql(usd*btc) }
-    it { expect((usd * btc * eur).cancel(eur*usd)).to eql(btc) }
+  describe SG::Units::Unit::Product do
+    describe '.cancel' do
+      it { expect((usd * btc * eur).cancel(eur)).to eql(usd*btc) }
+      it { expect((usd * btc * eur).cancel(eur*usd)).to eql(btc) }
+    end
   end
 end
 
@@ -208,6 +221,7 @@ describe SG::Units::Dimension do
   let(:dim2) { described_class.new('dim2') }
   let(:dim3) { described_class.new('dim3') }
 
+  # Dimensions get multiplied and divided like units:
   it { expect(dim1 * dim2 / dim2).to eq(dim1) }
   it { expect(dim1 * dim2 / dim1).to eq(dim2) }
   it { expect(dim1 * dim2 * dim3 / dim1 / dim2).to eq(dim3) }
@@ -229,6 +243,7 @@ describe SG::Units::Dimension do
 end
 
 describe SG::Units do
+  # Check the dimensions on the physics units:
   it { expect(SG::Units::Length).to be_kind_of(SG::Units::Dimension) }
   %w{ Inch Foot Meter Yard Mile }.each do |unit|
     it { expect(SG::Units.const_get(unit).dimension).to eql(SG::Units::Length) }
@@ -239,6 +254,7 @@ describe SG::Units do
     it { expect(SG::Units.const_get(unit).dimension).to eql(SG::Units::Time) }
   end
 
+  # Check the compound units and dimensions:
   it { expect(SG::Units::Velocity).to eql(SG::Units::Length / SG::Units::Time) }
   it { expect(SG::Units::Acceleration).to eql(SG::Units::Velocity / SG::Units::Time) }
   it { expect(SG::Units::Force).to eql(SG::Units::Mass * SG::Units::Acceleration) }
@@ -246,4 +262,19 @@ describe SG::Units do
   it { expect(SG::Units::Pound.dimension).to eql(SG::Units::Force) }
   it { expect(SG::Units::Energy).to eql(SG::Units::Force * SG::Units::Length) }
   it { expect(SG::Units::Joule.dimension).to eql(SG::Units::Energy) }
+
+  # 1/second and Hertz was failing the Per and Product caches.
+  # 1/Unit also involves a #coerce.
+  it { expect(1 / SG::Units::Second).to eql(SG::Units::Hertz) }
+  it { expect(SG::Units::Second.invert).to eql(SG::Units::Hertz) }
+  it { expect((1 / SG::Units::Second).name).to eql('hertz') }
+  it { expect(SG::Units::Second.invert.name).to eql('hertz') }
+  it { expect(1 / SG::Units::Hertz).to eql(SG::Units::Second) }
+  it { expect(SG::Units::Hertz.invert).to eql(SG::Units::Second) }
+
+  # A Per*Per and Per/Per were not canceling terms
+  it { expect(SG::Units::Columb.invert * SG::Units::Ampere).
+    to eql(SG::Units::Hertz) }
+  it { expect((SG::Units::Columb.invert * SG::Units::Ampere).dimension).
+    to eql(SG::Units::Hertz.dimension) }
 end

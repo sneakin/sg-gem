@@ -82,6 +82,10 @@ module SG::Units
       rescue NoMethodError
         false
       end
+
+      def coerce other
+        [ Unitless, self ]
+      end
     end
 
     class Per < Unit
@@ -106,21 +110,27 @@ module SG::Units
         def * other
           # a/b * b => a
           return numerator if denominator == other
-          # a/b * x/a => x/b
-          return other.numerator / denominator if other.superclass == Per && numerator == other.denominator
+          if other.subclasses?(Per)
+            # a/b * x/a => x/b
+            return other.numerator / denominator if numerator == other.denominator
+            # a/b * x/y
+            return (numerator * other.numerator).cancel(denominator * other.denominator)
+          end
           # a/b * x => ax/b
           return derive(numerator * other, denominator)
         end
 
         def / other
-          # a/b / 1/b => a
-          return numerator / other.numerator if other.superclass == Per && denominator == other.denominator
           # a/b / a => a/b * 1/a => 1/b
           return Unitless / denominator if numerator == other
-          # a/b / a/x => a/b * x/a => x/b
-          return other.numerator / denominator if other.superclass == Per && numerator == other.numerator
+          if other.subclasses?(Per)
+            # a/b / 1/b => a
+            return numerator / other.numerator if denominator == other.denominator
+            # a/b / a/x => a/b * x/a => x/b
+            return other.numerator / denominator if numerator == other.numerator
+          end
           # a/b / xa => x/b
-          return Per.derive(numerator.delete(other), denominator) if numerator.superclass == Product && numerator.include?(other)
+          return Per.derive(numerator.delete(other), denominator) if numerator.subclasses?(Product) && numerator.include?(other)
           # a/b / x => a/bx
           return Per.derive(numerator, denominator * other)
         end
@@ -134,7 +144,12 @@ module SG::Units
         end
         
         def derive n, d
-          key = Set.new([n, d])
+          # n = n.first if Array === n && n.size == 1
+          # n = n.terms.first if n.subclasses?(Product) && n.terms.size == 1
+          # d = d.first if Array === d && d.size == 1
+          # d = d.terms.first if d.subclasses?(Product) && d.terms.size == 1
+
+          key = [n, d]
           cached = per_cache[key]
           return cached if cached
           
@@ -156,12 +171,14 @@ module SG::Units
       return Unitless if self == other
       # A/1
       return self if other == 1 || other == Unitless
-      # A / A/x => x
-      return other.denominator if other.superclass == Per && self == other.numerator
       # A / Ab => 1 / b
-      return Per.derive(Unitless, other.delete(self)) if other.superclass == Product && other.include?(self)
-      # A / x/y => A*y / x
-      return Per.derive(self * other.denominator, other.numerator) if other.superclass == Per
+      return Per.derive(Unitless, other.delete(self)) if other.subclasses?(Product) && other.include?(self)
+      if other.subclasses?(Per)
+        # A / A/x => x
+        return other.denominator if self == other.numerator
+        # A / x/y => A*y / x
+        return Per.derive(self * other.denominator, other.numerator)
+      end
       # A / x
       Per.derive(self, other)
     end
@@ -192,7 +209,7 @@ module SG::Units
         end
 
         def cancel other
-          if other.superclass == Product
+          if other.subclasses?(Product)
             n, d = terms.disjunction(other.terms)
             if d.empty?
               if n.size < 2
@@ -201,7 +218,9 @@ module SG::Units
                 Product.derive(*n)
               end
             else
-              Per.derive(Product.derive(*n), Product.derive(*d))
+              n = n.size > 1 ? Product.derive(*n) : n.first
+              d = d.size > 1 ? Product.derive(*d) : d.first
+              Per.derive(n, d)
             end
           elsif include?(other)
             delete(other)
@@ -219,29 +238,33 @@ module SG::Units
           # a / a
           return Unitless if self == other
           # a*b / x*y
-          return cancel(other) if other.superclass == Product
+          return cancel(other) if other.subclasses?(Product)
           # a*b / b => a
           # a*b / a => b
           return delete(other) if terms.include?(other)
-          # a*b / b/x => a/x
-          # a*b / a/x => b/x
-          return delete(other) * other.denominator if other.superclass == Per && terms.include?(other.numerater)
-          # ab / abxyz
-          #return cancel(other) if other.superclass == Product
-          # a*b / x/y => a*b*y/x
-          return Per.derive(self * other.denominator, other.numerator) if other.superclass == Per
+          if other.subclasses?(Per)
+            # a*b / b/x => a/x
+            # a*b / a/x => b/x
+            return delete(other) * other.denominator if terms.include?(other.numerater)
+            # ab / abxyz
+            #return cancel(other) if other.subclasses?(Product)
+            # a*b / x/y => a*b*y/x
+            return Per.derive(self * other.denominator, other.numerator)
+          end
           # a*b / x
           return Per.derive(self, other)
         end
 
         def * other
-          # a*b * x/a => x*b
-          # a*b * x/b => a*x
-          return delete(other.denominator) * other.numerator if other.superclass == Per && terms.include?(other.denominator)
-          # a*b / x/y => aby/x
-          return Per.derive(self * other.denominator, other.numerator) if other.superclass == Per
+          if other.subclasses?(Per)
+            # a*b * x/a => x*b
+            # a*b * x/b => a*x
+            return delete(other.denominator) * other.numerator if terms.include?(other.denominator)
+            # a*b / x/y => aby/x
+            return Per.derive(self * other.denominator, other.numerator)
+          end
           # a*b * x*y
-          return derive(*other.terms) if other.superclass == Product
+          return derive(*other.terms) if other.subclasses?(Product)
           # a*b * x
           return derive(other)
         end
@@ -249,15 +272,17 @@ module SG::Units
         def product_cache
           @product_cache ||= Hash.new
         end
-        
+
+        # todo is returning seconds for seconds*seconds
         def derive *new_terms
-          all_terms = (terms || []) + (new_terms || [])
+          all_terms = ((terms || []) + (new_terms || [])).freeze
           return Unitless if all_terms.empty?
-          key = Set.new(all_terms)
-          cached = product_cache[key]
+          raise ArgumentError, 'single term product' if all_terms.size < 2
+          #return all_terms[0] if all_terms.size == 1 && all_terms[0].subclasses?(Unit)
+          cached = product_cache[all_terms]
           return cached if cached
-          product_cache[key] ||= Class.new(Product).tap do |p|
-            p.terms = all_terms.freeze
+          product_cache[all_terms] ||= Class.new(Product).tap do |p|
+            p.terms = all_terms
             p.dimension = all_terms.
               collect(&:dimension).
               reduce(SG::Ignored.new, &:*)
@@ -271,12 +296,14 @@ module SG::Units
       return Unitless if other == 0
       # A * 1
       return self if other == 1 || other == Unitless
-      # A * x/A
-      return other.numerator if other.superclass == Per && self == other.denominator
-      # A * x/y
-      return Per.derive(self * other.numerator, other.denominator) if other.superclass == Per
+      if other.subclasses?(Per)
+        # A * x/A
+        return other.numerator if self == other.denominator
+        # A * x/y
+        return Per.derive(self * other.numerator, other.denominator)
+      end
       # A * xyz
-      return Product.derive(self, *other.terms) if other.superclass == Product
+      return Product.derive(self, *other.terms) if other.subclasses?(Product)
       # A * x
       Product.derive(self, other)
     end
