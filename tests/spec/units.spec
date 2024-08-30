@@ -7,6 +7,7 @@ describe SG::Units do
   let(:usd) { SG::Units::Unit.derive('USD', 'USD') } #'$%.2f'.to_proc)
   let(:cents) { SG::Units.scaled_unit('cents', usd, 0.01, abbrev: 'US¢') } #'%i¢'.to_proc)
   let(:btc) { SG::Units::Unit.derive('BTC', 'BTC') } #'$%.2f'.to_proc)
+  let(:eur) { SG::Units::Unit.derive('EUR', 'EUR') } #'$%.2f'.to_proc)
 
   before do
     SG::Converter.register_scaler(btc, usd, 100000)    
@@ -21,12 +22,17 @@ describe SG::Units do
     it { expect(btc.dimension.name).to eq('BTC') }
 
     it { expect(usd * btc).to be_kind_of(Class) }
+    it { expect { usd / 0 }.to raise_error(ZeroDivisionError) }
     it { expect(usd / btc).to be_kind_of(Class) }
     it { expect(usd / usd).to eql(SG::Units::Unitless) }
     it { expect((usd / usd).new(3)).to eql(SG::Units::Unitless.new(3)) }
     it { expect((usd / cents).new(10)).to be_kind_of(SG::Units::Unit::Per) }
     it { expect(usd / btc * btc).to eql(usd) }
     it { expect(usd * btc / btc).to eql(usd) }
+    it { expect(usd / (btc * eur)).to eql(usd / btc / eur) }
+    it { expect(usd * (btc / eur)).to eql(usd * btc / eur) }
+    it { expect(usd * (btc * eur)).to eql(usd * btc * eur) }
+    it { expect(usd / (btc / eur)).to eql(usd / btc * eur) }
 
     it { expect(usd.invert).to eql(SG::Units::Unit::Per.derive(SG::Units::Unitless, usd)) }
     it { expect(usd.invert.invert).to eql(usd) }
@@ -34,6 +40,28 @@ describe SG::Units do
     it { expect(usd.invert * usd).to eql(SG::Units::Unitless) }
   end
 
+  describe 'subclassing' do
+    context 'by of a Product' do
+      let(:child) do
+        Class.new(usd * btc)
+      end
+
+      it { expect(child.name).to eql('USD*BTC') }
+      it { expect(child.abbrev).to eql('USD*BTC') }
+      it { expect(child.dimension).to eql(usd.dimension * btc.dimension) }
+    end
+
+    context 'by of a Per' do
+      let(:child) do
+        Class.new(usd / btc)
+      end
+
+      it { expect(child.name).to eql('USD / BTC') }
+      it { expect(child.abbrev).to eql('USD/BTC') }
+      it { expect(child.dimension).to eql(usd.dimension / btc.dimension) }
+    end
+  end
+  
   describe '#to_s' do
     it { expect(usd.new(100).to_s).to eq('100 USD') }
     it { expect(cents.new(100).to_s).to eq('100 US¢') }
@@ -88,6 +116,8 @@ describe SG::Units do
     it { expect((btc * usd * btc / usd / btc / btc).new(10)).to be_kind_of(SG::Units::Unitless) }
     it { expect((btc * usd * btc / btc / usd / btc).new(10)).to be_kind_of(SG::Units::Unitless) }
     it { expect((btc * usd * btc / btc / btc / usd).new(10)).to be_kind_of(SG::Units::Unitless) }
+    it { expect { usd.new(10) / 0 }.to raise_error(ZeroDivisionError) }
+    it { expect { usd.new(10) / usd.new(0) }.to raise_error(ZeroDivisionError) }
     it { expect(usd.new(100) / usd.new(50)).to eq(2) }
     it { expect(usd.new(100) / cents.new(50)).to eq(200.0) }
     it { expect(usd.new(100) / btc.new(0.0001)).to eq((usd / btc).new(1000000.0)) }
@@ -95,11 +125,32 @@ describe SG::Units do
     it { expect(btc.new(10) * usd.new(100) / btc.new(0.0001)).to eq(usd.new(10000000.0)) }
     it { expect(100 / usd.new(50.0)).to eq(usd.invert.new(2)) }
     it { expect(usd.new(100) / 50).to eq(usd.new(2)) }
+
+    it {
+      expect(SG::Units::Inch.new(100) / SG::Units::Second.new(30.0) * SG::Units::Gram.new(5) / SG::Units::Inch.new(3.0)).
+      to be_kind_of(SG::Units::Inch / SG::Units::Second * SG::Units::Gram / SG::Units::Inch)
+    }
+    it {
+      expect(SG::Units::Inch.new(100) / SG::Units::Second.new(30) * SG::Units::Gram.new(5) / SG::Units::Inch.new(3)).
+      to eql((SG::Units::Inch / SG::Units::Second * SG::Units::Gram / SG::Units::Inch).new(5))
+    }
+
+    it { expect(usd*btc / (usd*btc)).to eql(SG::Units::Unitless) }
+    it { expect(usd.new(100)*btc.new(0.5) / (usd.new(100)*btc.new(0.5))).to eql(SG::Units::Unitless.new(1.0)) }
+    it { expect(usd.new(100)*btc.new(0.5) / (usd.new(100)*btc.new(0.5))).to eql(SG::Units::Unitless.new(1.0)) }
+
+    it { expect(usd*btc*eur / (usd*btc)).to eql(eur) }
+    it { expect(usd.new(100)*btc.new(0.5)*eur.new(2) / (usd.new(100)*btc.new(0.5))).to eql(eur.new(2.0)) }
   end
 
   describe '#invert' do
     it { expect(usd.new(100.0).invert).to eql(usd.invert.new(0.01)) }
     it { expect(usd.new(100.0).invert.invert).to eql(usd.new(100.0)) }
+  end
+
+  describe '.cancel' do
+    it { expect((usd * btc * eur).cancel(eur)).to eql(usd*btc) }
+    it { expect((usd * btc * eur).cancel(eur*usd)).to eql(btc) }
   end
 end
 
@@ -162,7 +213,19 @@ describe SG::Units::Dimension do
   it { expect(dim1 * dim2 * dim3 / dim1 / dim2).to eq(dim3) }
   it { expect(dim1 / dim1).to eq(SG::Units::NullDimension) }
   it { expect(1 / dim1 * dim1).to eq(SG::Units::NullDimension) }
+  it { expect { dim1 / 0 }.to raise_error(ZeroDivisionError) }
+
   it { expect(dim1.invert * dim1).to eq(SG::Units::NullDimension) }
+
+  it { expect(dim1*dim2 / (dim1*dim2)).to eql(SG::Units::NullDimension) }
+  it { expect(dim1*dim2*dim3 / (dim1*dim2)).to eql(dim3) }
+  it { expect(dim1*(dim2/dim3)).to eql(dim1*dim2/dim3) }
+
+  describe '.cancel' do
+    it { expect((dim1 * dim2 * dim3).cancel(dim3)).to eql(dim1*dim2) }
+    it { expect((dim1 * dim2 * dim3).cancel(dim3*dim1)).to eql(dim2) }
+  end
+  
 end
 
 describe SG::Units do

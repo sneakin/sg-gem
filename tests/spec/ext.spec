@@ -455,6 +455,63 @@ describe Array do
       end
     end
   end
+
+  describe '#delete_one!' do
+    it { expect([].delete_one!(2)).to eql(nil) }
+
+    let(:arr) { [ 10, 20, 30, 20 ] }
+    
+    it { expect { arr.delete_one!(20) }.to change { arr }.to([ 10, 30, 20 ]) }
+    it { expect { arr.delete_one!(40) }.to_not change { arr } }
+
+    it 'modifies the array' do
+      a = %w{a b c a}
+      b = a.delete_one!('a')
+      expect(a).to eql(%w{b c a})
+    end
+
+    it 'returns the item' do
+      a = %w{a b c a}
+      b = a.delete_one!('a')
+      expect(b).to eql('a')
+    end
+
+    it 'returns nil if nothing is deleted' do
+      a = %w{a b c a}
+      b = a.delete_one!('d')
+      expect(b).to be(nil)
+      expect(a).to eql(%w{a b c a})
+    end
+  end
+
+  describe '#delete_one' do
+    it { expect([].delete_one(:c)).to eql([]) }
+    
+    it { expect([ 1, 1, 1 ].delete_one(1)).to eql([ 1, 1 ]) }
+
+    it {
+      expect(%w{a b c d a b c d}.delete_one(:c)).
+      to eql(%w{a b c d a b c d})
+    }
+
+    it {
+      expect(%w{a b c d a b c d}.delete_one('c')).
+      to eql(%w{a b d a b c d})
+    }
+
+    it 'returns a new array' do
+      a = %w{a b c a}
+      b = a.delete_one('a')
+      expect(b).to_not equal(a)
+      expect(b).to eql(%w{b c a})
+    end
+
+    it 'returns the array if nothing is deleted' do
+      a = %w{a b c a}
+      b = a.delete_one('z')
+      expect(b).to equal(a)
+    end
+  end
 end
 
 describe String do
