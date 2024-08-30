@@ -1,0 +1,64 @@
+#!/usr/bin/env ruby
+require 'bundler/setup'
+require 'webrick'
+
+require 'optparse'
+
+port = 8899
+dirs = []
+files = []
+title = 'Index: /'
+
+args = OptionParser.new do |o|
+  o.on('--port INTEGER') do |n|
+    port = n.to_i
+  end
+  o.on('-d', '--dir path:resource') do |v|
+    path, resource = v.split(':')
+    resource ||= File.basename(path)
+    dirs << [ path, resource ]
+  end
+  o.on('-f', '--file path:resource') do |v|
+    path, resource = v.split(':')
+    resource ||= File.basename(path)
+    files << [ path, resource ]
+  end
+  o.on('-t', '--title TITLE') do |v|
+    title = v
+  end
+end.parse(ARGV)
+
+if files.empty? && dirs.empty?
+  dirs = [ [ 'doc', 'doc' ], [ 'coverage', 'coverage' ] ]
+  files = [ [ 'doc/spec.html', 'spec.html' ] ]
+end
+
+def link_to href, label = nil
+  "<a href=\"%s\">%s</a>" % [ href, label || href ]
+end
+  
+server = WEBrick::HTTPServer.new(Port: port)
+server.mount_proc('/') do |req, resp|
+  resp.status = 200
+  resp.body = '<html><body>' +
+    '<h1>' + title + '</h1>' +
+    (dirs + files).sort_by(&:first).collect do |(path, resource)|
+      href = resource.end_with?('/') ? resource : resource + '/'
+      link_to(href, resource)
+    end.join("<br/>\n") +
+    '</body></html>'
+end
+dirs.each do |(path, resource)|
+  resource = '/' + resource unless resource.start_with?('/')
+  server.mount(resource, WEBrick::HTTPServlet::FileHandler, path, FancyIndexing: true)
+end
+files.each do |(path, resource)|
+  resource = '/' + resource unless resource.start_with?('/')
+  server.mount(resource, WEBrick::HTTPServlet::DefaultFileHandler, path)
+end
+
+trap('INT') do
+  server.stop
+end
+
+server.start
