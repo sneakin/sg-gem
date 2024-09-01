@@ -65,17 +65,23 @@ EOT
       # scan words, spaces, and delimeters
       scan(/(?:[[:alnum:]]+|(?:\s|[-_\/\\])+)/).
         reject { |p| p.blank? || p =~ /\A[-_]+\Z/ }.
-        collect { |p| p.titleize }.
-        join.
-        gsub(/(.?)([-_\/\\]+)(.?)/) do
-        if $1.space?
-          # strip spaces around delimeters
-          $2 + ($3.space? ? '' : $3)
-        else
-          # no spaces so replace delimeters
-          $1 + '::' + $3
-        end
-      end
+        collect { |p|
+          # all uppercase words get downcased
+          # while mixes only upcases thebfirst letter
+          if p =~ /\A(?:[[:upper:]]|[[:digit:]])+\Z/
+            p.capitalize
+          else
+            p.titleize
+          end
+        }.join.gsub(/(.?)([-_\/\\]+)(.?)/) {
+          if $1.space?
+            # strip spaces around delimeters
+            $2 + ($3.space? ? '' : $3)
+          else
+            # no spaces so replace delimeters
+            $1 + '::' + $3
+          end
+        }
     end
 
     def decamelize delim: ' '

@@ -641,7 +641,11 @@ EOT
               [ 'hello / world', 'Hello/World' ],
               [ 'Hello / World', 'Hello/World' ],
               [ 'HelloWorld', 'HelloWorld' ],
-              [ 'TheFooBar', 'TheFooBar' ]
+              [ 'TheFooBar', 'TheFooBar' ],
+              [ 'HELLOworld', 'HELLOworld' ],
+              [ 'HELLO123', 'Hello123' ],
+              [ 'HELLO world', 'HelloWorld' ],
+              [ 'HELLO WORld', 'HelloWORld' ]
             ]
           ]
     
