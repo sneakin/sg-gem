@@ -65,7 +65,7 @@ EOT
       # scan words, spaces, and delimeters
       scan(/(?:[[:alnum:]]+|(?:\s|[-_\/\\])+)/).
         reject { |p| p.blank? || p =~ /\A[-_]+\Z/ }.
-        collect { |p| p.capitalize }.
+        collect { |p| p.titleize }.
         join.
         gsub(/(.?)([-_\/\\]+)(.?)/) do
         if $1.space?

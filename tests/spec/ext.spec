@@ -640,6 +640,8 @@ EOT
               [ 'hello _ world', 'Hello_World' ],
               [ 'hello / world', 'Hello/World' ],
               [ 'Hello / World', 'Hello/World' ],
+              [ 'HelloWorld', 'HelloWorld' ],
+              [ 'TheFooBar', 'TheFooBar' ]
             ]
           ]
     
