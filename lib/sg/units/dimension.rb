@@ -27,8 +27,11 @@ module SG::Units
     end
 
     def coerce other
-      # fixme hmm
-      [ NullDimension, self ]
+      if self.class === other
+        [ other, self ]
+      else
+        [ NullDimension, self ]
+      end
     end
 
     def * other
@@ -70,6 +73,8 @@ module SG::Units
       "#<Dimension:%s>" % [ name ]
     end
 
+    # todo single term products promoted to the term
+    
     class Per < Dimension
       attr_accessor :numerator, :denominator
       def initialize n, d

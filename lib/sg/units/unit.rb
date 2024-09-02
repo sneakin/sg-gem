@@ -42,7 +42,11 @@ module SG::Units
     end
 
     def coerce other
-      [ Unitless.new(other), self ]
+      if Unit === other
+        [ other, self ]
+      else
+        [ Unitless.new(other), self ]
+      end
     end
     
     class << self
@@ -84,7 +88,11 @@ module SG::Units
       end
 
       def coerce other
-        [ Unitless, self ]
+        if Unit === other
+          [ other, self ]
+        else
+          [ Unitless, self ]
+        end
       end
     end
 
