@@ -44,7 +44,7 @@ module SG
         tty_styles => { heading: h, normal: n }
         op ||= OptionParser.new do |o|
           o.banner = <<-EOT % [ o.program_name ]
-#{h}Usage:#{n} %s command [options...] [arguments...]
+#{h}Usage:#{n} %s command [options...]
 
 #{h}Global options:#{n}
 EOT
@@ -58,7 +58,7 @@ EOT
 
     def options_for cmd, opts = options, name: cmd.printable_name
       tty_styles => { heading: h, normal: n }
-      opts.banner = <<-EOT % [ opts.program_name, name, cmd.argdoc != '' ? ' ' : '', cmd.argdoc || '[arguments...]' ]
+      opts.banner = <<-EOT % [ opts.program_name, name, cmd.argdoc != '' ? ' ' : '', cmd.argdoc || '' ]
 #{h}Usage:#{n} %s %s [options...]%s%s
 EOT
       if cmd.desc
