@@ -4,7 +4,7 @@ module SG::Ext
       methods.each do |m|
         module_eval <<-EOT
 def #{m}(...)
-  #{to}.#{m}(...)
+  self.#{to}.#{m}(...)
 end
 EOT
       end
