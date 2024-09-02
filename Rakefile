@@ -42,11 +42,24 @@ namespace :spec do
 end
 
 namespace :doc do
-  desc 'Generate the API documentation as HTML.'
-  task :api do
-    require 'rdoc/rdoc'
-    rdoc = RDoc::RDoc.new
-    rdoc.document %w{-o doc/api lib}
+  begin
+    require 'yard'
+
+    desc 'Generate the API documentation as HTML.'
+    YARD::Rake::YardocTask.new(:api) do |t|
+      t.files   = ['bin/*[^~]', '{bin,lib}/**/*.rb']
+      t.options = ['--title', NAME, '-e', 'lib/sg/yard.rb', '-o', Pathname.new(__FILE__).dirname.join('doc', 'api').to_s]
+      #t.options = ['--any', '--extra', '--opts', '-o', Pathname.new(__FILE__).dirname.join('doc', 'api').to_s]
+      #t.stats_options = ['--list-undoc']
+    end
+  rescue LoadError
+    require 'rdoc/task'
+    RDoc::Task.new(:api) do |t|
+      t.main = "README.rdoc"
+      t.rdoc_dir = 'doc/api'
+      t.options += %w{--all}
+      t.rdoc_files.include('README.rdoc', 'bin/*[^~]', '{bin,lib}/**/*.rb')
+    end
   end
 end
 
