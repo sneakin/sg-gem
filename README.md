@@ -14,7 +14,18 @@ rights reserved.
 
 ### Per Project
 
+To use the last official release:
+
     bundle add sg-gem
+
+Or to use the latest Git or local copy located a directory above:
+
+    if File.exist?(File.join(File.dirname(__FILE__), '../sg-gem'))
+      gem 'sg', path: '../sg-gem'
+    else
+      gem 'sg', git: 'git@github.com:sneakin/sg-gem.git'
+    end
+
 
 ### Development
 
