@@ -54,7 +54,14 @@ modules under {SG}.
 
     require 'sg/converter'
 
-    '12.3'.to(Float)
+    SG::Converter.convert('12.3', Float)
+    SG::Converter.register(String, Complex) do |s|
+      s =~ /([-+]?\d.*),([-+]?\d.*)/ && Complex($1.to_f, $2.to_f)
+    end
+    SG::Converter.convert('23,45', Complex)
+
+    using SG::Ext
+    '12.34,56'.to(Complex)
 
 ## Units of measure
 
@@ -72,12 +79,14 @@ to provide useful `--help` output.
 
     require 'sg/selfhelp'
 
+    # Use `@commands` to start, and `@cmd` for each case..
+    # @commands
     case (cmd = ARGV.shift)
     when 'normal' then # @cmd Do normal stuff
       do_normal_stuff
-    when 'big' then # @cmd(amount) Does big stuff withban argument
+    when 'big' then # @cmd(amount) Does big stuff with an argument
       do_big_stuff
-    else raise ArgumentError, "Unknown command: #{cmd}"
+    else SG::SelfHelp.print # <-- the important bit
     end
 
 
