@@ -2,6 +2,7 @@ using SG::Ext
 
 module SG::Units
   module SI
+    # Standard and binary metric prefixes
     Prefixes = {
       '' => 1,
       deci: 1e-1,
@@ -28,26 +29,31 @@ module SG::Units
       ronna: 1e27,
       quecto: 1e-30,
       quetta: 1e30,
-      kiba: (1 << 10).to_f,
-      meba: (1 << 20).to_f,
-      giba: (1 << 30).to_f,
-      tiba: (1 << 40).to_f,
-      peba: (1 << 50).to_f
+      kibi: (1 << 10).to_f,
+      mebi: (1 << 20).to_f,
+      gibi: (1 << 30).to_f,
+      tibi: (1 << 40).to_f,
+      pebi: (1 << 50).to_f,
+      exbi: (1 << 60).to_f,
+      zebi: (1 << 70).to_f,
+      yobi: (1 << 80).to_f
     }
-    
-    def self.si_prefix unit_s
-      unit_s = unit_s.to_s
-      unit_n = unit_s.camelize
-      unit = const_get("SG::Units::#{unit_n}")
-      Prefixes.each do |prefix, scale|
-        const_set("#{prefix.to_s.camelize}#{unit_n}",
-                  SG::Units.scaled_unit("#{prefix}#{unit_s.downcase}", unit, scale))
-      end
-    end
 
-    %w{ Meter Second Hertz Gram
-        Liter Mole Newton Watt Joule
-        Volt Ampere Ohm Byte Bit
-    }.each(&method(:si_prefix))
+    # Generate modules for each prefix that derive from
+    # {SG::Units} or any unit subclass using {#[]}.
+    Prefixes.each do |prefix, scale|
+      prefix = prefix.to_s
+      next if prefix.blank?
+      mod = nil
+      mod = Module.new do
+        define_singleton_method(:[]) do |base|
+          SG::Units.scaled_unit("#{prefix}#{base.name.downcase}", base, scale)
+        end        
+        define_singleton_method(:const_missing) do |unit|
+          const_set(unit, mod[SG::Units.const_get(unit.to_s)])
+        end
+      end
+      const_set(prefix.camelize, mod)
+    end    
   end
 end
