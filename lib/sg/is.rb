@@ -1,6 +1,7 @@
 require 'sg/ext'
 using SG::Ext
 
+# `case` clause helpers.
 module SG::Is
   module NewBracket
     module ClassMethods

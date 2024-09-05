@@ -106,11 +106,8 @@ module SG
   end
 end
 
-#
-# Monkey patch Object
-#
-
 module SG::Ext
+  # Refine core classes:
   [ ::String, ::Integer, ::Float ].each do |klass|
     refine klass do
       begin

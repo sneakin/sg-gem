@@ -1,0 +1,5 @@
+<ul>
+<% @refs.each do |r| %>
+<li><%= linkify(r.path, r.path) %></li>
+<% end %>
+</ul>
