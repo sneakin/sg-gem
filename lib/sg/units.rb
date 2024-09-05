@@ -8,10 +8,12 @@ using SG::Ext
 # Units of measure
 #
 # @example
-#   require 'sg/units'
-#   SG::Units::Foot.new(3.0).to(SG::Units::Meter)
-#   SG::Units::Gram.new(5) * 3 + SG::Units::Gram.new(10)
-#   SG::Units::Liter.new(5) / SG::Units::Minute.new(60) * SG::Units::Second.new(10.0)
+#
+#     require 'sg/units'
+#     SG::Units::Foot.new(3.0).to(SG::Units::Meter)
+#     SG::Units::Gram.new(5) * 3 + SG::Units::Gram.new(10)
+#     SG::Units::Liter.new(5) / SG::Units::Minute.new(60) * SG::Units::Second.new(10.0)
+#
 module SG::Units
 end
 

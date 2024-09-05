@@ -10,15 +10,20 @@ module SG
   # Use `@commands` to start, and `@cmd` for each case.
   # `@cmd(x, y, z)` can documont argumo\ents.
   #
+  # An `if $0 == __FILE__` line is also detected and treated
+  # like it was a `@commands`.
+  #
   # @example
-  #   # @commands
-  #   case (cmd = ARGV.shift)
-  #   when 'normal' then # @cmd Do normal stuff
-  #     do_normal_stuff
-  #   when 'big' then # @cmd(amount) Does big stuff with an argument
-  #     do_big_stuff
-  #   else SG::SelfHelp.print # <-- the important bit
-  #   end
+  #
+  #     # @commands
+  #     case (cmd = ARGV.shift)
+  #     when 'normal' then # @cmd Do normal stuff
+  #       do_normal_stuff
+  #     when 'big' then # @cmd(amount) Does big stuff with an argument
+  #      do_big_stuff
+  #     else SG::SelfHelp.print # <-- the important bit
+  #     end
+  #
   module SelfHelp
     def self.scan_for_commands
       File.open($0, 'rt') do |src|

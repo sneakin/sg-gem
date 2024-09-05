@@ -43,37 +43,56 @@ namespace :spec do
   task :html => 'doc/spec.html'
 end
 
-namespace :doc do
-  failed_yard = true
-  use_yard = !!(ENV.fetch('USE_YARD', '1') =~ /(y|1)/i)
+use_rdoc = !!(ENV.fetch('USE_RDOC', '0') =~ /(y|1)/i)
+use_yard = !!(ENV.fetch('USE_YARD', '1') =~ /(y|1)/i)
+failed_yard = true
   
+namespace :doc do
   if use_yard
     begin
       require 'yard'
 
       desc 'Generate the API documentation as HTML.'
-      YARD::Rake::YardocTask.new(:api) do |t|
+      YARD::Rake::YardocTask.new(:yard) do |t|
         t.files   = [ 'Rakefile', 'lib/sg.rb', 'bin/*[^~]', '{bin,lib,tests}/**/*.{rb,spec}', '-', 'README.md', 'COPYING' ]
-        t.options = ['--title', NAME, '-o', ROOT.join('doc', 'api').to_s, '-m', 'markdown', '-e', 'lib/sg/yard/refine.rb', '-e', 'lib/sg/yard/refine.rb', '-p', ROOT.join('templates').to_s]
+        t.options = ['--title', NAME, '-o', ROOT.join('doc', 'yard').to_s, '-m', 'markdown', '-e', 'lib/sg/yard/refine.rb', '-e', 'lib/sg/yard/refine.rb', '-p', ROOT.join('templates').to_s]
       end
       
       failed_yard = false
+
+      desc 'Generate the API docs.'
+      task :api => [ 'doc:yard' ]
+      
+      file 'doc/api' do
+        FileUtils.ln_sf('yard', 'doc/api')
+      end
     rescue LoadError
     end
   end
   
-  if failed_yard
+  if use_rdoc || failed_yard
     require 'rdoc/task'
-    RDoc::Task.new(:api) do |t|
+
+    RDoc::Task.new(:rdoc) do |t|
       t.main = "README.md"
-      t.rdoc_dir = 'doc/api'
+      t.rdoc_dir = 'doc/rdoc'
       t.options += %w{--all --markup markdown}
       t.rdoc_files.include('README.md', 'COPYING', 'Rakefile', 'bin/*[^~]', '{bin,lib,tests}/**/*.{rb,spec}')
+    end
+    
+    desc 'Generate the API docs.'
+    task :api => [ 'doc:rdoc' ]
+
+    if failed_yard
+      file 'doc/api' do
+        FileUtils.ln_sf('rdoc', 'doc/api')
+      end
     end
   end
 end
 
-task :doc => [ 'doc:api', 'spec:html' ]
+desc 'Generate the API docs and spec doc.'
+task :doc => [ 'doc:api', 'doc/api', 'spec:html' ]
 
 namespace :gem do
   file "#{NAME}-#{VERSION}.gem" => 'sg.gemspec' do
@@ -86,5 +105,5 @@ end
 
 desc 'Remove any built files.'
 task :clean do
-  sh("rm -rf #{NAME}*.gem doc/api doc/spec.html")
+  sh("rm -rf #{NAME}*.gem doc/api doc/rdoc doc/yard doc/spec.html")
 end
