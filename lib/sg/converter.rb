@@ -10,6 +10,17 @@ require 'sg/ignored'
 using SG::Ext
 
 module SG
+  # A type conversion registry.
+  #
+  # @example
+  #   SG::Converter.convert('12.3', Float)
+  #   SG::Converter.register(String, Complex) do |s|
+  #     s =~ /([-+]?\d.*),([-+]?\d.*)/ && Complex($1.to_f, $2.to_f)
+  #   end
+  #   SG::Converter.convert('23,45', Complex)
+  #
+  #   using SG::Ext
+  #   '12.34,56'.to(Complex)
   class Converter
     class NoConverterError < TypeError
       attr_reader :from, :to

@@ -5,8 +5,22 @@ require 'sg/hash_struct'
 module SG
   # Include this to be able to define attributes that get packed
   # into or unpacked from a string of binary data.
+  #
   # Attributes are defined by including the module and
   # using {ClassMethods#define_packing}.
+  #
+  # @example
+  #   class Person
+  #     include SG::AttrStruct
+  #     include SG::PackedStruct
+  #     define_packing([:name, :string],
+  #                    [:age, :uint8])
+  #     init_attr :age, 0
+  #   end
+  #
+  #   bin = Person.new(name: 'Alice', age: 32).pack
+  #   alice = Person.unpack(bin)
+  #
   # @todo array and string fields that use all the data
   # @todo explicit field offset: data interleaved with fields, trees
   module PackedStruct

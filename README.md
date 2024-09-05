@@ -74,7 +74,7 @@ modules under {SG}.
 
 ### SelfHelp
 
-{SG::SelfHelp}  extracts comments from a script built around a `case`
+{SG::SelfHelp} extracts comments from a script built around a `case`
 to provide useful `--help` output.
 
     require 'sg/selfhelp'
