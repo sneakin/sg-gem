@@ -9,6 +9,9 @@ require 'sg/color'
 require 'optparse'
 require 'sg/terminstry/terminals'
 
+require 'sg/ext'
+using SG::Ext
+
 Terminals = SG::Terminstry::Terminals
 Color = SG::Color
 
@@ -28,7 +31,10 @@ args = OptionParser.new do |o|
 end.parse!(ARGV)
 
 vt100 = Terminals.make_tty
-case ARGV.shift
+
+# @commands
+
+case (mode = ARGV.shift)
 when 'normal' then # @cmd Print the code to reset the TTY.
   $stdout.write(vt100.normal)
 when 'rgb' then # @cmd Print the escape code for an RGB color.
@@ -100,9 +106,11 @@ when 'rgb-grad' then # @cmd Print a gradient that uses the whole RGB colorspace.
     end
     $stdout.puts(vt100.normal)
   end
-when /-*help/ then # @cmd Print this list.
+else
   require 'sg/selfhelp'
   SG::SelfHelp.print
-else raise ArgumentError.new("Unknown mode.")
+  unless mode.blank? || mode =~ /help/
+    puts
+    puts("Unknown mode: %s" % [ mode ])
+  end
 end
-

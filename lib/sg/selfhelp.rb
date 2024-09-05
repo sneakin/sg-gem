@@ -25,8 +25,8 @@ module SG
   #     end
   #
   module SelfHelp
-    def self.scan_for_commands
-      File.open($0, 'rt') do |src|
+    def self.scan_for_commands path
+      File.open(path, 'rt') do |src|
         broke = src.each_line do |l|
           break true if l.match?(/(#\s*@commands|\$0 == __FILE__)/)
         end
@@ -35,14 +35,14 @@ module SG
         cmds = []
         src.each_line do |l|
           case l
-          when /^\s*when '(.*)' then( # @cmd(\(.*\))?\s*(.*$))/,
-               /^\s*when "(.*)" then( # @cmd(\(.*\))?\s*(.*$))/
+          when /^\s*when\s+'(.*)'\s+then(\s+#\s+@cmd(\(.*\))?\s*(.*$))/,
+               /^\s*when\s+"(.*)"\s+then(\s+#\s+@cmd(\(.*\))?\s*(.*$))/
           then
             msg = $4
             args = $3
             cmds << [ $1.split(/['"\/]\s*,\s*['"\/]/).join(', '),
                       msg, args ? args.strip[1...-1] : nil ]
-          when /^\s*when \/(.+)\/ then( # @cmd(\(.*\))?\s*(.*$))/ then
+          when /^\s*when\s+\/(.+)\/\s+then(\s+#\s+@cmd(\(.*\))?\s*(.*$))/ then
             cmds << [ $1, $4, $3 ? $3.strip[1...-1] : nil ]
           end
         end
@@ -50,7 +50,11 @@ module SG
       end
     end
     
-    def self.print io: $stdout, tty: SG::Terminstry::Terminals.global
+    def self.print path: nil, io: $stdout, tty: SG::Terminstry::Terminals.global
+      if !path
+        call_location = caller[0].split(':')[0]
+        path ||= call_location.start_with?('(') ? $0 : call_location
+      end
       heading = tty.fg(SG::Color::VT100.new(:brightcyan)) + tty.bold + tty.italic
       bold = tty.bold
       normal = tty.normal
@@ -58,7 +62,7 @@ module SG
       io.puts("%sUsage:%s %s command [args...]" % [ heading, normal, $0 ])
       io.puts
       io.puts("%sCommands:%s" % [ heading, normal ])
-      cmds = scan_for_commands
+      cmds = scan_for_commands(path)
       cells = cmds.collect do |(cmd, desc, args)|
         has_args = !args.blank?
         if has_args
