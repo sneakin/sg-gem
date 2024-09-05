@@ -70,6 +70,14 @@ class SG::TablePrinter
       bar: { filler: '─', leader: '├─', separator: '─┼─', finalizer: '─┤' },
       bottom_bar: { filler: '─', leader: '└─', separator: '─┴─', finalizer: '─┘' }
     }
+    VT100 = {
+      top_bar: { filler: "q", leader: "\e(0lq", separator: "qwq", finalizer: "qk\e(A" },
+      header_row: { leader: "\e(0x\e(A ", separator: " \e(0x\e(A ", finalizer: " \e(0x\e(A" },
+      header_bar: { filler: "q", leader: "\e(0tq", separator: "qnq", finalizer: "qu\e(A" },
+      row: { leader: "\e(0x\e(A ", separator: " \e(0x\e(A ", finalizer: " \e(0x\e(A" },
+      bar: { filler: "q", leader: "\e(0tq", separator: "qnq", finalizer: "qu\e(A" },
+      bottom_bar: { filler: "q", leader: "\e(0mq", separator: "qvq", finalizer: "qj\e(A" }
+    }
     HTML = {
       flags: [ :stripped, :noalign ],
       top_bar: { filler: '', leader: '<table>', separator: '', finalizer: '' },
@@ -83,6 +91,7 @@ class SG::TablePrinter
       ascii: Ascii,
       org: Org,
       box: Box,
+      vt100: VT100,
       html: HTML
     }
 
