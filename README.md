@@ -30,6 +30,9 @@ modules under {SG}.
 
 ## Core Refinements
 
+Many core classes have been refined. {SG::Ext} is the core
+module for these. There may be other {Refinements}.
+
     require 'sg/ext'
     using SG::Ext
 
