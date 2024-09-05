@@ -278,3 +278,30 @@ describe SG::Units do
   it { expect((SG::Units::Columb.invert * SG::Units::Ampere).dimension).
     to eql(SG::Units::Hertz.dimension) }
 end
+
+describe SG::Units::SI do
+  it {
+    expect(SG::Units::SI::Kilo::Meter.new(2)).
+      to eq(SG::Units::Meter.new(2000))
+  }
+  it {
+    expect(SG::Units::SI::Mega[SG::Units::Second].new(2)).
+      to eq(SG::Units::Second.new(2000000))
+  }
+  
+  SG::Units::SI::Prefixes.each do |prefix, scale|
+    next if prefix.blank?
+    prefix = prefix.to_s.camelize
+
+    %w{ Meter Second Gram Columb Kelvin Byte }.each do |unit|
+      it "has a #{prefix}::#{unit} that scales by #{scale}" do
+        expect(SG::Units::SI.const_get(prefix).const_get(unit).new(2.0)).
+          to eq(SG::Units.const_get(unit).new(2.0 * scale))
+      end
+      it "has a #{prefix}::#{unit} with a pretty name" do
+        expect(SG::Units::SI.const_get(prefix).const_get(unit).name).
+          to eq("#{prefix.downcase}#{unit.downcase}")
+      end
+    end
+  end
+end

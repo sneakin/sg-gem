@@ -18,13 +18,14 @@ module SG
     attr_reader :commands, :options_builder
     attr_accessor :default_command, :tty
     
-    def initialize default: 'help', tty: SG::Terminstry::Terminals.global
+    def initialize default: 'help', tty: SG::Terminstry::Terminals.global, &block
       @commands = Assoc.new(key: :name)
       @default_command = default
       @tty = tty
       @before = []
       @after = []
       add_default_commands
+      block.call(self) if block
     end
 
     def tty_styles
@@ -43,35 +44,42 @@ module SG
       else
         tty_styles => { heading: h, normal: n }
         op ||= OptionParser.new do |o|
-          o.banner = <<-EOT % [ o.program_name ]
-#{h}Usage:#{n} %s command [options...]
-
-#{h}Global options:#{n}
-EOT
+          o.banner = '' # OP provides one that is a problem later..
           o.on('-h', '--help', "Prints out available commands and options.") do
             @help = true
           end
         end
         @options_builder.call(op)
+        op.banner = <<-EOT % [ op.program_name, op.banner.blank? ? '' : ("\n\n" + op.banner) ]
+#{h}Usage:#{n} %s command [options...]%s
+
+#{h}Global options:#{n}
+EOT
+        op
       end
     end
 
     def options_for cmd, opts = options, name: cmd.printable_name
       tty_styles => { heading: h, normal: n }
-      opts.banner = <<-EOT % [ opts.program_name, name, cmd.argdoc != '' ? ' ' : '', cmd.argdoc || '' ]
-#{h}Usage:#{n} %s %s [options...]%s%s
-EOT
-      if cmd.desc
-        opts.banner += "\n" + cmd.desc + "\n"
-      end
-      
-      opts.banner += "\n#{h}Global options:#{n}"
-
+      global_banner = opts.banner
       if cmd.has_options?
         opts.separator ''
         opts.separator "#{h}Command options:#{n}"
         cmd.build_options(opts)
       end
+
+      banner = opts.banner
+      opts.banner = <<-EOT % [ opts.program_name, name, cmd.argdoc != '' ? ' ' : '', cmd.argdoc || '[arguments...]' ]
+#{h}Usage:#{n} %s %s [options...]%s%s
+EOT
+      if cmd.desc
+        opts.banner += "\n" + cmd.desc
+      end
+      if banner != global_banner && !banner.blank?
+        opts.banner += "\n" + banner
+      end
+      
+      opts.banner += "\n\n#{h}Global options:#{n}"
       
       opts      
     end

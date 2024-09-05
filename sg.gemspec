@@ -11,13 +11,14 @@ Gem::Specification.new do |s|
   s.metadata    = {
     "source_code_uri" => "https://github.com/sneakin/sg-gem"
   }
-  s.executables = [ 'color.rb' ]
+  s.executables = [ 'color.rb', 'tabler' ]
   s.require_paths = [ 'lib' ]
   s.add_runtime_dependency 'rake', '~>13.0.0'
   s.add_development_dependency 'rdoc', '~>6.5.0'
   s.add_development_dependency 'rspec', '~>3.12.0'
   s.add_development_dependency "simplecov", "~> 0.22.0"
   s.add_development_dependency 'json'
+  s.add_development_dependency 'yard'
   s.add_dependency 'base64'
   s.add_dependency 'matrix'
   s.add_dependency 'unicode-display_width', '~>2.5.0'

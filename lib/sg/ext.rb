@@ -1,4 +1,5 @@
 module SG
+  # A collection of refinements for core classes.
   module Ext
   end
 end

@@ -1,5 +1,6 @@
 #!/usr/bin/env -S ruby -W:no-experimental
 # -*-ruby-*-
+# @see {SG::TablePrinter.run}
 require 'bundler/setup'
 require 'sg/table-printer'
 SG::TablePrinter.run

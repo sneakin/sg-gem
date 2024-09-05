@@ -1,8 +1,5 @@
 require 'matrix'
 
-#require 'sg/ext'
-#using SG::Ext
-
 module SG
   class Graph
     MaxDepth = 6

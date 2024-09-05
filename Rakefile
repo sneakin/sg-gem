@@ -4,6 +4,8 @@ VERSION = '0.0.1'
 require 'pathname'
 require 'rspec/core/rake_task'
 
+ROOT = Pathname.new(__FILE__).dirname
+
 rspec_opts = [ ENV['RSPEC_OPTS'] || '' ]
 
 desc 'Run the RSpec test suit'
@@ -42,23 +44,31 @@ namespace :spec do
 end
 
 namespace :doc do
-  begin
-    require 'yard'
+  failed_yard = true
+  use_yard = !!(ENV.fetch('USE_YARD', '1') =~ /(y|1)/i)
+  
+  if use_yard
+    begin
+      require 'yard'
 
-    desc 'Generate the API documentation as HTML.'
-    YARD::Rake::YardocTask.new(:api) do |t|
-      t.files   = ['bin/*[^~]', '{bin,lib}/**/*.rb']
-      t.options = ['--title', NAME, '-e', 'lib/sg/yard.rb', '-o', Pathname.new(__FILE__).dirname.join('doc', 'api').to_s]
-      #t.options = ['--any', '--extra', '--opts', '-o', Pathname.new(__FILE__).dirname.join('doc', 'api').to_s]
-      #t.stats_options = ['--list-undoc']
+      desc 'Generate the API documentation as HTML.'
+      YARD::Rake::YardocTask.new(:api) do |t|
+        t.files   = [ 'Rakefile', 'lib/sg.rb', 'bin/*[^~]', '{bin,lib,tests}/**/*.{rb,spec}', '-', 'README.md', 'COPYING' ]
+        t.options = ['--title', NAME, '-o', ROOT.join('doc', 'api').to_s, '-m', 'markdown', '-e', 'lib/sg/yard/refine.rb', '-e', 'lib/sg/yard/refine.rb', '-p', ROOT.join('templates').to_s]
+      end
+      
+      failed_yard = false
+    rescue LoadError
     end
-  rescue LoadError
+  end
+  
+  if failed_yard
     require 'rdoc/task'
     RDoc::Task.new(:api) do |t|
-      t.main = "README.rdoc"
+      t.main = "README.md"
       t.rdoc_dir = 'doc/api'
-      t.options += %w{--all}
-      t.rdoc_files.include('README.rdoc', 'bin/*[^~]', '{bin,lib}/**/*.rb')
+      t.options += %w{--all --markup markdown}
+      t.rdoc_files.include('README.md', 'COPYING.md', 'Rakefile', 'bin/*[^~]', '{bin,lib,tests}/**/*.{rb,spec}')
     end
   end
 end
