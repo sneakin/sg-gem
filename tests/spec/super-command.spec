@@ -6,7 +6,7 @@ require 'sg/super-command'
 describe SG::SuperCommand do
   SCRIPT = Pathname.new(__FILE__).join(*%w{ .. .. .. lib sg super-command.rb })
   HELP = <<-EOT
-Usage: super-command command [options...] [arguments...]
+Usage: super-command command [options...]
 
 Global options:
     -h, --help                       Prints out available commands and options.
