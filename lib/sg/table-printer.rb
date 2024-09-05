@@ -7,6 +7,7 @@ using SG::Ext
 
 # todo multiline cells
 
+# A plain text table printer for Enumerables.
 class SG::TablePrinter
   class Column
     attr_accessor :title, :width, :strategy, :formatter, :alignment

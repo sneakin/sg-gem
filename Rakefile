@@ -68,7 +68,7 @@ namespace :doc do
       t.main = "README.md"
       t.rdoc_dir = 'doc/api'
       t.options += %w{--all --markup markdown}
-      t.rdoc_files.include('README.md', 'COPYING.md', 'Rakefile', 'bin/*[^~]', '{bin,lib,tests}/**/*.{rb,spec}')
+      t.rdoc_files.include('README.md', 'COPYING', 'Rakefile', 'bin/*[^~]', '{bin,lib,tests}/**/*.{rb,spec}')
     end
   end
 end
