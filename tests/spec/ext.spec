@@ -745,6 +745,58 @@ EOT
     end
   end
 
+  shared_examples_for 'String#strip_controls' do |meth, rm_escaped: false|
+    32.times do |c|
+      c = c.chr
+      it "strips #{c.inspect}" do
+        s = "hey%syou" % [ c ]
+        exp = (rm_escaped && c == "\e") ? 'heyou' : 'heyyou'
+        expect(s.send(meth)).to eql(exp)
+        expect(s.screen_size).to eql(c == "\e" ? 5 : 6)
+      end
+    end
+    (32...127).each do |c|
+      c = c.chr
+      it "keeps #{c.inspect}" do
+        s = "hey%syou" % [ c ]
+        expect(s.send(meth)).to eql(s)
+        expect(s.screen_size).to eql(7)
+      end
+    end
+  end
+   
+  describe '#strip_controls' do
+    it_behaves_like 'String#strip_controls', :strip_controls
+  end
+
+  shared_examples_for 'String#strip_escapes' do |meth|
+    [ [ 'hey', 'hey' ],
+      [ "\e[31mHey\e[0m", "Hey" ],
+      [ "hey\eyou", "heyou" ],
+      [ "it's boxed: \e(0jklmn\e(A.", "it's boxed: jklmn." ],
+      [ "fin\e", "fin" ]
+    ].each do |(input, output)|
+      it "strips #{input.inspect} to #{output.inspect}" do
+        expect(input.send(meth)).to eql(output)
+      end
+      it { expect(input.screen_size).to eql(output.size) }
+    end
+  end
+  
+  describe '#strip_escapes' do
+    it_behaves_like 'String#strip_escapes', :strip_escapes
+  end
+
+  describe '#strip_display_only' do
+    it_behaves_like 'String#strip_controls', :strip_display_only, rm_escaped: true
+    it_behaves_like 'String#strip_escapes', :strip_display_only
+    
+    it {
+      expect("Hello\n\e[33mWorld\e[0m\n".strip_display_only).
+        to eql("HelloWorld")
+    }
+  end
+    
   describe '#cycled' do
     it { expect('foo'.cycled(10)).to eql('foofoofoof') }
     it { expect('foo'.cycled(0.5)).to eql('f') }

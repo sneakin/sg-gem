@@ -114,27 +114,32 @@ EOT
       [ self[0, n], self[n, size - n] ]
     end
 
+    # Strips all bytes less than 32 aka " ".
     def strip_controls
       gsub(/[\x00-\x1F]+/, '')
     end
     
+    # Strips substrings like "\e", "\eX", "\e(A", "\e[-12;34X".
     def strip_escapes
-      gsub(/(\e\[?[-0-9;]+[a-zA-Z])/, '')
+      gsub(/\e(\Z|[\[\]]*[-0-9;]*[[:alnum:]]|[()][[:alnum:]]|\w)/, '')
     end
 
+    # Strips control and escaped characters.
     def strip_display_only
       strip_escapes.strip_controls
     end
 
+    # #size minus the escape sequences, control codes,
+    # and double width chars counted twice.
     def screen_size
-      # size minus the escapes and control codes with double width chars counted twice
       #VisualWidth.measure(strip_display_only)
-      strip_escapes.display_width
+      strip_display_only.display_width
     end
 
-    # todo use Terministry::Decoder
-    # todo keep or remove escapes after the slice?
+    # Slices by #screen_size factoring in non-displayed sequences.
     def visual_slice len
+      # todo use Terministry::Decoder
+      # todo keep or remove escapes after the slice?
       if screen_size == size && screen_size <= len
         [ self, nil ]
       else
