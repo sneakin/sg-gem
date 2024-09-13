@@ -618,7 +618,12 @@ EOT
       'echo' => 'echoes',
       'choose' => 'chooses',
       'address' => 'addresses',
-      'dress' => 'dresses'
+      'dress' => 'dresses',
+      'message' => 'messages',
+      'stone' => 'stones',
+      'brush' => 'brushes',
+      'crush' => 'crushes',
+      'confuse' => 'confuses'
     }
     examples.each do |input, output|
       it "\#pluralize converts #{input.inspect} to #{output.inspect}" do
