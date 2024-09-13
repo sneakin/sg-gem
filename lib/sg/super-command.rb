@@ -25,7 +25,7 @@ module SG
       @before = []
       @after = []
       add_default_commands
-      block.call(self) if block
+      block&.call(self)
     end
 
     def tty_styles
@@ -49,7 +49,7 @@ module SG
             @help = true
           end
         end
-        @options_builder.call(op)
+        @options_builder&.call(op)
         op.banner = <<-EOT % [ op.program_name, op.banner.blank? ? '' : ("\n\n" + op.banner) ]
 #{h}Usage:#{n} %s command [options...]%s
 
