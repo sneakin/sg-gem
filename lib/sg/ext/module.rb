@@ -44,5 +44,17 @@ EOT
     def const_by_value n
       constants.find { |c| const_get(c) == n }
     end
+
+    def lookup_const name, prefix = self.name
+      Object.const_get([ prefix || '', name ].join('::'))
+    rescue NameError
+      raise if prefix.blank?
+      case prefix.scan(/\A(?:(.*)::)?([^:]*)\Z/)
+        in [ [ new_prefix, _ ] ] then
+          prefix = new_prefix
+          retry
+      else raise
+      end
+    end    
   end
 end

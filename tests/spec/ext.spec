@@ -105,6 +105,13 @@ shared_examples 'delegated x, y, z' do |klass|
   end
 end
 
+shared_examples_for '.lookup_const' do
+  describe '.lookup_const' do
+    it { expect(described_class.lookup_const('String')).to be(String) }
+    it { expect(described_class.lookup_const(described_class.name)).to be(described_class) }
+  end
+end
+
 describe Object do
   describe '.delegate' do
     klass = Class.new do
@@ -132,6 +139,8 @@ describe Object do
     it_behaves_like 'inheritable attributes'
   end
 
+  it_behaves_like '.lookup_const'
+  
   describe '#true?' do
     it { expect(subject.true?).to be(true) }
   end
@@ -326,6 +335,26 @@ describe Module do
       describe 'that is inherited' do
       end
     end
+  end
+
+  it_behaves_like '.lookup_const'
+  
+  describe '.lookup_const' do
+    mod = Module.new do
+      A = 123
+      B = Module.new do
+        C = 456
+      end
+    end
+    
+    it { expect(SG::lookup_const('String')).to be(::String) }
+    it { expect(SG::lookup_const('Ext')).to be(SG::Ext) }
+    it { expect { SG::lookup_const('Get') }.to raise_error(NameError) }
+    it { expect { mod.lookup_const('Get') }.to raise_error(NameError) }
+    it { expect(mod.lookup_const('A')).to be(mod.const_get('A')) }
+    it { expect(mod.lookup_const('String')).to be(::String) }
+    it { expect(mod.const_get('B').lookup_const('A')).to be(mod.const_get('A')) }
+    it { expect(mod.const_get('B').lookup_const('C')).to be(mod.const_get('B').const_get('C')) }
   end
 end
 
