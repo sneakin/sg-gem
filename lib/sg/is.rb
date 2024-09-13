@@ -44,6 +44,7 @@ module SG::Is
       "%s[%s]" % [ self.class.name, cases.collect(&:to_s).join(', ') ]
     end
 
+    alias to_str to_s
     include LogicOps
   end
 
@@ -62,6 +63,7 @@ module SG::Is
       "%s[%s]" % [ self.class.name, cases.collect(&:to_s).join(', ') ]
     end
 
+    alias to_str to_s
     include LogicOps
   end
 
@@ -80,6 +82,7 @@ module SG::Is
       "%s[%s]" % [ self.class.name, @pred ]
     end
 
+    alias to_str to_s
     include LogicOps
   end
 
