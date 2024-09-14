@@ -29,7 +29,8 @@ args = OptionParser.new do |o|
 end.parse(ARGV)
 
 if files.empty? && dirs.empty?
-  dirs = [ [ 'doc', 'doc' ], [ 'coverage', 'coverage' ] ]
+  # [ local, hosted ]
+  dirs = [ [ 'doc/api', 'api' ], [ 'doc/coverage', 'coverage' ] ]
   files = [ [ 'doc/spec.html', 'spec.html' ] ]
 end
 
