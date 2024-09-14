@@ -2,6 +2,7 @@ require 'sg/ext/proc'
 using SG::Ext
 
 module SG
+  # todo Object methods?
   class SkipUnless
     def initialize test, src, &cb
       @test = test
@@ -17,6 +18,10 @@ module SG
     
     def _test_passes?
       @test && (@block == nil || @block.call(@src))
+    end
+
+    def to_s *a, **o, &b
+      method_missing(:to_s, *a, **o, &b)
     end
     
     def method_missing mid, *a, **o, &b
