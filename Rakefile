@@ -19,5 +19,5 @@ end
 
 desc 'Remove any built files.'
 task :clean do
-  sh("rm -rf #{NAME}*.gem doc/api doc/rdoc doc/yard doc/spec.html")
+  sh("rm -rf #{NAME}*.gem doc/api doc/rdoc doc/yard doc/spec.html doc/coverage")
 end
