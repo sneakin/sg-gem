@@ -1,13 +1,16 @@
 #!/usr/bin/env ruby
 require 'bundler/setup'
 require 'webrick'
-
 require 'optparse'
 
+require 'sg/ext'
+using SG::Ext
+
 port = 8899
-dirs = []
+serving = []
 files = []
-title = 'Index: /'
+title = File.basename(Dir.pwd)
+cache_control = 'must-revalidate, max-age=300'
 
 args = OptionParser.new do |o|
   o.on('--port INTEGER') do |n|
@@ -16,22 +19,24 @@ args = OptionParser.new do |o|
   o.on('-d', '--dir path:resource') do |v|
     path, resource = v.split(':')
     resource ||= File.basename(path)
-    dirs << [ path, resource ]
+    serving << [ path, resource ]
   end
   o.on('-f', '--file path:resource') do |v|
     path, resource = v.split(':')
     resource ||= File.basename(path)
-    files << [ path, resource ]
+    serving << [ path, resource ]
   end
   o.on('-t', '--title TITLE') do |v|
     title = v
   end
 end.parse(ARGV)
 
-if files.empty? && dirs.empty?
+if serving.empty?
   # [ local, hosted ]
-  dirs = [ [ 'doc/api', 'api' ], [ 'doc/coverage', 'coverage' ] ]
-  files = [ [ 'doc/spec.html', 'spec.html' ] ]
+  serving = [ [ Dir.pwd + '/doc/api', 'api' ],
+              [ Dir.pwd + '/doc/coverage', 'coverage' ],
+              [ Dir.pwd + '/doc/spec.html', 'spec.html' ]
+            ]
 end
 
 def link_to href, label = nil
@@ -41,21 +46,52 @@ end
 server = WEBrick::HTTPServer.new(Port: port)
 server.mount_proc('/') do |req, resp|
   resp.status = 200
-  resp.body = '<html><body>' +
-    '<h1>' + title + '</h1>' +
-    (dirs + files).sort_by(&:first).collect do |(path, resource)|
-      href = resource.end_with?('/') ? resource : resource + '/'
-      link_to(href, resource)
-    end.join("<br/>\n") +
-    '</body></html>'
+  resp['Cache-Control'] = cache_control
+  resp.body = [ '<html>',
+                '<title>', title, '</title>',
+                '<body>',
+                '<h1>', title, '</h1>',
+                '<ul>',
+                serving.sort_by(&:second).
+                collect do |(path, resource)|
+                  href = resource.end_with?('/') ? resource : resource + '/'
+                  '<li>%s</li>' % [ link_to(href, resource) ]
+                end,
+                '</ul></body></html>'
+                ].flatten.join
 end
-dirs.each do |(path, resource)|
-  resource = '/' + resource unless resource.start_with?('/')
-  server.mount(resource, WEBrick::HTTPServlet::FileHandler, path, FancyIndexing: true)
+
+class CustomHeadersProxy < WEBrick::HTTPServlet::AbstractServlet
+  def initialize server, headers, inst, *a, **o, &b
+    super(server, *a, **o)
+    @inst = inst.new(server, *a, **o, &b)
+    @custom_headers = headers
+  end
+
+  %w{ GET HEAD POST PUT DELETE }.each do |meth|
+    class_eval <<-EOT
+      def do_#{meth} request, response
+        @inst.do_#{meth}(request, response)
+        @custom_headers.each do |name, value|
+          response[name] = value
+        end
+      end
+EOT
+  end
 end
-files.each do |(path, resource)|
+
+serving.each do |(path, resource)|
   resource = '/' + resource unless resource.start_with?('/')
-  server.mount(resource, WEBrick::HTTPServlet::DefaultFileHandler, path)
+  if File.directory?(path)
+    server.mount(resource, CustomHeadersProxy,
+                 { 'Cache-Control' => cache_control },
+                 WEBrick::HTTPServlet::FileHandler,
+                 path, FancyIndexing: true)
+  else
+    server.mount(resource, CustomHeadersProxy,
+                 { 'Cache-Control' => cache_control },
+                 WEBrick::HTTPServlet::DefaultFileHandler, path)
+  end
 end
 
 trap('INT') do

@@ -15,7 +15,7 @@ namespace :spec do
   desc 'Add options to generate a coverage report.'
   task :coverage do
     rspec_opts << '-Ilib -Itests -Ispec -rsg/rake/simplecov-init'
-    Rake::Task['spec'].execute
+    #Rake::Task['spec:html'].execute
   end
   
   desc 'Run the RSpec test suit'
@@ -52,8 +52,11 @@ namespace :doc do
 
       desc 'Generate the API documentation as HTML.'
       YARD::Rake::YardocTask.new(:yard) do |t|
-        t.files   = [ 'Rakefile', 'bin/*[^~]', '{bin,lib,tests,spec}/**/*.{rb,spec}', '-', 'README.md', 'COPYING' ]
-        t.options = ['--title', NAME,
+        t.files   = [ 'Rakefile', 'bin/*[^~]',
+                      '{bin,lib,tests,spec}/**/*.{rb,spec}',
+                      'bin/*[^~]',
+                      '-', 'README.md', 'COPYING' ]
+        t.options = ['--title', $NAME,
                      '-o', $ROOT.join('doc', 'yard').to_s,
                      '-m', 'markdown',
                      '-e', SG_ROOT.join('lib/sg/yard/refine.rb').to_s,
@@ -76,9 +79,11 @@ namespace :doc do
     require 'rdoc/task'
 
     RDoc::Task.new(:rdoc) do |t|
+      t.title = $NAME if $NAME
       t.main = "README.md"
       t.rdoc_dir = 'doc/rdoc'
-      t.options += %w{--all --markup markdown}
+      t.markup = 'markdown'
+      t.options += %w{--all}
       t.rdoc_files.include('README.md', 'COPYING', 'Rakefile', 'bin/*[^~]', '{bin,lib,tests,spec}/**/*.{rb,spec}')
     end
     
