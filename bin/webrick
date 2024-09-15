@@ -10,7 +10,7 @@ port = 8899
 serving = []
 files = []
 title = File.basename(Dir.pwd)
-cache_control = 'must-revalidate, max-age=300'
+cache_control = 'must-revalidate, max-age=30'
 
 args = OptionParser.new do |o|
   o.on('--port INTEGER') do |n|
