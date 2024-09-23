@@ -102,6 +102,22 @@ module SG::Is
     include LogicOps
   end
 
+  class Included
+    def self.[] arr
+      new(arr)
+    end
+
+    def initialize arr
+      @arr = arr
+    end
+
+    def === other
+      @arr.include?(other)
+    end
+
+    include LogicOps
+  end
+  
   class ResponsiveTo
     include NewBracket
 
