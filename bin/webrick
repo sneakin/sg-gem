@@ -47,13 +47,13 @@ server = WEBrick::HTTPServer.new(Port: port)
 server.mount_proc('/') do |req, resp|
   resp.status = 200
   resp['Cache-Control'] = cache_control
+  resp['Content-Type'] = 'text/html'
   resp.body = [ '<html>',
                 '<title>', title, '</title>',
                 '<body>',
                 '<h1>', title, '</h1>',
                 '<ul>',
-                serving.sort_by(&:second).
-                collect do |(path, resource)|
+                serving.sort_by(&:second).collect do |(path, resource)|
                   href = resource.end_with?('/') ? resource : resource + '/'
                   '<li>%s</li>' % [ link_to(href, resource) ]
                 end,
