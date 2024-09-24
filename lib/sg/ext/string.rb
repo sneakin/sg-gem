@@ -67,7 +67,7 @@ EOT
         reject { |p| p.blank? || p =~ /\A[-_]+\Z/ }.
         collect { |p|
           # all uppercase words get downcased
-          # while mixes only upcases thebfirst letter
+          # while mixed case words only upcase the first letter
           if p =~ /\A(?:[[:upper:]]|[[:digit:]])+\Z/
             p.capitalize
           else
@@ -86,19 +86,24 @@ EOT
 
     def decamelize delim: ' '
       # replace case transitions, spaces, and hyphens with ~delim~
-      # scan for upper to lower transitions, careful of slashes,
-      # spaces, delimeters, and anything else.
-      gsub('::', '/').
-        scan(/(?:[[:upper:]]+(?:[\/\\][[:upper:]]|[^[:upper:]])*|\s+|[-_]+|\S+)/).
-        reject { |p| p.blank? || p =~ /\A[-_]+\Z/ }.
-        collect(&:downcase).
-        join(delim).
-        gsub(/[-_ ]+/, delim)
+      # while replacing common delimeters with ~delim~.
+      rep = '\1%s\2' % [ delim ]
+      gsub(/([[:upper:]]+|[[:lower:]])([[:upper:]])/, rep).
+        gsub(/(\s+|[-_])/, delim).
+        downcase
     end
 
     def underscore
       # replace case transitions, spaces, and hyphens with underscores
       decamelize(delim: '_')
+    end
+
+    def demodularize
+      underscore.gsub('::', '/')
+    end
+
+    def modularize
+      camelize.gsub('/', '::')
     end
 
     def hyphenate

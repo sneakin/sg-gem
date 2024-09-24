@@ -699,11 +699,12 @@ EOT
              [ 'Hello/World', 'hello/world' ],
              [ 'Hello / World', 'hello / world' ],
              [ 'hello/world', 'hello/world' ],
-             [ 'Hello::World', 'hello/world' ],
-             [ 'Hello :: World', 'hello / world' ],
-             [ 'hello::world', 'hello/world' ],
-             [ 'HELLOworld', 'helloworld' ],
-             [ 'HELLOworld-hello', 'helloworld hello' ]
+             [ 'Hello::World', 'hello::world' ],
+             [ 'Hello :: World', 'hello :: world' ],
+             [ 'hello::world', 'hello::world' ],
+             [ 'HELLOworld', 'hell oworld' ],
+             [ 'HELLOworld-hello', 'hell oworld hello' ],
+             [ 'HSLLuminosity', 'hsl luminosity' ]
              ]
           ]
     
@@ -721,6 +722,15 @@ EOT
              [ 'hello-world', 'hello-world' ],
              [ 'hello_world', 'hello-world' ],
              [ 'hello world', 'hello-world' ],
+             [ 'Hello/World', 'hello/world' ],
+             [ 'Hello / World', 'hello-/-world' ],
+             [ 'hello/world', 'hello/world' ],
+             [ 'Hello::World', 'hello::world' ],
+             [ 'Hello :: World', 'hello-::-world' ],
+             [ 'hello::world', 'hello::world' ],
+             [ 'HELLOworld', 'hell-oworld' ],
+             [ 'HELLOworld-hello', 'hell-oworld-hello' ],
+             [ 'HSLLuminosity', 'hsl-luminosity' ]
              ]
           ]
     
@@ -738,6 +748,15 @@ EOT
              [ 'hello-world', 'hello_world' ],
              [ 'hello_world', 'hello_world' ],
              [ 'hello world', 'hello_world' ],
+             [ 'Hello/World', 'hello/world' ],
+             [ 'Hello / World', 'hello_/_world' ],
+             [ 'hello/world', 'hello/world' ],
+             [ 'Hello::World', 'hello::world' ],
+             [ 'Hello :: World', 'hello_::_world' ],
+             [ 'hello::world', 'hello::world' ],
+             [ 'HELLOworld', 'hell_oworld' ],
+             [ 'HELLOworld-hello', 'hell_oworld_hello' ],
+             [ 'HSLLuminosity', 'hsl_luminosity' ]
              ]
           ]
     
@@ -748,6 +767,31 @@ EOT
     end
   end
 
+  describe '#demodularize' do
+    examples =
+      Hash[ [
+             [ 'HelloWorld', 'hello_world' ],
+             [ 'hello-world', 'hello_world' ],
+             [ 'hello_world', 'hello_world' ],
+             [ 'hello world', 'hello_world' ],
+             [ 'Hello/World', 'hello/world' ],
+             [ 'Hello / World', 'hello_/_world' ],
+             [ 'hello/world', 'hello/world' ],
+             [ 'Hello::World', 'hello/world' ],
+             [ 'Hello :: World', 'hello_/_world' ],
+             [ 'hello::world', 'hello/world' ],
+             [ 'HELLOworld', 'hell_oworld' ],
+             [ 'HELLOworld-hello', 'hell_oworld_hello' ],
+             [ 'HSLLuminosity', 'hsl_luminosity' ]
+             ]
+          ]
+    
+    examples.each do |input, output|      it "converts #{input.inspect} to #{output.inspect}" do
+        expect(input.demodularize).to eql(output)
+      end
+    end
+  end
+  
   describe '#to_bool' do
     %w{ t true y yes Yes YEs 1 1111 1234 }.each do |value|
       it "truths #{value.inspect}" do
