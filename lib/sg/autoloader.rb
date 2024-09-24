@@ -6,7 +6,7 @@ class ::Module
     parts = self.name.split('::')
     parts.shift if parts[0] == 'Object'
     parts << sym.to_s
-    parts.permutate_with([ :underscore, :hyphenate, :camelize ]) do |path|
+    parts.permutate_with([ :downcase, :upcase, :underscore, :hyphenate, :camelize ]) do |path|
       begin
         require(File.join(*path))
         return const_get(sym)
