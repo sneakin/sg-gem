@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   #s.description = "Much longer explanation of the example!"
   s.authors     = ["Nolan Eakins <sneakin@semanticgap.com>"]
   s.email       = 'support@semanticgap.com'
-  s.files       = Dir.glob("lib/**/*.rb")
+  s.files       = [ 'bin/sg-color', 'bin/sg-tabler', 'bin/webrick' ] + Dir.glob("lib/**/*.rb")
   s.homepage    = 'https://oss.semanticgap.com/ruby/sg'
   s.metadata    = {
     "source_code_uri" => "https://github.com/sneakin/sg-gem"
