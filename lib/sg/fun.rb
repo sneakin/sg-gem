@@ -3,7 +3,8 @@ using SG::Ext
 
 module SG::Fun
   Identity = lambda { |x| x }
-
+  Nil = lambda { |*,**,&| nil }
+  
   def self.maker klass
     lambda { |*a, **o, &b| klass.new(*a, **o, &b) }
   end

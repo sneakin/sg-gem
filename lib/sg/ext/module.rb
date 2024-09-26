@@ -46,7 +46,7 @@ EOT
     end
 
     def lookup_const name, prefix = self.name
-      Object.const_get([ prefix || '', name ].join('::'))
+       Object.const_get([ prefix || '', name ].join('::'))
     rescue NameError
       raise if prefix.blank?
       case prefix.scan(/\A(?:(.*)::)?([^:]*)\Z/)
