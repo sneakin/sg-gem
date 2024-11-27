@@ -17,11 +17,11 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rdoc', '~>6.5.0'
   s.add_development_dependency 'rspec', '~>3.12.0'
   s.add_development_dependency "simplecov", "~> 0.22.0"
-  s.add_development_dependency 'json'
+  #s.add_development_dependency 'json'
   s.add_development_dependency 'yard'
-  s.add_dependency 'base64'
+  #s.add_dependency 'base64'
   s.add_dependency 'matrix'
   s.add_dependency 'unicode-display_width', '~>2.5.0'
   s.add_dependency 'unicode-emoji', '~>3.4.0'
-  s.add_dependency 'webrick'
+  #s.add_dependency 'webrick'
 end
