@@ -21,7 +21,8 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'yard'
   #s.add_dependency 'base64'
   s.add_dependency 'matrix'
+  s.add_dependency 'ostruct', '0.6.0'
   s.add_dependency 'unicode-display_width', '~>2.5.0'
   s.add_dependency 'unicode-emoji', '~>3.4.0'
-  #s.add_dependency 'webrick'
+  s.add_dependency 'webrick'
 end
