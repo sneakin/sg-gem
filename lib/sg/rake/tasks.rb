@@ -38,7 +38,7 @@ namespace :spec do
 
   desc 'Run the RSpec test suit with the doc formatter.'
   RSpec::Core::RakeTask.new(:doc) do |t|
-    t.rspec_opts = [ *rspec_opts, "-f doc #{rspec_opts}" ].join(' ')
+    t.rspec_opts = [ *rspec_opts, "-f doc", *rspec_opts ].join(' ')
     t.pattern = TEST_GLOB
   end
 
