@@ -1,10 +1,12 @@
 module SG::Ext
   refine Array do
+    # Destructively removes one instance of an element.
     def delete_one! term
       i = index(term)
       i ? delete_at(i) : nil
     end
 
+    # Duplicates the array and then deletes one instasce of an element.
     def delete_one term
       i = index(term)
       if i
@@ -14,6 +16,8 @@ module SG::Ext
       end
     end
 
+    # Returns two arrays of `self` and `other` with the
+    # shared elements removed.
     def disjunction other
       n = dup
       d = other.dup
