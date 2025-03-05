@@ -20,7 +20,6 @@ GEM
     docile (1.4.1)
     ffi (1.17.1)
     ffi (1.17.1-x86_64-linux-gnu)
-    json (2.10.1)
     matrix (0.4.2)
     psych (5.2.3)
       date
@@ -47,7 +46,7 @@ GEM
       simplecov_json_formatter (~> 0.1)
     simplecov-html (0.13.1)
     simplecov_json_formatter (0.1.4)
-    stringio (3.1.3)
+    stringio (3.1.5)
     unicode-display_width (2.5.0)
     unicode-emoji (3.4.0)
       unicode-version (~> 1.0)
@@ -61,7 +60,6 @@ PLATFORMS
 
 DEPENDENCIES
   bindata
-  json
   rdoc (~> 6.5.0)
   rspec (~> 3.12.0)
   sg!

@@ -66,14 +66,15 @@ when 'hsl-rgb' then # @cmd Convert HSL to RGB for side by side comparison.
   puts("%s%3i %3i %3i%s  %s%3i %3i %3i%s" %
        [ vt100.fgbg(rgb.invert, rgb), *rgb, vt100.normal,
          vt100.fgbg(rgb, Color::RGB.new(0)), *rgb, vt100.normal ])
-when /^([-+*\/.])$/ then # @cmd Print a list of named colors.
-  op = $1.to_sym
-  colors = ARGV.collect { |a| Color.from_string(a) }
-  r = colors[1..-1].reduce(colors[0]) { |a, c| a.send(op, c) }.clamp
-  s = colors.collect { |c| "%s%s%s" % [ vt100.fg(c), c, vt100.normal ] }.
-        join(" #{op} ")
-  s += " = %s%s%s" % [ vt100.fg(r), r, vt100.normal ]
-  puts(s)
+when /^(ls|list)/ then # @cmd Print a list of named colors.
+  colors = ARGV.reduce({}) { |h, a| h[a] = Color.from_string(a) rescue nil; h }
+  errs = colors.collect { |k, v| v.nil? ? k : nil }.reject(&:nil?)
+  unless errs.empty?
+    puts("Not found: %s" % [ errs.join(', ') ])
+  end
+  colors = colors.reject { |k, v| v.nil? }
+  s = colors.collect { |n, c| "%s%s%s" % [ vt100.fg(c), c, vt100.normal ] }
+  puts(*s)
 when 'swatch' then # @cmd Print the entire HSL colorspace.
   s = (ARGV[2] || 1).to_f
   lines = (ARGV[1] || (ENV.fetch('LINES', 24).to_i - 1))

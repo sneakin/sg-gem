@@ -88,7 +88,9 @@ EOT
       # replace case transitions, spaces, and hyphens with ~delim~
       # while replacing common delimeters with ~delim~.
       rep = '\1%s\2' % [ delim ]
-      gsub(/([[:upper:]]+|[[:lower:]])([[:upper:]])/, rep).
+      gsub(/HSLLuminosity/i, 'hsl luminosity').
+        gsub(/([[:lower:]])([[:upper:]])/, rep).
+        gsub(/([[:upper:]]{2,})([[:lower:]])/, rep).
         gsub(/(\s+|[-_])/, delim).
         downcase
     end

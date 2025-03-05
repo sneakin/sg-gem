@@ -1,4 +1,5 @@
 require 'rspec/core/rake_task'
+require 'bundler/gem_tasks'
 require 'sg/ext'
 using SG::Ext
 
@@ -7,23 +8,13 @@ TEST_GLOB = '{,tests/}spec/**{,/*/**}/*.spec'
 
 rspec_opts = [ ENV['RSPEC_OPTS'] || '' ]
 
-if $NAME && $VERSION
-  namespace :gem do
-    file "#{$NAME}-#{$VERSION}.gem" => "#{$NAME.hyphenate}.gemspec" do |t|
-      sh(Shellwords.join(%w{gem build} + [ t.prerequisites.first ]))
-    end
-    
-    desc "Build the gem."
-    task :build => "#{$NAME}-#{$VERSION}.gem"
-  end
-else
+unless $NAME && $VERSION
   warn("$NAME and $VERSION are undefined.")
 end
 
 desc 'Remove any built files.'
 task :clean do
-  sh(Shellwords.join(%w{rm -rf doc/api doc/rdoc doc/yard doc/spec.html doc/coverage} +
-                     ($NAME ? [ "#{$NAME.hyphenate}-#{$VERSION}.gem" ] : []) ))
+  sh(Shellwords.join(%w{rm -rf doc/api doc/rdoc doc/yard doc/spec.html doc/coverage pkg}))
 end
 
 desc 'Run the RSpec test suit'

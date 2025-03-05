@@ -679,7 +679,10 @@ EOT
               [ 'HELLOworld', 'HELLOworld' ],
               [ 'HELLO123', 'Hello123' ],
               [ 'HELLO world', 'HelloWorld' ],
-              [ 'HELLO WORld', 'HelloWORld' ]
+              [ 'HELLO WORld', 'HelloWORld' ],
+              [ 'key code', 'KeyCode' ],
+              [ 'KEY CODE', 'KeyCode' ],
+              [ 'KEYCODE', 'Keycode' ]
             ]
           ]
     
@@ -702,9 +705,11 @@ EOT
              [ 'Hello::World', 'hello::world' ],
              [ 'Hello :: World', 'hello :: world' ],
              [ 'hello::world', 'hello::world' ],
-             [ 'HELLOworld', 'hell oworld' ],
-             [ 'HELLOworld-hello', 'hell oworld hello' ],
-             [ 'HSLLuminosity', 'hsl luminosity' ]
+             [ 'HELLOworld', 'hello world' ],
+             [ 'HELLOworld-hello', 'hello world hello' ],
+             [ 'HSLLuminosity', 'hsl luminosity' ],
+             [ 'KEYCODE', 'keycode' ],
+             [ 'KEY_CODE', 'key code' ]
              ]
           ]
     
@@ -728,8 +733,8 @@ EOT
              [ 'Hello::World', 'hello::world' ],
              [ 'Hello :: World', 'hello-::-world' ],
              [ 'hello::world', 'hello::world' ],
-             [ 'HELLOworld', 'hell-oworld' ],
-             [ 'HELLOworld-hello', 'hell-oworld-hello' ],
+             [ 'HELLOworld', 'hello-world' ],
+             [ 'HELLOworld-hello', 'hello-world-hello' ],
              [ 'HSLLuminosity', 'hsl-luminosity' ]
              ]
           ]
@@ -754,9 +759,12 @@ EOT
              [ 'Hello::World', 'hello::world' ],
              [ 'Hello :: World', 'hello_::_world' ],
              [ 'hello::world', 'hello::world' ],
-             [ 'HELLOworld', 'hell_oworld' ],
-             [ 'HELLOworld-hello', 'hell_oworld_hello' ],
-             [ 'HSLLuminosity', 'hsl_luminosity' ]
+             [ 'HELLOworld', 'hello_world' ],
+             [ 'HELLOworld-hello', 'hello_world_hello' ],
+             [ 'HSLLuminosity', 'hsl_luminosity' ],
+             [ 'KEYCODE', 'keycode' ],
+             [ 'KEY_CODE', 'key_code' ],
+             [ 'KEY CODE', 'key_code' ]
              ]
           ]
     
@@ -780,8 +788,8 @@ EOT
              [ 'Hello::World', 'hello/world' ],
              [ 'Hello :: World', 'hello_/_world' ],
              [ 'hello::world', 'hello/world' ],
-             [ 'HELLOworld', 'hell_oworld' ],
-             [ 'HELLOworld-hello', 'hell_oworld_hello' ],
+             [ 'HELLOworld', 'hello_world' ],
+             [ 'HELLOworld-hello', 'hello_world_hello' ],
              [ 'HSLLuminosity', 'hsl_luminosity' ]
              ]
           ]
