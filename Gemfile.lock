@@ -3,6 +3,7 @@ PATH
   specs:
     sg (0.2.0)
       base64
+      ffi
       matrix
       rake (~> 13.0.0)
       unicode-display_width (~> 2.5.0)
@@ -13,11 +14,16 @@ GEM
   remote: https://rubygems.org/
   specs:
     base64 (0.2.0)
-    diff-lcs (1.5.1)
+    bindata (2.5.0)
+    date (3.4.1)
+    diff-lcs (1.6.0)
     docile (1.4.1)
-    json (2.7.2)
+    ffi (1.17.1)
+    ffi (1.17.1-x86_64-linux-gnu)
+    json (2.10.1)
     matrix (0.4.2)
-    psych (5.1.2)
+    psych (5.2.3)
+      date
       stringio
     rake (13.0.6)
     rdoc (6.5.1.1)
@@ -41,12 +47,12 @@ GEM
       simplecov_json_formatter (~> 0.1)
     simplecov-html (0.13.1)
     simplecov_json_formatter (0.1.4)
-    stringio (3.1.1)
+    stringio (3.1.3)
     unicode-display_width (2.5.0)
     unicode-emoji (3.4.0)
       unicode-version (~> 1.0)
     unicode-version (1.4.0)
-    webrick (1.8.1)
+    webrick (1.9.1)
     yard (0.9.37)
 
 PLATFORMS
@@ -54,6 +60,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  bindata
   json
   rdoc (~> 6.5.0)
   rspec (~> 3.12.0)
