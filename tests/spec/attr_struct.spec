@@ -2,19 +2,43 @@ require 'sg/packed_struct'
 
 describe SG::AttrStruct do
   module AttrStructSpec
-    class Alpha
+    class BaseStruct
+      attr_reader :base_initialized
+      
+      def initialize value: -1
+        @base_initialized = value
+      end
+    end
+    
+    class Alpha < BaseStruct
+      INIT_VALUE = -2
+      
       include SG::AttrStruct
       attributes :name, :age
       init_attr :name, 'John Doe'
       init_attr :age, 0
+
+      attr_reader :alpha_initialized
+
+      def initialize(*values, base: -2)
+        super(*values, _super: { value: base })
+        @alpha_initialized = true
+      end
     end
   end
 
   describe 'direct descendent' do
-    subject { AttrStructSpec::Alpha.new('Bob', 32) }
+    subject { AttrStructSpec::Alpha.new('Bob', 32, base: 'heyo') }
 
     it { expect(subject.members).to eq([:name, :age]) }
     it { expect(subject.to_a).to eq(['Bob', 32]) }    
+
+    it 'called #initialize' do
+      expect(subject.alpha_initialized).to be(true)
+    end
+    it 'initialized the super class' do
+      expect(subject.base_initialized).to eql('heyo')
+    end
 
     it 'has readers' do
       expect(subject.name).to eq('Bob')
@@ -104,6 +128,12 @@ describe SG::AttrStruct do
       it 'initialized age' do
         expect(subject.age).to eq(0)
       end
+      it 'called #initialize' do
+        expect(subject.alpha_initialized).to be(true)
+      end
+      it 'initialized the super class' do
+        expect(subject.base_initialized).to be(AttrStructSpec::Alpha::INIT_VALUE)
+      end
     end
   end
 
@@ -123,17 +153,35 @@ describe SG::AttrStruct do
     module AttrStructSpec
       class Beta < Alpha
         attributes :ttl, :created
+        attr_reader :beta_initialized
+        
+        def initialize(...)
+          super(...)
+          @beta_initialized = true
+        end
       end
     end
 
     let(:now) { Time.now }
-    subject { AttrStructSpec::Beta.new('Alice', 21, 3600, now) }
+    subject { AttrStructSpec::Beta.new('Alice', 21, 3600, now, base: 'from_beta') }
     
     it { expect(subject.members).to eq([:name, :age, :ttl, :created]) }
     it { expect(subject).to be_kind_of(AttrStructSpec::Beta) }
     it { expect(subject).to be_kind_of(AttrStructSpec::Alpha) }
     it { expect(subject.members).to eq([:name, :age, :ttl, :created]) }
     it { expect(subject.to_a).to eq(['Alice', 21, 3600, now]) }    
+
+    it 'calls the initializer' do
+      expect(subject.beta_initialized).to be(true)
+    end
+    
+    it 'calls the Base initializer' do
+      expect(subject.base_initialized).to eql('from_beta')
+    end
+
+    it 'calls the Alpha initializer' do
+      expect(subject.alpha_initialized).to be(true)
+    end
     
     describe '#[]' do
       describe 'with integers' do

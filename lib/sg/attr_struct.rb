@@ -10,10 +10,23 @@ module SG
       base.extend(ClassMethods)
     end
     
-    def initialize *values
-      members.zip(values, self.class.init_values || []) do |f, v, iv|
+    def initialize *v, **o, &blk
+      # Pass arguments to a `super` call
+      super_args = o[:_super]
+      case super_args
+      when nil, true then super
+      when Array then super(*super_args, &blk)
+      when Hash then super(**super_args, &blk)
+      when false then super(&blk) if blk
+      end
+      initialize_attributes(*v)
+    end
+
+    def initialize_attributes *values
+      members&.zip(values, self.class.init_values || []) do |f, v, iv|
         self[f] = v || eval_init(iv)
       end
+      self
     end
 
     def members; self.class.members; end
