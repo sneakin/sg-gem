@@ -14,7 +14,8 @@ module SG
       # Pass arguments to a `super` call
       super_args = o[:_super]
       case super_args
-      when nil, true then super
+      when nil then super()
+      when true then super
       when Array then super(*super_args, &blk)
       when Hash then super(**super_args, &blk)
       when false then super(&blk) if blk
