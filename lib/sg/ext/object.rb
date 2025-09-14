@@ -4,11 +4,20 @@ module SG::Ext
   refine ::Object.singleton_class do
     def delegate(*methods, to:)
       methods.each do |m|
-        class_eval <<-EOT
+        # Ruby did not like assignments of `...`
+        if m.to_s[-1] == '=' && m[-2] != ']'
+          class_eval <<-EOT
+def #{m}(v)
+  self.#{to}.#{m}(v)
+end
+EOT
+        else
+          class_eval <<-EOT
 def #{m}(...)
   self.#{to}.#{m}(...)
 end
 EOT
+        end
       end
     end
     

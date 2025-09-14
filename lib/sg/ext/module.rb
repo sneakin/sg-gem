@@ -2,11 +2,20 @@ module SG::Ext
   refine ::Module do
     def delegate(*methods, to:)
       methods.each do |m|
-        module_eval <<-EOT
+        # Ruby did not like assignments of `...`
+        if m.to_s[-1] == '=' && m[-2] != ']'
+          module_eval <<-EOT
+def #{m}(v)
+  self.#{to}.#{m}(v)
+end
+EOT
+        else
+          module_eval <<-EOT
 def #{m}(...)
   self.#{to}.#{m}(...)
 end
 EOT
+        end
       end
     end
 

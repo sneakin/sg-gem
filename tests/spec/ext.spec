@@ -88,6 +88,11 @@ shared_examples 'delegated x, y, z' do |klass|
       expect(alpha).to receive(:x).with(1, 2, 3, boo: :who).and_return(123)
       expect(subject.x(1, 2, 3, boo: :who)).to eql(123)
     end
+
+    it do
+      expect(alpha).to receive(:x=).with(123).and_return(123)
+      expect(subject.x = 123).to eql(123)
+    end
   end
 
   context 'beta delegates' do
@@ -115,7 +120,7 @@ end
 describe Object do
   describe '.delegate' do
     klass = Class.new do
-      delegate :x, to: :alpha
+      delegate :x, :x=, to: :alpha
       delegate :y, :z, to: :beta
 
       attr_accessor :alpha, :beta
@@ -283,7 +288,7 @@ end
 describe Module do
   describe '.delegate' do
     mod = Module.new do
-      delegate :x, to: :alpha
+      delegate :x, :x=, to: :alpha
       delegate :y, :z, to: :beta
 
       attr_accessor :alpha, :beta
