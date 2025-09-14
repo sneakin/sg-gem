@@ -14,16 +14,16 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    base64 (0.2.0)
-    bindata (2.5.0)
+    base64 (0.3.0)
+    bindata (2.5.1)
     date (3.4.1)
-    diff-lcs (1.6.0)
+    diff-lcs (1.6.2)
     docile (1.4.1)
-    ffi (1.17.1)
-    ffi (1.17.1-x86_64-linux-gnu)
-    matrix (0.4.2)
+    ffi (1.17.2)
+    ffi (1.17.2-x86_64-linux-gnu)
+    matrix (0.4.3)
     ostruct (0.6.0)
-    psych (5.2.3)
+    psych (5.2.6)
       date
       stringio
     rake (13.0.6)
@@ -46,13 +46,13 @@ GEM
       docile (~> 1.1)
       simplecov-html (~> 0.11)
       simplecov_json_formatter (~> 0.1)
-    simplecov-html (0.13.1)
+    simplecov-html (0.13.2)
     simplecov_json_formatter (0.1.4)
-    stringio (3.1.5)
+    stringio (3.1.7)
     unicode-display_width (2.5.0)
     unicode-emoji (3.4.0)
       unicode-version (~> 1.0)
-    unicode-version (1.4.0)
+    unicode-version (1.5.0)
     webrick (1.9.1)
     yard (0.9.37)
 
@@ -67,3 +67,6 @@ DEPENDENCIES
   sg!
   simplecov (~> 0.22.0)
   yard
+
+BUNDLED WITH
+   2.7.1
