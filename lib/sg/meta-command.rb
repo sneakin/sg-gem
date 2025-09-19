@@ -57,7 +57,11 @@ class SG::MetaCommand
       if @banner_argument
         cmd = commands[name]
         if cmd
-          desc = IO.popen([cmd.to_s, @banner_argument], &:readline)
+          desc = begin
+                   IO.popen([cmd.to_s, @banner_argument], &:readline)
+                 rescue
+                   $!.message
+                 end
         end
       end
       acc << [ "  " + name, desc ]
