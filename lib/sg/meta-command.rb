@@ -58,9 +58,9 @@ class SG::MetaCommand
         cmd = commands[name]
         if cmd
           desc = begin
-                   IO.popen([cmd.to_s, @banner_argument], &:readline)
-                 rescue
-                   $!.message
+                   IO.popen([cmd.to_s, @banner_argument], &:readline).strip
+                 rescue EOFError
+                   nil
                  end
         end
       end
