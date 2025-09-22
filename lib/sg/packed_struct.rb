@@ -339,7 +339,6 @@ module SG
       def unpack str, inst
         bin, r = type.unpack(str)
         raise NoDataError.new("Ran out of data unpacking a #{type.name}") if bin == nil || bin == []
-        #puts("%s => %s" % [ name, bin.inspect ])
         inst.update!(name => bin)
         [ inst, r ]
       end

@@ -475,29 +475,24 @@ describe SG::PackedStruct do
       calc_attr :size, lambda { value.bytesize }
     end
 
-    describe 'with hello' do
-      subject { struct.new(size: 5, value: 'hello') }
+    [ [ 5, 'hello', 'la*' ],
+      [ 0, '', 'la*' ]
+    ].each do |(size, value, packer)|
+      describe "with #{value.inspect}" do
+        subject { struct.new(size:, value:) }
 
-      it 'packs' do
-        expect(subject.pack).to eq([ 5, "hello" ].pack('la*'))
-      end
+        it 'packs' do
+          expect(subject.pack).to eq([ size, value ].pack(packer))
+        end
 
-      it 'unpacks' do
-        expect(struct.unpack([ 5, "hello" ].pack('la*'))).
-          to eq([subject, ''])
-      end
-    end
+        it 'unpacks' do
+          expect(struct.unpack([ size, value ].pack(packer))).
+            to eq([subject, ''])
+        end
 
-    describe 'with ""' do
-      subject { struct.new(size: 0, value: '') }
-
-      it 'packs' do
-        expect(subject.pack).to eq([ 0, "" ].pack('la*'))
-      end
-
-      it 'unpacks' do
-        expect(struct.unpack([ 0, "" ].pack('la*'))).
-          to eq([subject, ''])
+        it 'round trips' do
+          expect(struct.unpack(subject.pack)). to eq([subject, ''])
+        end
       end
     end
 
@@ -506,36 +501,35 @@ describe SG::PackedStruct do
         Class.new do
           include SG::AttrStruct
           include SG::PackedStruct
-          define_packing [:a, struct ],
+          define_packing [:size, :uint16],
+                         [:a, struct ],
                          [:b, struct ]
+          calc_attr :size, lambda { a.bytesize + b.bytesize }
         end
       end
+      
+      [ [ 8, '', '' ],
+        [ 11, '', 'hello' ],
+        [ 11, 'hello', '' ],
+        [ 18, 'hello', 'hello' ]
+      ].each do |(size, avalue, bvalue)|
+        describe "with #{avalue.inspect} and #{bvalue.inspect}" do
+          subject { bigstruct.new(size: size,
+                                  a: struct.new(size: avalue.size, value: avalue),
+                                  b: struct.new(size: bvalue.size, value: bvalue)) }
 
-      describe 'with "" and ""' do
-        subject { bigstruct.new(a: struct.new(size: 0, value: ''),
-                                b: struct.new(size: 0, value: '')) }
+          it 'packs' do
+            expect(subject.pack).to eq([ size, avalue.size, avalue, bvalue.size, bvalue ].pack('sla*la*'))
+          end
 
-        it 'packs' do
-          expect(subject.pack).to eq([ 0, "", 0, "" ].pack('la*la*'))
-        end
+          it 'unpacks' do
+            expect(bigstruct.unpack([ size, avalue.size, avalue, bvalue.size, bvalue ].pack('sla*la*'))).
+              to eq([subject, ''])
+          end
 
-        it 'unpacks' do
-          expect(bigstruct.unpack([ 0, "", 0, "" ].pack('la*la*'))).
-            to eq([subject, ''])
-        end
-      end
-
-      describe 'with "" and "hello"' do
-        subject { bigstruct.new(a: struct.new(size: 0, value: ''),
-                                b: struct.new(size: 5, value: 'hello')) }
-
-        it 'packs' do
-          expect(subject.pack).to eq([ 0, "", 5, "hello" ].pack('la*la*'))
-        end
-
-        it 'unpacks' do
-          expect(bigstruct.unpack([ 0, "", 5, "hello" ].pack('la*la*'))).
-            to eq([subject, ''])
+          it 'round trips' do
+            expect(bigstruct.unpack(subject.pack)). to eq([subject, ''])
+          end
         end
       end
     end
