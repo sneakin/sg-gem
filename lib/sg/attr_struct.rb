@@ -113,7 +113,10 @@ module SG
           self.members = []
         end
         sz = members.size
-        self.members += attrs.each { |a| attr_accessor(a) }
+        self.members += attrs.each do |a|
+          attr_reader(a) unless (instance_method(a) rescue nil)
+          attr_writer(a) unless (instance_method("#{a}=") rescue nil)
+        end
         subclasses.each { |c| c.insert_attributes(sz, *attrs) }
         self
       end
