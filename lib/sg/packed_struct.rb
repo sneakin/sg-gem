@@ -380,22 +380,13 @@ module SG
       end
 
       def pack inst
-        if bytesize(inst) == 0
-          ''
-        else
-          [ inst.send(name) ].pack(packer(inst))
-        end
+        [ inst.send(name) ].pack(packer(inst))
       rescue TypeError
         raise TypeError.new("Incompatible value in :%s" % [ name ])
       end
       
       def unpack str, inst
-        bin, r = if bytesize(inst) == 0
-                   [ '', str ]
-                 else
-                   str.unpack(packer(inst) + 'a*')
-                   #puts("%s => %s" % [ name, bin.inspect ])
-                 end
+        bin, r = str.unpack(packer(inst) + 'a*')
         inst.update!(name => bin)
         [ inst, r ]
       end

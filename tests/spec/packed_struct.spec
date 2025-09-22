@@ -466,6 +466,81 @@ describe SG::PackedStruct do
     end
   end  
 
+  describe 'when a string length is a field' do
+    struct = Class.new do
+      include SG::AttrStruct
+      include SG::PackedStruct
+      define_packing [:size, :int32],
+                     [:value, :string, :size ]
+      calc_attr :size, lambda { value.bytesize }
+    end
+
+    describe 'with hello' do
+      subject { struct.new(size: 5, value: 'hello') }
+
+      it 'packs' do
+        expect(subject.pack).to eq([ 5, "hello" ].pack('la*'))
+      end
+
+      it 'unpacks' do
+        expect(struct.unpack([ 5, "hello" ].pack('la*'))).
+          to eq([subject, ''])
+      end
+    end
+
+    describe 'with ""' do
+      subject { struct.new(size: 0, value: '') }
+
+      it 'packs' do
+        expect(subject.pack).to eq([ 0, "" ].pack('la*'))
+      end
+
+      it 'unpacks' do
+        expect(struct.unpack([ 0, "" ].pack('la*'))).
+          to eq([subject, ''])
+      end
+    end
+
+    describe 'nested in another struct' do
+      let(:bigstruct) do
+        Class.new do
+          include SG::AttrStruct
+          include SG::PackedStruct
+          define_packing [:a, struct ],
+                         [:b, struct ]
+        end
+      end
+
+      describe 'with "" and ""' do
+        subject { bigstruct.new(a: struct.new(size: 0, value: ''),
+                                b: struct.new(size: 0, value: '')) }
+
+        it 'packs' do
+          expect(subject.pack).to eq([ 0, "", 0, "" ].pack('la*la*'))
+        end
+
+        it 'unpacks' do
+          expect(bigstruct.unpack([ 0, "", 0, "" ].pack('la*la*'))).
+            to eq([subject, ''])
+        end
+      end
+
+      describe 'with "" and "hello"' do
+        subject { bigstruct.new(a: struct.new(size: 0, value: ''),
+                                b: struct.new(size: 5, value: 'hello')) }
+
+        it 'packs' do
+          expect(subject.pack).to eq([ 0, "", 5, "hello" ].pack('la*la*'))
+        end
+
+        it 'unpacks' do
+          expect(bigstruct.unpack([ 0, "", 5, "hello" ].pack('la*la*'))).
+            to eq([subject, ''])
+        end
+      end
+    end
+  end
+
   describe 'when a string length uses bytesize' do
     let(:struct) do
       Class.new do
@@ -477,15 +552,30 @@ describe SG::PackedStruct do
       end
     end
 
-    subject { struct.new(size: 9, value: 'hello') }
+    describe 'with hello' do
+      subject { struct.new(size: 9, value: 'hello') }
 
-    it 'packs' do
-      expect(subject.pack).to eq([ 9, "hello" ].pack('la*'))
+      it 'packs' do
+        expect(subject.pack).to eq([ 9, "hello" ].pack('la*'))
+      end
+
+      it 'unpacks' do
+        expect(struct.unpack([ 9, "hello" ].pack('la*'))).
+          to eq([subject, ''])
+      end
     end
 
-    it 'unpacks' do
-      expect(struct.unpack([ 9, "hello" ].pack('la*'))).
-        to eq([subject, ''])
+    describe 'with ""' do
+      subject { struct.new(size: 4, value: '') }
+
+      it 'packs' do
+        expect(subject.pack).to eq([ 4, "" ].pack('la*'))
+      end
+
+      it 'unpacks' do
+        expect(struct.unpack([ 4, "" ].pack('la*'))).
+          to eq([subject, ''])
+      end
     end
   end
 
