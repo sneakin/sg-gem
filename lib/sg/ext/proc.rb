@@ -2,6 +2,8 @@ require 'sg/rescued_proc'
 
 module SG::Ext
   refine ::Proc do
+    # todo Use Ruby's #curry
+    
     def partial_before *args
       self.class.new do |*a, **o, &b|
         self.call(*args, *a, **o, &b)
@@ -58,5 +60,18 @@ module SG::Ext
     end
 
     alias ~ not
+
+    def catch *exceptions, &cb
+      return self if exceptions.empty? && cb == nil
+      lambda do |*a, **o, &b|
+        self.call(*a, **o, &b)
+      rescue
+        if exceptions.empty? || exceptions.include?($!.class)
+          cb&.call($!)
+        else
+          raise
+        end
+      end
+    end
   end
 end
