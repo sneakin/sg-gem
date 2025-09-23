@@ -14,7 +14,8 @@ class SG::IO::Reactor
     end
 
     def but *ex, &block
-      @cb = @cb.but(*ex, &block)
+      @exceptions = ex
+      @on_error = block
       self
     end
     
@@ -30,8 +31,8 @@ class SG::IO::Reactor
       @connected = true
       @cb.call(io)
     rescue
-      if @cb.on_error
-        @cb.on_error.call($!)
+      if @on_error && (@exceptions.empty? || @exceptions.include?($!.class))
+        @on_error.call($!)
       else
         raise
       end

@@ -50,18 +50,13 @@ module SG::Ext
       @fn || self
     end
 
-    def but *exes, &cb
-      return self unless cb
-      SG::RescuedProc.new(self, *exes, &cb)
-    end
-
     def not
       lambda { |*a, **o, &b| !self.call(*a, **o, &b) }
     end
 
     alias ~ not
 
-    def catch *exceptions, &cb
+    def but *exceptions, &cb
       return self if exceptions.empty? && cb == nil
       lambda do |*a, **o, &b|
         self.call(*a, **o, &b)

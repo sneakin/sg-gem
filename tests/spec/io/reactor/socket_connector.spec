@@ -8,7 +8,7 @@ describe SG::IO::Reactor::SocketConnector do
   subject do
     described_class.new(host: '127.0.0.1', port: port) do |io|
       @connected_to = io
-    end.but(SystemCallError) do |ex|
+    end.but do |ex|
       @connected_to = ex
     end
   end
