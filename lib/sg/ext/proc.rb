@@ -1,5 +1,3 @@
-require 'sg/rescued_proc'
-
 module SG::Ext
   refine ::Proc do
     # todo Use Ruby's #curry
