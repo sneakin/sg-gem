@@ -1,5 +1,8 @@
 require 'sg/constants'
 
+require 'sg/ext'
+using SG::Ext
+
 module SG
   module IO
   end
@@ -17,6 +20,8 @@ require 'sg/io/reactor/dispatch_set'
 
 class SG::IO::Reactor
   attr_reader :inputs, :outputs, :errs, :idlers
+
+  inheritable_attr :current
   
   def initialize
     @inputs = DispatchSet.new
@@ -94,6 +99,7 @@ class SG::IO::Reactor
   # @todo error set really is errors and not stderr, possibly every io?
   
   def process timeout: nil
+    self.class.current = self
     ios = [ @inputs.needs_processing.keys,
             @outputs.needs_processing.keys,
             @errs.needs_processing.keys
@@ -108,6 +114,8 @@ class SG::IO::Reactor
     @idlers.each { |i| i.call }
       
     self
+  ensure
+    self.class.current = nil
   end
 
   def flush

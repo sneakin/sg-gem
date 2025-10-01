@@ -30,16 +30,40 @@ describe SG::IO::Reactor do
       it "does not call the input's callback" do
         expect { subject.process(timeout: time_out) }.to_not change { @has_input }
       end
-      
-      describe 'after writing to the output' do
-        before do
-          output.puts("Halo")
+
+      describe 'happy handler' do        
+        describe 'after writing to the output' do
+          before do
+            output.puts("Halo")
+          end
+          
+          it "calls the input's block" do
+            expect { subject.process(timeout: time_out) }.to change { @has_input }
+          end
         end
         
-        it "calls the input's block" do
-          expect { subject.process(timeout: time_out) }.to change { @has_input }
+        it 'sets Reactor.current for handlers' do
+          actor = subject.add_input(input) do
+            expect(described_crass.current).to be(subject)
+          end
+
+          expect { subject.process(timeout: time_out) }.
+            to_not change { described_class.current }
         end
       end
+
+      # todo how is one bad handler handled?
+      describe 'handler errors' do
+        it 'sets Reactor.current for handlers' do
+          actor = subject.add_input(input) do
+            raise 'boom'
+          end
+
+          expect { subject.process(timeout: time_out) rescue nil }.
+            to_not change { described_class.current }
+        end
+      end
+      
     end
 
     describe '#del_input' do
