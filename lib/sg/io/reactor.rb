@@ -106,9 +106,9 @@ class SG::IO::Reactor
           ]
     i,o,e = ::IO.select(*ios, timeout) unless ios.all?(&:empty?)
     if i || o || e
-      @inputs.process(i)
-      @outputs.process(o)
       @errs.process(e)
+      @outputs.process(o)
+      @inputs.process(i)
     end
     
     @idlers.each { |i| i.call }
