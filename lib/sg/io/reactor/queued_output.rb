@@ -10,9 +10,13 @@ class SG::IO::Reactor
       @closing = false
     end
 
+    def closing?
+      @closing
+    end
+
     def close
       @closing = true
-      self
+      super
     end
 
     alias close_write close

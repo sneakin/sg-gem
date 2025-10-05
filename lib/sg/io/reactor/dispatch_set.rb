@@ -26,8 +26,7 @@ class SG::IO::Reactor
         cl = @ios[io]
         cl.process if cl
       end if ios
-
-      cleanup_closed
+      self
     end
 
     def cleanup_closed

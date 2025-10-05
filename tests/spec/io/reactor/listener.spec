@@ -10,7 +10,7 @@ describe SG::IO::Reactor::Listener do
     let(:in_stream) { Class.new(SG::IO::Reactor::Source).new(in_io) }
     let(:out_io) { double('IO') }
     let(:out_stream) { Class.new(SG::IO::Reactor::Sink).new(out_io) }
-    let(:server) { instance_double('TCPServer', accept: srv_stream) }
+    let(:server) { instance_double('TCPServer', accept: srv_stream, closed?: false) }
     let(:clients) { [] }    
     
     subject do
@@ -20,6 +20,15 @@ describe SG::IO::Reactor::Listener do
       end
     end
     
+    it do
+      expect(server).to receive(:closed?).and_return(true)
+      expect(subject.closed?).to eql(true)
+    end
+    it do
+      expect(server).to receive(:close).and_return(server)
+      subject.close
+    end
+
     describe '#process' do
       it 'accepts a client' do
         expect(server).to receive(:accept).and_return(srv_stream)

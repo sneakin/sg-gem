@@ -99,6 +99,7 @@ class SG::IO::Reactor
   # @todo error set really is errors and not stderr, possibly every io?
   
   def process timeout: nil
+    cleanup_closed
     self.class.current = self
     ios = [ @inputs.needs_processing.keys,
             @outputs.needs_processing.keys,
@@ -112,13 +113,13 @@ class SG::IO::Reactor
     end
     
     @idlers.each { |i| i.call }
-      
     self
   ensure
     self.class.current = nil
   end
 
   def flush
+    @outputs.cleanup_closed
     i,o,e = ::IO.select([],
                         @outputs.needs_processing.keys,
                         [],
@@ -127,6 +128,13 @@ class SG::IO::Reactor
     self
   end
 
+  def cleanup_closed
+    @errs.cleanup_closed
+    @outputs.cleanup_closed
+    @inputs.cleanup_closed
+    self
+  end
+  
   def done!
     flush
     @done = true

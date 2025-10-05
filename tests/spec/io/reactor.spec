@@ -38,7 +38,19 @@ describe SG::IO::Reactor do
           end
           
           it "calls the input's block" do
-            expect { subject.process(timeout: time_out) }.to change { @has_input }
+            expect { subject.process(timeout: time_out) }.
+              to change { @has_input }
+          end
+
+          describe 'closing the input' do
+            before do
+              @input_actor.close
+            end
+            
+            it 'causes the input to be removed from the reactor' do
+              expect { subject.process(timeout: time_out) }.
+                to change(subject.inputs, :size).by(-1)
+            end
           end
         end
         
@@ -117,6 +129,17 @@ describe SG::IO::Reactor do
           expect(ending - start).to be >= time_out
         end
       end
+
+      describe 'closing the output' do
+        before do
+          @output_actor.close
+        end
+        
+        it 'causes the output to be removed from the reactor' do
+          expect { 2.times { subject.process(timeout: time_out) } }.
+            to change(subject.outputs, :size).by(-1)
+        end
+      end
     end
 
     describe '#flush' do
@@ -144,6 +167,17 @@ describe SG::IO::Reactor do
           expect(subject.flush).to be(subject)
           ending = Time.now
           expect(ending - start).to be < 1
+        end
+      end
+
+      describe 'closing the output' do
+        before do
+          @output_actor.close
+        end
+        
+        it 'causes the output to be removed from the reactor' do
+          expect { subject.flush }.
+            to change(subject.outputs, :size).by(-1)
         end
       end
     end
@@ -218,6 +252,17 @@ describe SG::IO::Reactor do
         
         it "calls the error callback" do
           expect { subject.process(timeout: time_out) }.to change { @err_input }
+        end
+      end
+
+      describe 'closing the input' do
+        before do
+          @err_actor.close
+        end
+        
+        it 'causes the input to be removed from the reactor' do
+          expect { subject.process(timeout: time_out) }.
+            to change(subject.errs, :size).by(-1)
         end
       end
     end

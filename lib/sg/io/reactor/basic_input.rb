@@ -12,11 +12,11 @@ class SG::IO::Reactor
           data = blk.call
           reactor.delete(rin)
           data
-        rescue EOFError
+        rescue IO::WaitReadable, IO::WaitWritable
+          # reactor will try again
+        rescue
           reactor.delete(rin)
           raise
-        rescue IO::EAGAINWaitReadable
-          # reactor will try again
         end
       end
       reactor << rin # todo deleting the IO requires rin since the reactor IO is unavailable

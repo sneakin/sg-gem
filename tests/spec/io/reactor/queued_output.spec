@@ -10,7 +10,10 @@ describe SG::IO::Reactor::QueuedOutput do
   end
   
   it_behaves_like 'an output stream'
-
+  it 'delays the close' do
+    expect { subject.close }.to change(subject, :closing?).to eql(true)
+  end
+  
   describe 'nothing written' do
     it { expect(subject.needs_processing?).to be(false) }
     it { expect(subject.closed?).to be(false) }

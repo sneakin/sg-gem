@@ -15,6 +15,9 @@ describe SG::IO::Reactor::LineReader do
   it { expect(subject.io).to eq(pipe[0]) }
   it { expect(subject.needs_processing?).to be(true) }
 
+  it { expect { subject.close }.to change(subject, :closed?).to eql(true) }
+  it { expect { subject.close }.to change(subject.io, :closed?).to eql(true) }
+  
   describe 'closed IO' do
     before do
       pipe[0].close

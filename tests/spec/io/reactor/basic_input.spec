@@ -15,6 +15,9 @@ describe SG::IO::Reactor::BasicInput do
   
   it { expect(subject).to be_kind_of(SG::IO::Reactor::Source) }
   it { expect(subject.io).to eq(pipe[0]) }
+
+  it { expect { subject.close }.to change(subject, :closed?).to eql(true) }
+  it { expect { subject.close }.to change(subject.io, :closed?).to eql(true) }
   
   describe 'before closing' do
     it 'needs processing' do

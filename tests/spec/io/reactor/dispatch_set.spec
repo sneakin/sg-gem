@@ -36,10 +36,6 @@ describe SG::IO::Reactor::DispatchSet do
         it 'does not error' do
           expect { subject.process([]) }.to_not raise_error
         end
-
-        it 'removed the closed mock' do
-          expect { subject.process([]) }.to change { subject.ios[io2] }.to(nil)
-        end
       end
       
       describe 'with arguments' do
@@ -48,16 +44,12 @@ describe SG::IO::Reactor::DispatchSet do
           expect(mock2).to_not receive(:process)
           subject.process([io1])
         end
-
-        it 'removed the closed mock' do
-          expect { subject.process([]) }.to change { subject.ios[io2] }.to(nil)
-        end
       end
     end
 
     describe '#cleanup_closed' do
       it 'deletes any record of closed IOs.' do
-        expect { subject.process([]) }.to change { subject.ios[io2] }.to(nil)
+        expect { subject.cleanup_closed }.to change { subject.ios[io2] }.to(nil)
       end
     end
 

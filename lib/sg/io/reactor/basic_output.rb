@@ -12,6 +12,11 @@ class SG::IO::Reactor
       @needs_processing.call if @needs_processing
     end
 
+    def close
+      io.close
+      super
+    end
+    
     def process
       @cb.call
     end
