@@ -34,12 +34,6 @@ module SG::Ext
 
     alias * compose
 
-    def and &cb
-      compose(cb)
-    end
-
-    attr_accessor :on_error
-
     def fn= v
       @fn = v
     end
@@ -48,23 +42,46 @@ module SG::Ext
       @fn || self
     end
 
+    def and &cb
+      compose(cb)
+    end
+
     def not
       lambda { |*a, **o, &b| !self.call(*a, **o, &b) }
     end
 
     alias ~ not
 
+      # todo adding an on_error method for an alt route?
+    def on_error
+      @on_error ||= Hash.new
+    end
+
+    def err! ex
+      clause = [ ex.class, *ex.class.ancestors ].
+        find { on_error.has_key?(_1) }
+      h = on_error[clause]
+      raise ex unless h
+      h.call(ex)
+    end
+
     def but *exceptions, &cb
       return self if exceptions.empty? && cb == nil
-      lambda do |*a, **o, &b|
+      p = lambda do |*a, **o, &b|
         self.call(*a, **o, &b)
       rescue
-        if exceptions.empty? || exceptions.include?($!.class)
-          cb&.call($!)
-        else
-          raise
-        end
+        p.err!($!)
+      end.but!(*exceptions, &cb)
+    end
+    
+    def but! *exceptions, &cb
+      if exceptions.empty?
+        @en_error = Hash.new { cb.call(_2) }.merge!(on_error)
+      else
+        exceptions.each { on_error[_1] = cb }
       end
+
+      self
     end
   end
 end
