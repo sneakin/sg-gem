@@ -1127,6 +1127,116 @@ describe Proc do
     it { expect((~subject).call(true)).to eql(false) }
     it { expect((~subject).call(false)).to eql(true) }
   end
+
+  describe '#but' do
+    describe 'with an argument' do
+      subject do
+        lambda do |ex, m = nil|
+          raise ex, m
+        end.but(Errno::ENOENT) do |ex|
+          @caught = ex
+        end
+      end
+
+      it { expect { subject.error_handler_for(Errno::ENOENT) }.
+        to_not raise_error }
+      it { expect { subject.error_handler_for(Errno::EBADFD) }.
+        to raise_error(KeyError) }
+      
+      it 'catches the exception' do
+        expect { subject.call(Errno::ENOENT) }.to_not raise_error
+      end
+      
+      it 'raises other exceptions' do
+        expect { subject.call(Errno::EACCES) }.to raise_error(Errno::EACCES)
+      end
+      
+      it 'calls the block for the exception' do
+        expect { subject.call(Errno::ENOENT) }.to change { @caught }.to(Errno::ENOENT)
+      end
+      
+      it 'catches subclasses' do
+        deriv = Class.new(Errno::ENOENT)
+        expect { subject.call(Errno::ENOENT) }.to change { @caught }.to(deriv)
+      end
+    end
+
+    describe 'with no argument' do
+      subject do
+        lambda do |ex, m = nil|
+          raise ex, m
+        end.but do |ex|
+          @caught = ex
+        end
+      end
+
+      it { expect { subject.error_handler_for(Errno::ENOENT) }.
+        to_not raise_error }
+      it { expect { subject.error_handler_for(Errno::EBADFD) }.
+        to_not raise_error }
+      
+      it 'catches the exception' do
+        expect { subject.call(Errno::ENOENT) }.to_not raise_error
+      end
+      
+      it 'catches other exceptions' do
+        expect { subject.call(Errno::EACCES) }.to_not raise_error
+      end
+      
+      it 'calls the block for the exception' do
+        expect { subject.call(Errno::ENOENT) }.to change { @caught }.to(Errno::ENOENT)
+      end
+      
+      it 'catches subclasses' do
+        deriv = Class.new(Errno::ENOENT)
+        expect { subject.call(Errno::ENOENT) }.to change { @caught }.to(deriv)
+      end
+    end
+
+    describe 'with multiple buts' do
+      subject do
+        lambda do |ex, m = nil|
+          raise ex, m
+        end.but(Errno::ENOENT) do |ex|
+          @caught = ex
+        end.but(SystemCallError) do |ex|
+          @syserr = ex
+        end
+      end
+      
+      it { expect { subject.error_handler_for(Errno::ENOENT) }.
+        to_not raise_error }
+      it { expect { subject.error_handler_for(SystemCallError) }.
+        to_not raise_error }
+      it { expect { subject.error_handler_for(Errno::ENOENT) }.
+        to_not raise_error }
+      
+      it 'catches the exception' do
+        expect { subject.call(Errno::ENOENT) }.to_not raise_error
+      end
+      
+      it 'raises other exceptions' do
+        expect { subject.call(ZeroDivisionError) }.
+          to raise_error(ZeroDivisionError)
+      end
+      
+      it 'calls the block for the exception' do
+        expect { subject.call(Errno::ENOENT) }.
+          to change { @caught }.to(Errno::ENOENT)
+      end
+      
+      it 'catches subclasses' do
+        deriv = Class.new(Errno::ENOENT)
+        expect { subject.call(Errno::ENOENT) }.
+          to change { @caught }.to(deriv)
+      end
+
+      it 'calls the block for the exception' do
+        expect { subject.call(Errno::EBADFD) }.
+          to change { @syserr }.to(Errno::EBADFD)
+      end
+    end
+  end
 end
 
 describe Range do

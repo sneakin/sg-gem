@@ -52,33 +52,61 @@ module SG::Ext
 
     alias ~ not
 
-      # todo adding an on_error method for an alt route?
-    def on_error
-      @on_error ||= Hash.new
+    def dup
+      super.tap do
+        _1.inner_fn = inner_fn
+        _1.error_handlers = error_handlers.dup
+      end
+    end
+      
+    # Exception rescue clauses:
+      
+    attr_accessor :inner_fn
+    attr_writer :error_handlers
+
+    def error_handlers
+      @error_handlers ||= Hash.new
     end
 
+    def error_handler_for ex
+      unless ex.kind_of?(Class)
+        ex = ex.class
+      end
+      handler = [ ex, *ex.ancestors ].
+        find { |c| error_handlers.has_key?(c) }
+      error_handlers[handler] || raise(KeyError.new(ex))
+    end
+    
     def err! ex
-      clause = [ ex.class, *ex.class.ancestors ].
-        find { on_error.has_key?(_1) }
-      h = on_error[clause]
-      raise ex unless h
-      h.call(ex)
+      error_handler_for(ex).call(ex)
+    rescue KeyError
+      raise ex
     end
 
+    public
     def but *exceptions, &cb
       return self if exceptions.empty? && cb == nil
+      # The original Proc needs to be tracked since dupping the Proc
+      # would not update ~p~ in ~p.errs!~.
+      this = self
+      unless (error_handlers.empty? && error_handlers.default == nil) || this.inner_fn == nil
+        this = this.inner_fn
+      end
       p = lambda do |*a, **o, &b|
-        self.call(*a, **o, &b)
+        this.call(*a, **o, &b)
       rescue
         p.err!($!)
+      end.tap do
+        _1.inner_fn = this
+        _1.error_handlers = self.error_handlers.dup
       end.but!(*exceptions, &cb)
     end
     
     def but! *exceptions, &cb
       if exceptions.empty?
-        @en_error = Hash.new { cb.call(_2) }.merge!(on_error)
+        error_handlers.default = cb
       else
-        exceptions.each { on_error[_1] = cb }
+        exceptions.each { error_handlers[_1] = cb }
       end
 
       self
