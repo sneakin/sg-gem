@@ -1,5 +1,5 @@
 Gem::Specification.new do |s|
-  s.name        = 'sg'
+  s.name        = 'sg-gem'
   s.version     = '0.2.0'
   s.licenses    = ['MIT']
   s.summary     = "Common modules for all SemanticGap projects."
@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   }
   s.executables = [ 'sg-color', 'sg-tabler' ]
   s.require_paths = [ 'lib' ]
-  s.add_runtime_dependency 'rake', '~>13.0.0'
+  s.add_dependency 'rake', '~>13.0.0'
   s.add_development_dependency 'bindata'
   s.add_development_dependency 'rdoc', '~>6.5.0'
   s.add_development_dependency 'rspec', '~>3.12.0'
