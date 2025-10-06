@@ -24,10 +24,16 @@ RSpec::Core::RakeTask.new(:spec) do |t|
 end
 
 namespace :spec do
-  desc 'Add options to generate a coverage report.'
-  task :coverage do
-    rspec_opts << '-Ilib -Itests -Ispec -rsg/rake/simplecov-init'
-    #Rake::Task['spec:html'].execute
+  if Gem.loaded_specs['simplecov']
+    desc 'Add options to generate a coverage report.'
+    task :coverage do
+      rspec_opts << '-Ilib -Itests -Ispec -rsg/rake/simplecov-init'
+      #Rake::Task['spec:html'].execute
+    end
+  else
+    task :coverage do
+      warn("Install simplecov.")
+    end
   end
   
   desc 'Run the RSpec test suit'
