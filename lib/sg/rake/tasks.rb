@@ -58,36 +58,35 @@ namespace :doc do
   use_yard = !!(ENV.fetch('USE_YARD', '1') =~ /(y|1)/i)
   failed_yard = true
   
-  if use_yard
-    begin
-      require 'yard'
+  if use_yard && Gem.loaded_specs['yard']
+    require 'yard'
 
-      desc 'Generate the API documentation as HTML.'
-      YARD::Rake::YardocTask.new(:yard) do |t|
-        t.files   = [ 'Rakefile', 'bin/*[^~]',
-                      '{bin,lib,tests,spec}/**/*.{rb,spec}',
-                      'bin/*[^~]',
-                      '-', 'README.md', 'COPYING' ]
-        t.options = ['--title', $NAME,
-                     '-o', $ROOT.join('doc', 'yard').to_s,
-                     '-m', 'markdown',
-                     '-e', SG_ROOT.join('lib/sg/yard/refine.rb').to_s,
-                     '-p', SG_ROOT.join('templates').to_s ]
-      end
+    desc 'Generate the API documentation as HTML.'
+    YARD::Rake::YardocTask.new(:yard) do |t|
+      t.files   = [ 'Rakefile', 'bin/*[^~]',
+                    '{bin,lib,tests,spec}/**/*.{rb,spec}',
+                    'bin/*[^~]',
+                    *$SRC_FILES,
+                    '-',
+                    '*.md', '*.org', 'COPYING', *$EXTRA_FILES ]
+      t.options = ['--title', $NAME,
+                   '-o', $ROOT.join('doc', 'yard').to_s,
+                   '-m', 'markdown',
+                   '-e', SG_ROOT.join('lib/sg/yard/refine.rb').to_s,
+                   '-p', SG_ROOT.join('templates').to_s ]
+    end
       
-      failed_yard = false
+    failed_yard = false
 
-      desc 'Generate the API docs.'
-      task :api => [ 'doc:yard' ]
-      
-      file 'doc/api' do
-        FileUtils.ln_sf('yard', 'doc/api')
-      end
-    rescue LoadError
+    desc 'Generate the API docs.'
+    task :api => [ 'doc:yard' ]
+    
+    file 'doc/api' do
+      FileUtils.ln_sf('yard', 'doc/api')
     end
   end
   
-  if use_rdoc || failed_yard
+  if (use_rdoc || failed_yard) && Gem.loaded_specs['rdoc']
     require 'rdoc/task'
 
     RDoc::Task.new(:rdoc) do |t|
@@ -96,7 +95,7 @@ namespace :doc do
       t.rdoc_dir = 'doc/rdoc'
       t.markup = 'markdown'
       t.options += %w{--all}
-      t.rdoc_files.include('README.md', 'COPYING', 'Rakefile', 'bin/*[^~]', '{bin,lib,tests,spec}/**/*.{rb,spec}')
+      t.rdoc_files.include('README.md', 'COPYING', '*.md', '*.org', 'Rakefile', 'bin/*[^~]', '{bin,lib,tests,spec}/**/*.{rb,spec}', *$SOURCE_FILES, *$EXTRA_FILES)
     end
     
     desc 'Generate the API docs.'

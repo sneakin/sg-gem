@@ -20,6 +20,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "simplecov", "~> 0.22.0"
   #s.add_development_dependency 'json'
   s.add_development_dependency 'yard'
+  s.add_development_dependency 'org-ruby'
   s.add_dependency 'base64'
   s.add_dependency 'ffi'
   s.add_dependency 'matrix'
