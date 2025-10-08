@@ -72,7 +72,7 @@ class SG::IO::Reactor
       end
     rescue ::IO::WaitWritable, ::OpenSSL::SSL::SSLErrorWaitWritable
       @queue.unshift(data[amt..-1]) if data && amt < data.size
-    rescue Errno::EPIPE
+    rescue IOError, SystemCallError
       # fixme necessary? more cases?
       io.close
       @closing = nil
