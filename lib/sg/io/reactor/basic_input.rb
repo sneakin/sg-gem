@@ -7,7 +7,7 @@ class SG::IO::Reactor
     # @yieldreturn [String]
     def self.read(io, reactor: nil, &blk)
       reactor ||= SG::IO::Reactor.current
-      rin = SG::IO::Reactor::BasicInput.new(io) do
+      rin = self.new(io) do
         begin
           data = blk.call
           reactor.delete(rin)
@@ -19,7 +19,8 @@ class SG::IO::Reactor
           raise
         end
       end
-      reactor << rin # todo deleting the IO requires rin since the reactor IO is unavailable
+      reactor << rin
+      rin
     end
 
     def initialize io, &cb
