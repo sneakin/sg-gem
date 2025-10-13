@@ -93,6 +93,9 @@ module SG::Defer
       @value
     end
 
+    alias accept resolve!
+    alias reject failed!
+    
     # Used for arithmetic to promote values to deferred values.
     # @param other [Object]
     # @return [Array(Value, self)]

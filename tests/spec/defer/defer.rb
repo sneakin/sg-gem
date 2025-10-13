@@ -137,6 +137,11 @@ shared_examples_for 'a Defer::Value' do
       end
 
       describe 'regular value' do
+        it 'updated the value' do
+          subject.resolve!('boom')
+          expect(subject.wait).to eql('boom')
+        end
+
         it 'becomes ready' do
           expect { subject.resolve!('boom') }.
             to change(subject, :ready?).to(true)

@@ -76,6 +76,13 @@ describe SG::Promise2 do
     x = 1
     v.reset!
     expect(p5.call).to eql(1000 * 1000)
+
+    x = 0
+    v = SG::Defer::Value.new # { x == 1 ? raise('boom') : 123 }
+    #v.reset!
+    expect(p2.call(v)).to eql(456 + 456)
+    #v.accept(200)
+    expect(v.wait).to eql(456 + 456)
   end
 end
 

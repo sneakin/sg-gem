@@ -51,14 +51,21 @@ module SG
     end
 
     def and_then &cb
-      Promise2.new do |acc, rej|
+      PromiseGold.new do |acc, rej|
         call(lambda { acc.call(cb.call(_1)) }, rej)
       end
     end
 
     def rescues &cb
-      Promise2.new do |acc, rej|
+      PromiseGold.new do |acc, rej|
         call(acc, lambda { acc.call(cb.call(_1)) })
+      end
+    end
+
+    def finally &cb # or always
+      PromiseGold.new do |acc, rej|
+        call(lambda { acc.call(cb.call(_1)) },
+             lambda { rej.call(cb.call(_1)) })
       end
     end
   end
@@ -102,16 +109,22 @@ module SG
     def and_then &cb
       Promise2.new do |acc|
         call(Acceptor.new(lambda { acc.accept(cb.call(_1)) },
-                          acc.rejector))
+                          lambda { acc.reject(_1) }))
       end
     end
 
     def rescues &cb
       Promise2.new do |acc|
-        call(Acceptor.new(acc.acceptor,
+        call(Acceptor.new(lambda { acc.accept(_1) },
                           lambda { acc.accept(cb.call(_1)) }))
       end
     end
+
+    def finally &cb
+      Promise2.new(lambda { acc.accept(cb.call(_1)) },
+                   lambda { acc.accept(cb.call(_1)) })
+    end
+      
   end
 
   class PromisedValue < Promise2
