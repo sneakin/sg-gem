@@ -41,7 +41,7 @@ class SG::IO::Reactor
     end
     
     def process
-      @cb.call
+      @cb.call(self)
     end
   end
 end
