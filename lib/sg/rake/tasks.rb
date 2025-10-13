@@ -28,7 +28,7 @@ namespace :spec do
     desc 'Add options to generate a coverage report.'
     task :coverage do
       rspec_opts << '-Ilib -Itests -Ispec -rsg/rake/simplecov-init'
-      #Rake::Task['spec:html'].execute
+      Rake::Task['spec'].execute
     end
   else
     task :coverage do
