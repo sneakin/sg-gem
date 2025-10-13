@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'sg-gem'
-  s.version     = '0.2.0'
+  s.version     = '0.3.0'
   s.licenses    = ['MIT']
   s.summary     = "Common modules for all SemanticGap projects."
   #s.description = "Much longer explanation of the example!"
@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rdoc', '~>6.5.0'
   s.add_development_dependency 'rspec', '~>3.12.0'
   s.add_development_dependency "simplecov", "~> 0.22.0"
-  #s.add_development_dependency 'json'
+  s.add_development_dependency 'solargraph'
   s.add_development_dependency 'yard'
   s.add_development_dependency 'org-ruby'
   s.add_dependency 'base64'
