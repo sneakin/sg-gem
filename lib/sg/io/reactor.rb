@@ -149,7 +149,7 @@ class SG::IO::Reactor
     if cb
       until done?
         process(timeout: timeout)
-        cb.call
+        cb.call(self)
       end
     else
       process(timeout: timeout) until done?
