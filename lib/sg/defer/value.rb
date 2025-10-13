@@ -1,14 +1,13 @@
 require 'sg/ext'
 using SG::Ext
 
-require_relative 'futurable'
+require_relative 'able'
 
 module SG::Defer
   # A deferred value that requires calling #wait to get
   # the value from a production method.
   class Value
     include Able
-    include Futurable
 
     # Create a new value obtained by later calling the block argument.
     # @yield [void]
@@ -25,17 +24,17 @@ module SG::Defer
     # @raise [RuntimeError]
     def wait
       @mut.synchronize do
-        raise @value if failed?
+        raise @value if rejected?
         return @value if ready?
       end
       begin
         return nil unless @producer
         v = @producer.call
-        v = v.wait while Able === v
+        v = v.wait while Waitable === v
         # could have waited on self
-        ready?? @value : resolve!(v)
+        ready?? @value : accept(v)
       rescue
-        failed!($!) unless ready?
+        reject($!) unless ready?
         raise
       end
     end
@@ -43,7 +42,7 @@ module SG::Defer
     # Has a value been obtained?
     def ready?; !!@ready; end
     # Was the value an error?
-    def failed?; @ready == :failed; end
+    def rejected?; @ready == :rejected; end
 
     # Zero out the state and value.
     # @return [self]
@@ -61,14 +60,14 @@ module SG::Defer
     # @param v [Object]
     # @return [Object, Value]
     # @raise [AlreadyResolved]
-    def resolve! v
+    def accept v
       raise AlreadyResolved.new(self) if ready?
       
-      if Able === v
+      if Waitable === v
         self.class.new do
-          resolve!(v.wait)
+          accept(v.wait)
         rescue
-          failed!($!)
+          reject($!)
           raise
         end
       else
@@ -84,18 +83,15 @@ module SG::Defer
     # @param v [StandardError, String]
     # @return [Object]
     # @raise [AlreadyResolved]
-    def failed! v
+    def reject v
       raise AlreadyResolved.new(self) if ready?
       @mut.synchronize do
-        @ready = :failed
+        @ready = :rejected
         @value = v
       end
       @value
     end
 
-    alias accept resolve!
-    alias reject failed!
-    
     # Used for arithmetic to promote values to deferred values.
     # @param other [Object]
     # @return [Array(Value, self)]

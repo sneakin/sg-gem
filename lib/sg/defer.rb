@@ -8,8 +8,8 @@ using SG::Ext
 
 module SG::Defer
   autoload :Able, 'sg/defer/able'
-  autoload :Rejectable, 'sg/defer/rejectable'
-  autoload :Futurable, 'sg/defer/futurable'
+  autoload :Acceptorable, 'sg/defer/able'
+  autoload :Waitable, 'sg/defer/able'
   autoload :Value, 'sg/defer/value'
   autoload :Missing, 'sg/defer/missing'
   autoload :Proxy, 'sg/defer/proxy'
@@ -20,7 +20,7 @@ module SG::Defer
   def self.wait_for obj
     case obj
     when Hash then obj.reduce({}) { |h, (k,v)| h[k] = wait_for(v); h }
-    when Able then obj.wait
+    when Waitable then obj.wait
     when Enumerable, Array then obj.collect { wait_for(_1) }
     else obj
     end

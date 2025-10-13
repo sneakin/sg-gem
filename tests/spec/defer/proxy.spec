@@ -4,7 +4,7 @@ using SG::Ext
 require_relative 'defer'
 
 describe SG::Defer::Proxy do
-  it_should_behave_like 'a Futurable'
+  it_should_behave_like 'a Defer::Able'
   it_should_behave_like 'a Defer::Value'
 
   subject { described_class.new { [ 10, 100, 200 ] } }

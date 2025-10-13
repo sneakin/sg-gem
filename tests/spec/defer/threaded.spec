@@ -4,6 +4,7 @@ using SG::Ext
 require_relative 'defer'
 
 describe SG::Defer::Value do
+  it_should_behave_like 'a Defer::Able'
   it_should_behave_like 'a Defer::Value'
 
   it 'works' do

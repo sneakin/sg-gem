@@ -82,6 +82,8 @@ module SG
 
   class Promise2
     class Acceptor
+      include SG::Defer::Acceptorable
+      
       attr_reader :acceptor, :rejector
       
       def initialize acc = nil, rej = nil
@@ -138,7 +140,7 @@ module SG
   end
   
   class Promise
-    include SG::Defer::Futurable
+    include SG::Defer::Able
     
     def initialize future, acceptor = nil, rejector = nil
       @acceptor = acceptor
@@ -161,15 +163,12 @@ module SG
     end
     
     def accept v
-      @future.resolve!(v)
+      @future.accept(v)
     end
 
-    def reject v, raises = false
-      @future.failed!(v, raises)
+    def reject v
+      @future.reject(v)
     end
-
-    alias resolve! accept
-    alias failed! reject
 
     def reset!
       @future.reset!

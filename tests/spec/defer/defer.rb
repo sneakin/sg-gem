@@ -3,14 +3,13 @@ using SG::Ext
 
 require 'sg/defer'
 
-shared_examples_for 'a Futurable' do
-  it { expect(subject).to be_kind_of(SG::Defer::Futurable) }
-  it { expect(subject).to be_kind_of(SG::Defer::Rejectable) }
+shared_examples_for 'a Defer::Able' do
+  it { expect(subject).to be_kind_of(SG::Defer::Waitable) }
+  it { expect(subject).to be_kind_of(SG::Defer::Acceptorable) }
   it { expect(subject).to be_kind_of(SG::Defer::Able) }
   it { expect(subject).to be_respond_to(:wait) }
-  it { expect(subject).to be_respond_to(:resolve) }
-  it { expect(subject).to be_respond_to(:resolve!) }
-  it { expect(subject).to be_respond_to(:failed!) }
+  it { expect(subject).to be_respond_to(:accept) }
+  it { expect(subject).to be_respond_to(:reject) }
   it { expect(subject).to be_respond_to(:reset!) }
 end
 
@@ -21,7 +20,7 @@ shared_examples_for 'a Defer::Value' do
   
   describe 'before resolve' do
     it { expect(subject).to_not be_ready }
-    it { expect(subject).to_not be_failed }
+    it { expect(subject).to_not be_rejected }
 
     describe '#wait' do
       describe 'without data' do
@@ -42,7 +41,7 @@ shared_examples_for 'a Defer::Value' do
             to change(queue, :size).by(-1)
         end
         it { expect { subject.wait }.to change(subject, :ready?).to(true) }
-        it { expect { subject.wait }.to_not change(subject, :failed?) }
+        it { expect { subject.wait }.to_not change(subject, :rejected?) }
 
         it 'stored the value' do
           subject.wait
@@ -59,7 +58,7 @@ shared_examples_for 'a Defer::Value' do
         end
 
         it { expect { subject.wait rescue nil }.to change(subject, :ready?).to(true) }
-        it { expect { subject.wait rescue nil }.to change(subject, :failed?).to(true) }
+        it { expect { subject.wait rescue nil }.to change(subject, :rejected?).to(true) }
 
         it 'stored and reraises the error' do
           ex = subject.wait rescue $!
@@ -81,7 +80,7 @@ shared_examples_for 'a Defer::Value' do
         end
 
         it { expect { subject.wait }.to change(subject, :ready?).to(true) }
-        it { expect { subject.wait }.to_not change(subject, :failed?).from(false) }
+        it { expect { subject.wait }.to_not change(subject, :rejected?).from(false) }
       end
 
       describe 'the producer returns a deferred error' do
@@ -99,31 +98,31 @@ shared_examples_for 'a Defer::Value' do
         end
 
         it { expect { subject.wait rescue nil }.to change(subject, :ready?).to(true) }
-        it { expect { subject.wait rescue nil }.to change(subject, :failed?).to(true) }
+        it { expect { subject.wait rescue nil }.to change(subject, :rejected?).to(true) }
       end
     end
 
-    describe '#resolve!' do
+    describe '#accept' do
       describe 'with a deferred value' do
         let(:src) { described_class.new { 1234 } }
         
         it 'returns a new deferred value that is dependent' do
-          expect(subject.resolve!(src)).to be_kind_of(described_class)
+          expect(subject.accept(src)).to be_kind_of(described_class)
         end
         
         it 'stays not ready' do
-          expect { subject.resolve!(src) }.
+          expect { subject.accept(src) }.
             to_not change(subject, :ready?)
         end
         
-        it 'is not failed' do
-          expect { subject.resolve!(src) }.
-            to_not change(subject, :failed?)
+        it 'is not rejected' do
+          expect { subject.accept(src) }.
+            to_not change(subject, :rejected?)
         end
         
         describe 'dependent resolves' do
           it 'returns the value' do
-            expect(subject.resolve!(src).wait).to eql(1234)
+            expect(subject.accept(src).wait).to eql(1234)
           end
         end
         
@@ -131,58 +130,58 @@ shared_examples_for 'a Defer::Value' do
           let(:src) { described_class.new { raise this_error } }
           
           it 'fails with the error' do
-            expect { subject.resolve!(src).wait }.to raise_error(this_error)
+            expect { subject.accept(src).wait }.to raise_error(this_error)
           end
         end
       end
 
       describe 'regular value' do
         it 'updated the value' do
-          subject.resolve!('boom')
+          subject.accept('boom')
           expect(subject.wait).to eql('boom')
         end
 
         it 'becomes ready' do
-          expect { subject.resolve!('boom') }.
+          expect { subject.accept('boom') }.
             to change(subject, :ready?).to(true)
         end
         
-        it 'is not failed' do
-          expect { subject.resolve!('boom') }.
-            to_not change(subject, :failed?)
+        it 'is not rejected' do
+          expect { subject.accept('boom') }.
+            to_not change(subject, :rejected?)
         end
 
         it 'returns the value' do
-          expect(subject.resolve!('boom')).to eql('boom')
+          expect(subject.accept('boom')).to eql('boom')
         end
       end
     end
 
-    describe '#failed!' do
+    describe '#reject' do
       it 'becomes ready' do
-        expect { subject.failed!('boom') }.
+        expect { subject.reject('boom') }.
           to change(subject, :ready?).to(true)
       end
       
-      it 'becomes failed' do
-        expect { subject.failed!('boom') }.
-          to change(subject, :failed?).to(true)
+      it 'becomes rejected' do
+        expect { subject.reject('boom') }.
+          to change(subject, :rejected?).to(true)
       end
       
       it 'causes #wait to raise the error' do
-        subject.failed!(this_error.new)
+        subject.reject(this_error.new)
         expect { subject.wait }.to raise_error(this_error)
       end
 
       it 'returns the value' do
-        expect(subject.failed!(1234)).to eql(1234)
+        expect(subject.reject(1234)).to eql(1234)
       end
     end
   end
 
   describe 'after resolve' do
     before do
-      subject.resolve!(1234)
+      subject.accept(1234)
     end
     
     describe '#wait' do
@@ -191,38 +190,38 @@ shared_examples_for 'a Defer::Value' do
           to change { Time.now }.to be_within(0.001).of(Time.now)
       end
     end
-    describe '#resolve!' do
+    describe '#accept' do
       it 'raises error' do
-        expect { subject.resolve!(789) }.
+        expect { subject.accept(789) }.
           to raise_error(SG::Defer::AlreadyResolved)
       end
     end
-    describe '#fail!' do
+    describe '#reject' do
       it 'raises error' do
-        expect { subject.resolve!(789) }.
+        expect { subject.reject(789) }.
           to raise_error(SG::Defer::AlreadyResolved)
       end
     end
   end
 
-  describe 'after fail' do
+  describe 'after reject' do
     before do
-      subject.failed!(this_error.new)
+      subject.reject(this_error.new)
     end
     describe '#wait' do
       it 'raises the error' do
         expect { subject.wait }.to raise_error(this_error)
       end
     end
-    describe '#resolve!' do
+    describe '#accept' do
       it 'raises error' do
-        expect { subject.resolve!(789) }.
+        expect { subject.accept(789) }.
           to raise_error(SG::Defer::AlreadyResolved)
       end
     end
-    describe '#fail!' do
+    describe '#reject' do
       it 'raises error' do
-        expect { subject.resolve!(789) }.
+        expect { subject.reject(789) }.
           to raise_error(SG::Defer::AlreadyResolved)
       end
     end
@@ -230,15 +229,15 @@ shared_examples_for 'a Defer::Value' do
 
   describe '#reset!' do
     before do
-      subject.failed!(123)
+      subject.reject(123)
     end
     
     it 'is not ready' do
       expect { subject.reset! }.to change(subject, :ready?).to(false)
     end
     
-    it 'is not failed' do
-      expect { subject.reset! }.to change(subject, :failed?).to(false)
+    it 'is not rejected' do
+      expect { subject.reset! }.to change(subject, :rejected?).to(false)
     end
     
     it 'produces a new value' do
