@@ -4,7 +4,7 @@ using SG::Ext
 require 'sg/promise'
 
 shared_examples_for SG::Chainable do
-  describe 'no chalinks' do
+  describe 'no chain links' do
   end
 
   describe '#and_then' do
@@ -14,23 +14,7 @@ shared_examples_for SG::Chainable do
   end
 end
 
-describe SG::Chain do
-  it 'works' do
-    called = {}
-    rescued = {}
-    p = SG::Chain.new { called[0] = _1; _1 + _1 }.
-      rescues { rescued[0] = _1; 'oops' }.
-      and_then { called[1] = _1; _1 + _1 }
-    expect(p.accept(123)).to eql(123*4)
-    expect(called).to eql({ 0 => 123, 1 => 246 })
-
-    expect(p.reject(123)).to eql('oopsoops')
-    expect(called).to eql({ 0 => nil, 1 => 'oops' })
-    expect(rescued[0]).to be_kind_of(RuntimeError)
-  end
-end
-
-describe SG::Promise2 do
+describe SG::Promise do
   it 'works' do
     x = 0
     # p = SG::PromiseGold.new do |acc, rej|
@@ -40,7 +24,7 @@ describe SG::Promise2 do
     #     acc.call(456)
     #   end
     # end
-    p = SG::Promise2.new do |acc|
+    p = SG::Promise.new do |acc|
       if x == 1
         acc.reject(123)
       else
@@ -83,36 +67,23 @@ describe SG::Promise2 do
     expect(p2.call(v)).to eql(456 + 456)
     #v.accept(200)
     expect(v.wait).to eql(456 + 456)
-  end
-end
 
-describe SG::Promise do
-  let(:queue) { Queue.new }
-  
-  it 'works' do
-    called = {}
-    rescued = {}
-    v = SG::Defer::Value.new
-    p = SG::Promise.new(v,
-                        lambda { called[0] = _1; _1 + _1 }).
-      rescues { rescued[0] = _1; 'oops' }.
-      and_then { called[1] = _1; _1 + _1 }
-    allow(v).to receive(:wait).and_return(123)
-    expect(p.wait).to eql(123*4)
-    expect(called).to eql({ 0 => 123, 1 => 246 })
+    fin = 0
+    pe = p.ensure { fin += 1; _1 + 1 }.
+      and_then { fin += 10; _1 + 10 }.
+      rescues { fin += 100; _1 + 100 }
+    x = 0
+    expect { pe.call }.to change { fin }.by(11)
+    x = 1
+    expect { pe.call }.to change { fin }.by(101)
 
-    p.reset!
-    allow(v).to receive(:wait).and_raise(RuntimeError.new('v'))
-    expect(p.wait).to eql('oopsoops')
-    expect(rescued[0]).to be_kind_of(RuntimeError)
-    expect(called).to eql({ 0 => nil, 1 => 'oops' })
-  end
-  
-  describe 'no chaining' do
-    describe 'accepting a value' do
-    end
-
-    describe 'rejecting a value' do
-    end
+    fin = 0
+    pf = p.finally { fin += 1; _1 }.
+      and_then { fin += 10; _1 + 10 }.
+      rescues { fin += 100; _1 + 100 }
+    x = 0
+    expect { pf.call }.to change { fin }.by(1)
+    x = 1
+    expect { pf.call }.to change { fin }.by(1)
   end
 end
