@@ -17,7 +17,18 @@ describe SG::Defer::Value do
     z = SG::Defer::Value.new { n.wait + y.wait }
     expect([x.wait, n.wait, y.wait, z.wait]).
       to eql([50, 30, 30, 60])
+    t = Time.now
     expect { [x.wait, n.wait, y.wait, z.wait] }.
-      to change { Time.now }.to be_within(0.001).of(Time.now)
+      to change { Time.now }.to be_within(0.001).of(t)
+  end
+
+  describe 'initialized without a block' do
+    subject { described_class.new }
+    it 'waits for #ready?' do
+      Thread.new { sleep(1); subject.accept(100) }
+      t = Time.now
+      expect { subject.wait }.
+        to change { Time.now }.to be_within(2).of(t)
+    end
   end
 end

@@ -13,13 +13,15 @@ module SG::Defer
     # @yield [void]
     # @yieldreturn [Object]
     def initialize &fn
-      @producer = fn
+      @producer = fn || method(:wait_ready)
       @mut = Mutex.new
+      @cv = ConditionVariable.new
     end
 
-    # Get the actual value or raise an error. The producer is called
+    # Wait for the actual value. The producer is called
     # on the first wait, which in expected to block until
     # available. Subsequent calls return or reraise the first value.
+    # Without a block to #initialize this waits until #ready? goes true.
     # @return [Object]
     # @raise [RuntimeError]
     def wait
@@ -28,7 +30,6 @@ module SG::Defer
         return @value if ready?
       end
       begin
-        return nil unless @producer
         v = @producer.call
         v = v.wait while Waitable === v
         # could have waited on self
@@ -74,6 +75,7 @@ module SG::Defer
         @mut.synchronize do
           @ready = true
           @value = v
+          @cv.signal
           @value
         end
       end
@@ -88,6 +90,7 @@ module SG::Defer
       @mut.synchronize do
         @ready = :rejected
         @value = v
+        @cv.signal
       end
       @value
     end
@@ -97,6 +100,13 @@ module SG::Defer
     # @return [Array(Value, self)]
     def coerce other
       [ self.class.new { other }, self ]
+    end
+
+    def wait_ready secs = nil
+      @mut.synchronize do
+        @cv.wait(@mut, secs)
+      end
+      self
     end
   end
 end
