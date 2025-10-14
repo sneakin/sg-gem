@@ -140,19 +140,22 @@ for scripts.
     scmd.run
 
 
-## Misc
+## More
 
 * Data
     * {SG::AttrStruct} Struct like objects with greater reflection.
     * {SG::HashStruct} Struct like access to {Hash}.
-* Meta help
-    * {sg/autoloader} Automatically loads files for missing constants.
-    * {SG::Is} Helpers for case statements.
-    * {SG::Fun} Useful lone Procs.
-    * {SG::SkipUnless} #skip_when and #skip_unless for conditional method chaining.
+* Computation
+    * {SG::Defer} Place holders for future values.
+    * {SG::Promise} Method chaining that computes only when called.
 * IO
     * {SG::TablePrinter} Print data as a table to the terminal.
     * {SG::IO::Reactor} IO event loop.
     * {SG::Color} RGB, HSL, and VT100 color classes.
     * {SG::Terminstry} Terminal IO and styling.
     * {SG::WebSocket} Connect to and process web sockets.
+* Meta help
+    * {sg/autoloader} Automatically loads files for missing constants.
+    * {SG::Is} Helpers for case statements.
+    * {SG::Fun} Useful lone Procs.
+    * {SG::SkipUnless} {#skip_when} and {#skip_unless} for conditional method chaining.

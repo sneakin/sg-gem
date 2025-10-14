@@ -4,7 +4,7 @@ using SG::Ext
 require_relative 'able'
 
 module SG::Defer
-  # A deferred value that requires calling #wait to get
+  # A deferred value that requires calling {#wait} to get
   # the value from a production method.
   class Value
     include Able
@@ -21,7 +21,7 @@ module SG::Defer
     # Wait for the actual value. The producer is called
     # on the first wait, which in expected to block until
     # available. Subsequent calls return or reraise the first value.
-    # Without a block to #initialize this waits until #ready? goes true.
+    # Without a block to {#initialize} this waits until {#ready?} goes true.
     # @return [Object]
     # @raise [RuntimeError]
     def wait
@@ -81,7 +81,7 @@ module SG::Defer
       end
     end
 
-    # Assign te value and set the state to flag an error occurred.
+    # Assign the value and set the state to flag an error occurred.
     # @param v [StandardError, String]
     # @return [Object]
     # @raise [AlreadyResolved]
