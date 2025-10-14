@@ -25,7 +25,7 @@ module SG
       
       def initialize acc = nil, rej = nil
         @acceptor = acc || :itself.to_proc
-        @rejector = rej || :itself.to_proc
+        @rejector = rej
       end
 
       def accept v
@@ -33,43 +33,76 @@ module SG
       end
 
       def reject v
-        @rejector.call(v)
+        if @rejector
+          @rejector.call(v)
+        elsif RuntimeError === v
+          raise(v)
+        else
+          v
+        end
       end
     end
     
     include SG::Chainable
 
-    def initialize &fn
-      @fn = fn
+    def initialize fn = nil, &blk
+      @fn = fn || blk
+      @fn ||= lambda { |acc, *args| acc.accept(args[0]) }
     end
 
-    def call acceptor = nil
-      @fn.call(acceptor || Acceptor.new)
+    def to_proc
+      lambda { |*a| self.call(nil, *a) }
+    end
+    
+    def call *args
+      acceptor = args[0]
+      unless SG::Defer::Acceptorable === acceptor
+        args.unshift(acceptor = Acceptor.new)
+      end
+      @fn.call(*args)
+    rescue
+      acceptor.reject($!)
     end
 
     def and_then &cb
-      Promise.new do |acc|
-        call(Acceptor.new(lambda { acc.accept(cb.call(_1)) },
-                          lambda { acc.reject(_1) }))
+      return self unless cb
+      Promise.new do |acc, *args|
+        call(Acceptor.new(lambda { acc.accept(cb.call(_1, *args)) },
+                          lambda { acc.reject(_1) }),
+             *args)
       end
     end
 
     def rescues &cb
-      Promise.new do |acc|
+      return self unless cb
+      Promise.new do |acc, *args|
         call(Acceptor.new(lambda { acc.accept(_1) },
-                          lambda { acc.accept(cb.call(_1)) }))
+                          lambda { acc.accept(cb.call(_1, *args)) }),
+             *args)
       end
     end
 
     def ensure &cb
-      Promise.new do |acc|
-        call(Acceptor.new(lambda { acc.accept(cb.call(_1)) },
-                          lambda { acc.reject(cb.call(_1)) }))
+      return self unless cb
+      Promise.new do |acc, *args|
+        call(Acceptor.new(lambda { acc.accept(cb.call(_1, *args)) },
+                          lambda { acc.reject(cb.call(_1, *args)) }),
+             *args)
       end
     end
     
     def finally &cb
-      Promise.new { |acc| cb.call(call(Acceptor.new)) }
+      return self unless cb
+      Promise.new do |acc, *args|
+        v = call(Acceptor.new, *args)
+        acc.accept(cb.call(v, *args))
+      rescue
+        begin
+          acc.reject(cb.call($!, *args))
+        rescue
+          raise
+        end
+      end
     end
   end
 
