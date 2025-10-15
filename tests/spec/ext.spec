@@ -387,7 +387,7 @@ describe Array do
     describe 'two items' do
       context 'strings' do
         subject { [ 'foo', 'bar' ] }
-        it 'calls the block for every variast of every item' do
+        it 'calls the block for every variant of every item' do
           expect do |b|
             subject.permutate_with([ :upcase, :downcase,
                                      lambda { |s| s.capitalize }
@@ -406,7 +406,7 @@ describe Array do
       
       context 'bools' do
         subject { [ true, true ] }
-        it 'calls the block for every variast of every item' do
+        it 'calls the block for every variant of every item' do
           expect do |b|
             subject.permutate_with([ :identity, :! ], &b)
           end.to yield_successive_args([true, true],
@@ -420,7 +420,7 @@ describe Array do
     describe 'many items' do
       context 'bools' do
         subject { [ true, true, true ] }
-        it 'calls the block for every variast of every item' do
+        it 'calls the block for every variant of every item' do
           expect do |b|
             subject.permutate_with([ :identity, :! ], &b)
           end.to yield_successive_args([true, true, true],
@@ -436,7 +436,7 @@ describe Array do
 
       context 'equal number variants' do
         subject { [ 'hello', 'world', 'foo' ] }
-        it 'calls the block for every variast of every item' do
+        it 'calls the block for every variant of every item' do
           expect do |b|
             subject.permutate_with([ :upcase, :downcase,
                                      lambda { |s| s.capitalize }
@@ -1326,6 +1326,18 @@ describe Integer do
       it "masks 0x#{input.to_s(16)} with 0x#{output.to_s(16)}" do
         expect(input.to_bitmask).to eql(output)
       end
+    end
+  end
+end
+
+describe Regexp do
+  describe '#to_proc' do
+    subject { /he/ }
+    it { expect(subject.to_proc).to be_kind_of(Proc) }
+    it { expect(%w{hello world hey}.select(&subject)).to eql(%w{hello hey}) }
+    describe 'the return' do
+      it { expect(subject.to_proc.call('hello')).to be_truthy }
+      it { expect(subject.to_proc.call('world')).to_not be_truthy }
     end
   end
 end
