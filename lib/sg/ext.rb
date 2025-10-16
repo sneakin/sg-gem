@@ -16,6 +16,7 @@ require_relative 'ext/enum'
 require_relative 'ext/numeric'
 require_relative 'ext/integer'
 require_relative 'ext/range'
+require_relative 'ext/regexp'
 require_relative 'ext/io'
 require_relative 'ext/hash'
 
