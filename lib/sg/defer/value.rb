@@ -1,6 +1,7 @@
 require 'sg/ext'
 using SG::Ext
 
+require_relative '../defer'
 require_relative 'able'
 
 module SG::Defer
@@ -39,7 +40,7 @@ module SG::Defer
         raise
       end
     end
-
+    
     # Has a value been obtained?
     def ready?; !!@ready; end
     # Was the value an error?
@@ -65,7 +66,7 @@ module SG::Defer
       raise AlreadyResolved.new(self) if ready?
       
       if Waitable === v
-        self.class.new do
+        Value.new do
           accept(v.wait)
         rescue
           reject($!)

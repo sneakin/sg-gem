@@ -64,9 +64,13 @@ module SG
       acceptor.reject($!)
     end
 
+    def new_sibling *a, **o, &blk
+      Promise.new(*a, **o, &blk)
+    end
+    
     def and_then &cb
       return self unless cb
-      Promise.new do |acc, *args|
+      new_sibling do |acc, *args|
         call(Acceptor.new(lambda { acc.accept(cb.call(_1, *args)) },
                           lambda { acc.reject(_1) }),
              *args)
@@ -75,7 +79,7 @@ module SG
 
     def rescues &cb
       return self unless cb
-      Promise.new do |acc, *args|
+      new_sibling do |acc, *args|
         call(Acceptor.new(lambda { acc.accept(_1) },
                           lambda { acc.accept(cb.call(_1, *args)) }),
              *args)
@@ -84,16 +88,17 @@ module SG
 
     def ensure &cb
       return self unless cb
-      Promise.new do |acc, *args|
+      new_sibling do |acc, *args|
         call(Acceptor.new(lambda { acc.accept(cb.call(_1, *args)) },
                           lambda { acc.reject(cb.call(_1, *args)) }),
              *args)
       end
     end
-    
+
+    # todo what's this do other than ensure and wanting freezing?
     def finally &cb
       return self unless cb
-      Promise.new do |acc, *args|
+      new_sibling do |acc, *args|
         v = call(Acceptor.new, *args)
         acc.accept(cb.call(v, *args))
       rescue

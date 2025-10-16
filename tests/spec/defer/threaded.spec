@@ -3,9 +3,18 @@ using SG::Ext
 
 require_relative 'defer'
 
-describe SG::Defer::Value do
+describe SG::Defer::Threaded do
+  let(:state) { SG::Spec::Defer::QueueTest.new(described_class: described_class) }
+  subject { state.make_instance }
+  
+  before do
+    state.setup
+  end
+
   it_should_behave_like 'a Defer::Able'
-  it_should_behave_like 'a Defer::Value'
+  it_should_behave_like('a Defer::Value',
+                        test_state: SG::Spec::Defer::QueueTest)
+  it_should_behave_like 'a Defer::Value that can defer'
 
   it 'works' do
     sync = true
@@ -17,8 +26,6 @@ describe SG::Defer::Value do
       sleep 3
       q.push(x + x)
     end
-    #q.push(['abc'])
-    #y = SG::Defer::Value.new { n.wait + x.wait }
     z = (n + y)
     expect([x.wait, n.wait, y.wait, z.wait]).
       to eql([50, 100, 100, 200])

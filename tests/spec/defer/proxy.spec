@@ -4,10 +4,17 @@ using SG::Ext
 require_relative 'defer'
 
 describe SG::Defer::Proxy do
-  it_should_behave_like 'a Defer::Able'
-  it_should_behave_like 'a Defer::Value'
+  let(:state) { SG::Spec::Defer::QueueTest.new(described_class: described_class) }
+  subject { state.make_instance }
+  
+  before do
+    state.setup
+  end
 
-  subject { described_class.new { [ 10, 100, 200 ] } }
+  it_should_behave_like 'a Defer::Able'
+  it_should_behave_like('a Defer::Value',
+                        test_state: SG::Spec::Defer::QueueTest)
+  it_should_behave_like 'a Defer::Value that can defer'
 
   it 'works' do
     q = Queue.new
@@ -23,23 +30,27 @@ describe SG::Defer::Proxy do
       to change { Time.now }.to be_within(0.001).of(Time.now)
   end
 
-  describe 'missing methods' do
-    it 'returns deferred value' do
-      expect(subject.sort).to be_kind_of(described_class)
-    end
-    it 'waits on the subject' do
-      n = subject.sort
-      allow(subject).to receive(:wait).and_return([ 2, 3, 1 ])
-      expect(n.wait).to eql([1,2,3])
-    end
-    it 'waits on any deferred arguments' do
-      other = described_class.new { 100 }
-      n = subject.include?(other)
-      allow(other).to receive(:wait).and_return(100)
-      expect(n.wait).to be(true)
+  describe 'for an array' do
+    subject { described_class.new { [ 10, 100, 200 ] } }
+
+    describe 'missing methods' do
+      it 'returns deferred value' do
+        expect(subject.sort).to be_kind_of(described_class)
+      end
+      it 'waits on the subject' do
+        n = subject.sort
+        allow(subject).to receive(:wait).and_return([ 2, 3, 1 ])
+        expect(n.wait).to eql([1,2,3])
+      end
+      it 'waits on any deferred arguments' do
+        other = described_class.new { 100 }
+        n = subject.include?(other)
+        allow(other).to receive(:wait).and_return(100)
+        expect(n.wait).to be(true)
+      end
     end
   end
-
+  
   describe 'integer values' do
     let(:value) { 100 }
     let(:ovalue) { 20 }

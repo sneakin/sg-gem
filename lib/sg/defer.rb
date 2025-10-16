@@ -3,9 +3,6 @@ require 'thread'
 require 'sg/ext'
 using SG::Ext
 
-# todo make Futurable the Able, Able is more Waitable
-# todo resolve!/failed! vs accept/reject
-
 module SG::Defer
   autoload :Able, 'sg/defer/able'
   autoload :Acceptorable, 'sg/defer/able'
@@ -16,12 +13,20 @@ module SG::Defer
   autoload :Threaded, 'sg/defer/threaded'
   autoload :Reactor, 'sg/defer/reactor'
 
-  # Rusolve any deferred values contained in simple objects.
-  def self.wait_for obj
+  # Resolve any deferred values contained in enumerable objects.
+  def self.wait_for obj, bg: Thread.method(:new), limit: 4
+    # todo parallel start before waiting
+    # todo in batches, already stalled a pool
     case obj
-    when Hash then obj.reduce({}) { |h, (k,v)| h[k] = wait_for(v); h }
+    when Hash then obj.
+        #skip_unless(bg).
+        #each { |k, v| bg.call { wait_for(v, bg:, limit:) } if Waitable === v }.
+        reduce({}) { |h, (k,v)| h[k] = wait_for(v, bg:, limit:); h }
     when Waitable then obj.wait
-    when Enumerable, Array then obj.collect { wait_for(_1) }
+    when Enumerable, Array then obj.
+        #skip_unless(bg).
+        #each_slice(limit) { |s| s.each { |v| bg.call { wait_for(v, bg:, limit:) } if Waitable === v } }.
+        collect { wait_for(_1, bg:, limit:) }
     else obj
     end
   end
