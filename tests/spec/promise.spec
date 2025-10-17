@@ -10,13 +10,13 @@ shared_examples_for 'a Chainable' do
     it { expect(subject.and_then).to be(subject) }
     it { expect(subject.rescues).to be(subject) }
     it { expect(subject.ensure).to be(subject) }
-    it { expect(subject.finally).to be(subject) }
+    it { expect(subject.and_tap).to be(subject) }
   end
   describe 'with a block' do
     it { expect(subject.and_then { _1 }).to be_kind_of(SG::Chainable) }
     it { expect(subject.rescues { _1 }).to be_kind_of(SG::Chainable) }
     it { expect(subject.ensure { _1 }).to be_kind_of(SG::Chainable) }
-    it { expect(subject.finally { _1 }).to be_kind_of(SG::Chainable) }
+    it { expect(subject.and_tap { _1 }).to be_kind_of(SG::Chainable) }
   end
 end
 
@@ -42,6 +42,11 @@ describe SG::Promise do
       it 'rescues' do
         p2 = p.rescues { _1 + 1000 }.and_then { _1 + _1 }
         expect(p2.call).to eql(456*2)
+      end
+      it 'taps' do
+        n = nil
+        p2 = p.and_tap { n = _1 * 100 }.and_then { _1 + _1 }
+        expect { expect(p2.call).to eql(456*2) }.to change { n }.to(456*100)
       end
 
       describe 'deferred values' do
@@ -70,14 +75,6 @@ describe SG::Promise do
           rescues { fin += 100; _1 + 100 }
         expect { pe.call }.to change { fin }.by(11)
       end
-
-      it 'finally' do
-        fin = 0
-        pf = p.finally { fin += 1; _1 }.
-          and_then { fin += 10; _1 + 10 }.
-          rescues { fin += 100; _1 + 100 }
-        expect { pf.call }.to change { fin }.by(11)
-      end
     end
 
     describe 'rejected values' do
@@ -91,7 +88,7 @@ describe SG::Promise do
         expect(p.call).to eql(123)
       end
 
-      it 'chains' do
+      it 'stops chains' do
         p2 = p.and_then { _1 + _1 }
         expect(p2.call).to eql(123)
       end
@@ -99,6 +96,18 @@ describe SG::Promise do
       it 'rescues' do
         p2 = p.rescues { _1 + 1000 }.and_then { _1 + _1 }
         expect(p2.call).to eql(1123 * 2)
+      end
+
+      it 'taps rejects' do
+        n = nil
+        p2 = p.and_tap { n = _1 * 100 }.and_then { _1 + _1 }
+        expect { expect(p2.call).to eql(123) }.to change { n }.to(123 * 100)
+      end
+
+      it 'taps rescues' do
+        n = nil
+        p2 = p.rescues { _1 }.and_tap { n = _1 * 100 }.and_then { _1 + _1 }
+        expect { expect(p2.call).to eql(123*2) }.to change { n }.to(123 * 100)
       end
 
       describe 'deferred values' do
@@ -125,14 +134,6 @@ describe SG::Promise do
           and_then { fin += 10; _1 + 10 }.
           rescues { fin += 100; _1 + 100 }
         expect { pe.call }.to change { fin }.by(101)
-      end
-
-      it 'finally' do
-        fin = 0
-        pf = p.finally { fin += 1; _1 }.
-          and_then { fin += 10; _1 + 10 }.
-          rescues { fin += 100; _1 + 100 }
-        expect { pf.call }.to change { fin }.by(11)
       end
     end
   end
@@ -285,9 +286,6 @@ describe SG::Promise do
         it_should_behave_like 'raising Promise', error: err
       end
     end
-    
-    xdescribe 'finally' do
-    end
   end
 
   it_should_behave_like 'and_then'
@@ -305,7 +303,7 @@ describe SG::Promise do
     describe 'and then'
     describe 'rescues'
     describe 'ensure'
-    describe 'finally'
+    describe 'and_tap'
   end
   
   describe 'ensure'do
@@ -330,23 +328,24 @@ describe SG::Promise do
     describe 'and then'
     describe 'rescues'
     describe 'ensure'
-    describe 'finally'
+    describe 'and_tap'
   end
 
-  describe 'finally' do
+  describe 'and_tap' do
     subject do
-      promise.finally { @fin = _1; (Numeric === _1 ? _1 : 0) - 1000 }
+      promise.and_tap { @fin = _1; (Numeric === _1 ? _1 : 0) - 1000 }
     end
     
     it_should_behave_like 'a Chainable'
-    it_should_behave_like 'accepted Promise', accepts: -900
+    it_should_behave_like 'accepted Promise', accepts: 100
+    it_should_behave_like 'rejected Promise', rejects: -100
+    it_should_behave_like 'raised Promise', error: err
 
     describe 'that rejects' do
       before do
         @do_reject = true
       end
 
-      it_should_behave_like 'accepted Promise', accepts: -1100
       it { expect { subject.call }.to change { @fin } }
     end
 
@@ -355,13 +354,12 @@ describe SG::Promise do
         @do_raise = true
       end
 
-      it_should_behave_like 'rejecting Promise', rejects: -1000
-      it { expect { subject.call }.to change { @fin } }
+      it { expect { subject.call rescue $! }.to change { @fin } }
     end
 
     describe 'that itself raises' do
       subject do
-        promise.finally { raise err }
+        promise.and_tap { raise err }
       end
 
       it_should_behave_like 'raising Promise', error: err
@@ -371,6 +369,6 @@ describe SG::Promise do
     xdescribe 'and then'
     xdescribe 'rescues'
     xdescribe 'ensure'
-    xdescribe 'finally'
+    xdescribe 'and_tap'
   end
 end

@@ -14,7 +14,7 @@ module SG
       raise NotImplementedError
     end
     
-    def finally &cb
+    def and_tap &cb
       raise NotImplementedError
     end
   end
@@ -95,18 +95,12 @@ module SG
       end
     end
 
-    # todo what's this do other than ensure and wanting freezing?
-    def finally &cb
+    def and_tap &cb
       return self unless cb
       new_sibling do |acc, *args|
-        v = call(Acceptor.new, *args)
-        acc.accept(cb.call(v, *args))
-      rescue
-        begin
-          acc.reject(cb.call($!, *args))
-        rescue
-          raise
-        end
+        call(Acceptor.new(lambda { cb.call(_1, *args); acc.accept(_1) },
+                          lambda { cb.call(_1, *args); acc.reject(_1) }),
+             *args)
       end
     end
   end
