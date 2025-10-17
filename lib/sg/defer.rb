@@ -7,6 +7,7 @@ module SG::Defer
   autoload :Able, 'sg/defer/able'
   autoload :Acceptorable, 'sg/defer/able'
   autoload :Waitable, 'sg/defer/able'
+  autoload :Acceptor, 'sg/defer/acceptor'
   autoload :Value, 'sg/defer/value'
   autoload :Missing, 'sg/defer/missing'
   autoload :Proxy, 'sg/defer/proxy'

@@ -60,10 +60,10 @@ describe SG::Promise do
           expect(p5.call).to eql(123 * 123)
         end
 
-        it 'writes to deferred values' do
+        it 'resolves to deferred values' do
           v = SG::Defer::Value.new # { x == 1 ? raise('boom') : 123 }
           p2 = p.rescues { _1 + 1000 }.and_then { _1 + _1 }
-          expect(p2.call(v)).to eql(456 + 456)
+          expect(p2.resolve(v)).to eql(456 + 456)
           expect(v.wait).to eql(456 + 456)
         end
       end
@@ -119,10 +119,10 @@ describe SG::Promise do
           expect(p5.call).to eql(1000 * 1000)
         end
 
-        it 'writes to deferred values' do
+        it 'resolves to deferred values' do
           v = SG::Defer::Value.new # { x == 1 ? raise('boom') : 123 }
           p2 = p.rescues { 1000 }.and_then { _1 + _1 }
-          expect(p2.call(v)).to eql(2000)
+          expect(p2.resolve(v)).to eql(2000)
           expect(v.wait).to eql(2000)
         end
       end
@@ -143,9 +143,9 @@ describe SG::Promise do
       it { expect(subject.call).to eql(opts.fetch(:accepts)) }
       it { expect { subject.call(1, 2, 3) }.to change { @promise_args } }
       it 'accepts the value with its argument' do
-        acceptor = SG::Promise::Acceptor.new
+        acceptor = SG::Defer::Acceptor.new
         expect(acceptor).to receive(:accept).with(opts.fetch(:accepts))
-        subject.call(acceptor)
+        subject.resolve(acceptor)
       end
     end
   end
@@ -154,9 +154,9 @@ describe SG::Promise do
     it { expect(subject.call).to eql(opts.fetch(:rejects)) }
     it { expect { subject.call(1, 2, 3) rescue $! }.to change { @promise_args } }
     it 'rejects the value with its argument' do
-      acceptor = SG::Promise::Acceptor.new
+      acceptor = SG::Defer::Acceptor.new
       expect(acceptor).to receive(:reject).with(opts.fetch(:rejects))
-      subject.call(acceptor)
+      subject.resolve(acceptor)
     end
   end
   
@@ -173,9 +173,9 @@ describe SG::Promise do
     it { expect { subject.call }.to raise_error(opts.fetch(:error).class) }
     it { expect { subject.call(1, 2, 3) rescue $! }.to change { @promise_args } }
     it 'rejects the error with its argument' do
-      acceptor = SG::Promise::Acceptor.new
+      acceptor = SG::Defer::Acceptor.new
       expect(acceptor).to receive(:reject).with(opts.fetch(:error))
-      subject.call(acceptor)
+      subject.resolve(acceptor)
     end
   end
 
