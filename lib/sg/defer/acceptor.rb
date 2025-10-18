@@ -16,7 +16,7 @@ module SG::Defer
     def reject v
       if @rejector
         @rejector.call(v)
-      elsif RuntimeError === v
+      elsif Exception === v
         raise(v)
       else
         v
