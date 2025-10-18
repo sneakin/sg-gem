@@ -31,7 +31,7 @@ module SG::Defer
         return @value if ready?
       end
       begin
-        v = @producer.call
+        v = @producer.call(self)
         v = v.wait while Waitable === v
         # could have waited on self
         ready?? @value : accept(v)
@@ -103,7 +103,7 @@ module SG::Defer
       [ self.class.new { other }, self ]
     end
 
-    def wait_ready secs = nil
+    def wait_ready acceptor, secs = nil
       @mut.synchronize do
         @cv.wait(@mut, secs)
       end
