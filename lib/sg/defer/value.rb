@@ -34,9 +34,9 @@ module SG::Defer
         v = @producer.call(self)
         v = v.wait while Waitable === v
         # could have waited on self
-        ready?? @value : accept(v)
+        ready?? (rejected?? raise(@value) : @value) : accept(v)
       rescue
-        reject($!) unless ready?
+        reject($!)
         raise
       end
     end
@@ -82,18 +82,21 @@ module SG::Defer
       end
     end
 
+    # todo no raise on reject. raise only on woit
+    
     # Assign the value and set the state to flag an error occurred.
     # @param v [StandardError, String]
     # @return [Object]
     # @raise [AlreadyResolved]
     def reject v
-      raise AlreadyResolved.new(self) if ready?
-      @mut.synchronize do
-        @ready = :rejected
-        @value = v
-        @cv.signal
+      unless ready?
+        @mut.synchronize do
+          @ready = :rejected
+          @value = v
+          @cv.signal
+        end
       end
-      @value
+      self
     end
 
     # Used for arithmetic to promote values to deferred values.

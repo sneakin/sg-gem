@@ -242,12 +242,12 @@ shared_examples_for 'a Defer::Value' do
       end
       
       it 'causes #wait to raise the error' do
-        subject.reject(this_error.new)
+        subject.reject(this_error.new) rescue $!
         expect { subject.wait }.to raise_error(this_error)
       end
 
-      it 'returns the value' do
-        expect(subject.reject(1234)).to eql(1234)
+      it 'returns self' do
+        expect(subject.reject(this_error.new)).to be(subject)
       end
     end
   end
@@ -270,9 +270,9 @@ shared_examples_for 'a Defer::Value' do
       end
     end
     describe '#reject' do
-      it 'raises error' do
-        expect { subject.reject(789) }.
-          to raise_error(SG::Defer::AlreadyResolved)
+      it 'raises no error' do
+        expect { subject.reject('789') }.
+          to_not raise_error
       end
     end
   end
@@ -293,16 +293,16 @@ shared_examples_for 'a Defer::Value' do
       end
     end
     describe '#reject' do
-      it 'raises error' do
-        expect { subject.reject(789) }.
-          to raise_error(SG::Defer::AlreadyResolved)
+      it 'raises no error' do
+        expect { subject.reject('789') }.
+          to_not raise_error
       end
     end
   end
 
   describe '#reset!' do
     before do
-      subject.reject(123)
+      subject.reject('123')
     end
     
     it 'is not ready' do
