@@ -60,7 +60,7 @@ module SG
     end
     
     def call(...)
-      resolve(new_acceptor, ...)
+      resolve(SG::Defer::Acceptor.new, ...)
     end
 
     def resolve(acceptor, ...)
@@ -69,12 +69,8 @@ module SG
       acceptor.reject($!)
     end
 
-    def new_acceptor
-      SG::Defer::Acceptor.new
-    end
-    
-    def new_sibling *a, **o, &blk
-      Promise.new(*a, **o, &blk)
+    def new_sibling &blk
+      Promise.new(&blk)
     end
   end
 
