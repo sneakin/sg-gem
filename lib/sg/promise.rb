@@ -64,7 +64,7 @@ module SG
     end
 
     def resolve(acceptor, ...)
-      @fn.call(acceptor, ...)
+      Promise === @fn ? @fn.resolve(acceptor, ...) : @fn.call(acceptor, ...)
     rescue
       acceptor.reject($!)
     end
