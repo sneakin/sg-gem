@@ -177,6 +177,9 @@ describe SG::Promise do
       expect(acceptor).to receive(:reject).with(opts.fetch(:error))
       subject.resolve(acceptor)
     end
+    it 'raises an error w/ the default acceptor' do
+      expect { subject.call }.to raise_error(opts.fetch(:error))
+    end
   end
 
   shared_examples_for 'raised Promise' do |**opts|
