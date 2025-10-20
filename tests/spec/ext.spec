@@ -117,6 +117,30 @@ shared_examples_for '.lookup_const' do
   end
 end
 
+shared_examples_for 'Object#with_options' do
+  describe 'no options' do
+    it 'calls w/ no added args' do
+      expect(subject).to receive(:hello).with(1, 2)
+      subject.with_options { _1.hello(1, 2) }
+    end
+    it 'returns the blocks return' do
+      expect(subject).to receive(:hello).with(1, 2).and_return(123)
+      expect(subject.with_options { _1.hello(1, 2) }).to eql(123)
+    end
+  end
+  describe 'w/ options' do
+    it 'calls w/ added args' do
+      expect(subject).to receive(:hello).with(1, 2, x: 9, y: 8)
+      subject.with_options(x: 9, y: 8) { _1.hello(1, 2) }
+    end
+    it 'returns the blocks return' do
+      expect(subject).to receive(:hello).with(1, 2, x: 9, y: 8).and_return(123)
+      expect(subject.with_options(x: 9, y: 8) { _1.hello(1, 2) }).
+        to eql(123)
+    end
+  end
+end
+
 describe Object do
   describe '.delegate' do
     klass = Class.new do
@@ -281,6 +305,17 @@ describe Object do
       subject { { a: 2, b: 3, c: 4 } }
       it { expect(subject.pick_attrs(:keys, :values)).to eql([[:a, :b, :c], [2, 3, 4]]) }
       it { expect{ subject.pick_attrs(:a, :c) }.to raise_error(NoMethodError) }
+    end
+  end
+
+  describe '#with_options' do
+    describe 'instance' do
+      subject { Object.new }
+      it_should_behave_like 'Object#with_options'
+    end
+    describe 'class' do
+      subject { Object }
+      it_should_behave_like 'Object#with_options'
     end
   end
 end

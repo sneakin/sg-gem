@@ -1,7 +1,26 @@
 require 'sg/skip-unless'
 
 module SG::Ext
+  module WithOptions
+    class OptionApplier
+      def initialize target, **opts
+        @target = target
+        @opts = opts
+      end
+
+      def method_missing mid, *a, **o, &b
+        @target.send(mid, *a, **@opts.merge(o), &b)
+      end
+    end
+
+    def with_options **opts, &blk
+      yield(OptionApplier.new(self, **opts))
+    end
+  end
+
   refine ::Object.singleton_class do
+    import_methods WithOptions
+    
     def delegate(*methods, to:)
       methods.each do |m|
         # Ruby did not like assignments of `...`
@@ -36,6 +55,8 @@ EOT
   end
 
   refine ::Object do
+    import_methods WithOptions
+
     def identity; self; end
     
     def recurse(m, top = true)
