@@ -26,6 +26,45 @@ shared_examples 'inheritable attributes' do
   end
 end
 
+describe Class do
+  subject { described_class.new }
+  
+  describe '.to_proc' do
+    subject do
+      described_class.new do
+        attr_accessor :value, :a, :o
+        def initialize v, *a, **o
+          @value = v
+          @a = a
+          @o = o
+        end        
+        def self.[] v, *a, **o
+          new(v, *a, **o)
+        end
+        def eql? other
+          self.class === other &&
+            value.eql?(other.value) &&
+            a.eql?(other.a) &&
+            o.eql?(other.o)
+        end
+      end
+    end
+          
+    it 'returns a proc' do
+      expect(subject.to_proc).to be_kind_of(Proc)
+    end
+    it 'calls `.[]` when the proc is called' do
+      expect(subject.to_proc.call(1, 2, a: 3)).
+        to eql(subject.new(1, 2, a: 3))
+    end
+    it 'is liked by the & operator' do
+      expect(%w{hello world}.collect(&subject)).
+        to eql([ subject.new('hello'),
+                 subject.new('world') ])
+    end
+  end
+end
+
 describe FalseClass do
   subject { false }
 

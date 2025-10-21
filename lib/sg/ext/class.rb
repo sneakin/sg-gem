@@ -15,5 +15,9 @@ module SG::Ext
       return false if superclass.nil?
       (ancestors & klass.ancestors).find { |el| el.equal?(klass) } != nil
     end
+
+    def to_proc
+      method(:[]).to_proc
+    end
   end
 end
