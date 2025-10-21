@@ -10,6 +10,11 @@ module SG::Defer
   class Value
     include Able
 
+    protected
+    attr_reader :value
+
+    public
+    
     # Create a new value obtained by later calling the block argument.
     # @yield [void]
     # @yieldreturn [Object]
