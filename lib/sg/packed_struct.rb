@@ -2,6 +2,11 @@ require 'sg/ext'
 require 'sg/attr_struct'
 require 'sg/hash_struct'
 
+# todo IO::Buffer is a thing: pack into String / Buffers instead of always returning; Array#pack takes a target: keyword.
+# todo IOBuffer#get_value better than String#unpack?
+# todo String#unpack takes an offset: keyword
+# todo Completely virtual instances that read and convert from a blob on demand. Possible w/ the need for dynamically sized fields that precede? No unpack and update instance. Writables w/ dynamic fields?!
+
 module SG
   # Include this to be able to define attributes that get packed
   # into or unpacked from a string of binary data.
