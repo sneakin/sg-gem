@@ -13,7 +13,9 @@ module SG
       @elements = elements
     end
 
-    delegate :<<, :push, :each, :size, :empty?, :blank?, to: :elements
+    delegate :<<, :push, :each, :size, :empty?, to: :elements
+    def blank?; elements.blank?; end
+    
     include Enumerable
 
     def [] key
