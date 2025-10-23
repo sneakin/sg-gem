@@ -17,13 +17,18 @@ GEM
     ast (2.4.3)
     backport (1.2.0)
     base64 (0.3.0)
-    benchmark (0.4.1)
+    benchmark (0.5.0)
     bindata (2.5.1)
     date (3.4.1)
     diff-lcs (1.6.2)
     docile (1.4.1)
     ffi (1.17.2)
     ffi (1.17.2-x86_64-linux-gnu)
+    io-console (0.8.1)
+    irb (1.15.2)
+      pp (>= 0.6.0)
+      rdoc (>= 4.0.0)
+      reline (>= 0.4.2)
     jaro_winkler (1.6.1)
     json (2.15.1)
     kramdown (2.5.1)
@@ -48,7 +53,11 @@ GEM
     parser (3.3.9.0)
       ast (~> 2.4.1)
       racc
-    prism (1.5.2)
+    pp (0.6.3)
+      prettyprint
+    prettyprint (0.2.0)
+    prism (1.6.0)
+    profile (0.4.0)
     psych (5.2.6)
       date
       stringio
@@ -60,6 +69,8 @@ GEM
     rdoc (6.5.1.1)
       psych (>= 4.0.0)
     regexp_parser (2.11.3)
+    reline (0.6.2)
+      io-console (~> 0.5)
     reverse_markdown (3.0.0)
       nokogiri
     rexml (3.4.4)
@@ -76,7 +87,7 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.12.0)
     rspec-support (3.12.2)
-    rubocop (1.81.1)
+    rubocop (1.81.6)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.1.0)
@@ -139,7 +150,9 @@ PLATFORMS
 
 DEPENDENCIES
   bindata
+  irb
   org-ruby
+  profile
   rdoc (~> 6.5.0)
   rspec (~> 3.12.0)
   sg-gem!
