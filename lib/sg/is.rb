@@ -3,10 +3,12 @@ using SG::Ext
 
 # `case` clause helpers.
 module SG::Is
+  # Give classes a {[]} class method for construction and conversion.
   module NewBracket
+    # todo did add the SG::Ext::Class#[]
     module ClassMethods
-      def [] *a, **o, &cb
-        new(*a, **o, &cb)
+      def [](...)
+        new(...)
       end
     end
 
@@ -14,7 +16,8 @@ module SG::Is
       base.extend(ClassMethods)
     end
   end
-  
+
+  # Combines SG::Is classes using operators and other common functionality.
   module LogicOps
     def &(other)
       And[self, other]
@@ -27,8 +30,12 @@ module SG::Is
     def ~
         Not[self]
     end
+
+    def to_str; to_s; end
+    def to_proc; lambda { self === _1 }; end
   end
-  
+
+  # The logical AND of multiple LogicOps.
   class And
     include NewBracket
 
@@ -44,10 +51,10 @@ module SG::Is
       "%s[%s]" % [ self.class.name, cases.collect(&:to_s).join(', ') ]
     end
 
-    alias to_str to_s
     include LogicOps
   end
 
+  # The logical OR of multiple LogicOps.
   class Or
     include NewBracket
 
@@ -63,10 +70,10 @@ module SG::Is
       "%s[%s]" % [ self.class.name, cases.collect(&:to_s).join(', ') ]
     end
 
-    alias to_str to_s
     include LogicOps
   end
 
+  # The logical negation of a LogicOp.
   class Not
     include NewBracket
 
@@ -82,53 +89,79 @@ module SG::Is
       "%s[%s]" % [ self.class.name, @pred ]
     end
 
-    alias to_str to_s
     include LogicOps
   end
 
-  class Predicated
-    def self.[] fn = nil, &blk
-      new(&(blk || fn))
-    end
-
-    def initialize &blk
-      @fn = blk
-    end
-
-    def === other
-      @fn === other
-    end
-
-    include LogicOps
-  end
-
-  class Included
-    def self.[] arr
-      new(arr)
-    end
-
-    def initialize arr
-      @arr = arr
-    end
-
-    def === other
-      @arr.include?(other)
-    end
-
-    include LogicOps
-  end
-  
-  class ResponsiveTo
+  # Provides LogicOps for the left handed side of a {#===}.
+  class CaseOf
     include NewBracket
 
-    def initialize meth
-      @meth = meth
+    def initialize lhs
+      @lhs = lhs
     end
 
     def === other
-      other.respond_to?(@meth)
+      @lhs === other
     end
 
     include LogicOps
+  end
+
+  # Provides LogicOps for the right handed side of a {#===}.
+  class InCaseOf
+    include NewBracket
+
+    def initialize rhs
+      @rhs = rhs
+    end
+
+    def === other
+      other === @rhs
+    end
+
+    include LogicOps
+  end
+
+  # Tests with a Boolean returning block argument or named method.
+  class Predicated
+    include NewBracket
+
+    def initialize fn = nil, *a, **o, &blk
+      if blk
+        @fn = blk
+        @args = [ *fn, *a ]
+      else
+        @fn = fn.skip_when(&CaseOf[Proc]).to_proc
+        @args = a
+      end
+      @opts = o
+    end
+
+    def === other
+      @fn.call(*[other, *@args], **@opts)
+    end
+
+    include LogicOps
+  end
+
+  # For cases when an array has a value.
+  class Included < Predicated
+    def initialize arr
+      super() { arr.include?(_1) }
+    end
+  end
+
+  # For cases when a value is in an array.
+  class MemberOf < Predicated
+    def initialize arr
+      super(:include?, arr)
+    end
+  end
+  
+  # Checking for methods in cases:
+  class ResponsiveTo < Predicated
+    def initialize meth
+      super(:respond_to?, meth)
+    end
   end
 end
