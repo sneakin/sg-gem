@@ -59,7 +59,7 @@ class SG::MetaCommand
       if @banner_argument
         cmd = commands[name]
         if cmd
-          desc = capture_cmd(cmd, @banner_argument)
+          desc = capture_cmd(cmd, @banner_argument).scan(/[^\n]+/).first&.strip
         end
       end
       acc << [ "  " + name, desc ]
@@ -74,7 +74,7 @@ class SG::MetaCommand
     if $verbose && !err.blank?
       $stderr.puts("%i %s:" % [ status.exitstatus, cmd.to_s ], err, '')
     end
-    out.scan(/[^\n]+/).first&.strip
+    out
   rescue IOError
     nil
   end
