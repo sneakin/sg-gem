@@ -1,3 +1,5 @@
+require 'open3'
+require 'shellwords'
 require 'sg/terminstry'
 require 'sg/table-printer'
 require 'sg/ext'
@@ -57,16 +59,23 @@ class SG::MetaCommand
       if @banner_argument
         cmd = commands[name]
         if cmd
-          desc = begin
-                   IO.popen([cmd.to_s, @banner_argument], &:readline).strip
-                 rescue EOFError
-                   nil
-                 end
+          desc = capture_cmd(cmd, @banner_argument)
         end
       end
       acc << [ "  " + name, desc ]
     end
     SG::TablePrinter.new(style: 'none').
       print([ [ '  help', 'Print this.' ], *cmds ])
+  end
+
+  def capture_cmd *cmd
+    cmd = Shellwords.join(cmd)
+    out, err, status = Open3.capture3(cmd)
+    if $verbose && !err.blank?
+      $stderr.puts("%i %s:" % [ status.exitstatus, cmd.to_s ], err, '')
+    end
+    out.scan(/[^\n]+/).first&.strip
+  rescue IOError
+    nil
   end
 end
