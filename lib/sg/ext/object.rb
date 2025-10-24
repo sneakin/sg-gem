@@ -30,7 +30,7 @@ module SG::Ext
   refine ::Object.singleton_class do
     import_methods WithOptions
 
-    # Define question and exclamation marked methods tomaccess a
+    # Define question and exclamation marked methods to access a
     # boolean instance variable.
     #
     # @param [Array<String, Symbol>] names
@@ -132,18 +132,26 @@ EOT
     # Objects are no blanks.
     def blank?; false; end
 
+    # Returns an proxy that calls the following chained method
+    # call when `test` is not `nil`. The chained call after that is
+    # always called.
+    #
+    # @example
+    #   'foo'.skip_unless(true).upcase.each_char.first # => 'F'
+    #   'bar'.skip_unless(false).upcase.each_char.first # => 'b'
     def skip_unless test = true, &b
-      # Returns an enumerator that calls the following chained method
-      # call when `test` is not `nil`. The chained call after that is
-      # always called.
       s = SG::SkipUnless.new(test, self, &b)
       s._test_passes?? self : s
     end
 
+    # Returns an proxy that calls the following chained method
+    # call when `test` is nil or false. The chained call after that
+    # is always called.
+    #
+    # @example
+    #   'foo'.skip_when(true).upcase.each_char.first # => 'f'
+    #   'bar'.skip_when(false).upcase.each_char.first # => 'B'
     def skip_when test = true, &b
-      # Returns an enumerator that calls the following chained method
-      # call when `test` is nil or false. The chained call after that
-      # is always called.
       s = SG::SkipWhen.new(test, self, &b)
       s._test_passes?? self : s
     end
