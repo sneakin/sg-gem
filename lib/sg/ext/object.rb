@@ -20,9 +20,31 @@ module SG::Ext
 
   refine ::Object.singleton_class do
     import_methods WithOptions
+
+    def predicate *names
+      raise ArgumentError.new("No predicates named.") if names.empty?
+      
+      names.each do |n|
+        unless String === n || Symbol === n
+          raise ArgumentError.new("Predicate names must be String or Symbol, not: #{n.class}")
+        end
+        class_eval <<-EOT
+def #{n}?; !!@#{n}; end
+def #{n}!(v=true); @#{n} = v; self; end
+def un#{n}!; @#{n} = false; self; end
+EOT
+      end
+
+      self
+    end
     
     def delegate(*methods, to:)
+      raise ArgumentError.new("No delegates were named.") if methods.empty?
+
       methods.each do |m|
+        unless String === m || Symbol === m
+          raise ArgumentError.new("Delegate names must be String or Symbol, not: #{n.class}")
+        end
         # Ruby did not like assignments of `...`
         if m.to_s[-1] == '=' && m[-2] != ']'
           class_eval <<-EOT
@@ -38,6 +60,7 @@ end
 EOT
         end
       end
+      self
     end
     
     def inheritable_attr *attrs

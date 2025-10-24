@@ -181,6 +181,51 @@ shared_examples_for 'Object#with_options' do
 end
 
 describe Object do
+  describe '.predicate' do
+    klass = Class.new do
+      predicate :empty, :full
+      predicate :busy
+    end
+
+    subject { klass.new }
+
+    it "needs a name" do
+      expect { Class.new { predicate } }.to raise_error(ArgumentError)
+    end
+
+    it 'accepts symbols or strings' do
+      expect { Class.new { predicate(:hello, 'done') } }.to_not raise_error
+    end
+    it 'rejects anything else' do
+      expect { Class.new { predicate(:hello, 123, 'done') } }.to raise_error(ArgumentError)
+    end
+    
+    %w{ empty full busy }.each do |pred|
+      it "defined #{pred}?" do
+        expect(subject.send("#{pred}?")).to be(false)
+      end
+      it "defined #{pred}! to set #{pred}?" do
+        expect { expect(subject.send("#{pred}!")).to be(subject) }.
+          to change(subject, "#{pred}?").to be(true)
+      end
+      describe "#{pred}! takes an argument" do
+        [ [ true, true ], [ :hello, true ], [ nil, false ], [ false, false ]
+        ].each do |(input, output)|
+          it "becomes #{output.inspect} with #{input.inspect}" do
+            subject.send("#{pred}!") if output == false
+            expect { expect(subject.send("#{pred}!", input)).to be(subject) }.
+              to change(subject, "#{pred}?").to eql(output)
+          end
+        end
+      end
+      it "defined un#{pred}! to reset #{pred}" do
+        subject.send("#{pred}!")
+        expect { expect(subject.send("un#{pred}!")).to be(subject) }.
+          to change(subject, "#{pred}?").to be(false)
+      end
+    end
+  end
+  
   describe '.delegate' do
     klass = Class.new do
       delegate :x, :x=, to: :alpha
