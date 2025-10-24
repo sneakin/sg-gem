@@ -47,7 +47,7 @@ module SG::Defer
     end
     
     # Has a value been obtained?
-    def ready?; !!@ready; end
+    predicate :ready
     # Was the value an error?
     def rejected?; @ready == :rejected; end
 
@@ -55,7 +55,7 @@ module SG::Defer
     # @return [self]
     def reset!
       @mut.synchronize do
-        @ready = nil
+        unready!
         @value = nil
       end
       self
@@ -69,21 +69,11 @@ module SG::Defer
     # @raise [AlreadyResolved]
     def accept v
       raise AlreadyResolved.new(self) if ready?
-      
-      if Waitable === v
-        Value.new do
-          accept(v.wait)
-        rescue
-          reject($!)
-          raise
-        end
-      else
-        @mut.synchronize do
-          @ready = true
-          @value = v
-          @cv.signal
-          @value
-        end
+      @mut.synchronize do
+        ready!
+        @value = v
+        @cv.signal
+        @value
       end
     end
 
@@ -96,7 +86,7 @@ module SG::Defer
     def reject v
       unless ready?
         @mut.synchronize do
-          @ready = :rejected
+          ready!(:rejected)
           @value = v
           @cv.signal
         end

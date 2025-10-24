@@ -183,9 +183,9 @@ shared_examples_for 'a Defer::Value' do
           expect(subject.accept(src)).to be_kind_of(SG::Defer::Value)
         end
         
-        it 'stays not ready' do
+        it 'becomes ready' do
           expect { subject.accept(src) }.
-            to_not change(subject, :ready?)
+            to change(subject, :ready?)
         end
         
         it 'is not rejected' do
