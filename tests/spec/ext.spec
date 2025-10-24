@@ -527,7 +527,7 @@ describe Array do
         subject { [ true, true ] }
         it 'calls the block for every variant of every item' do
           expect do |b|
-            subject.permutate_with([ :identity, :! ], &b)
+            subject.permutate_with([ :itself, :! ], &b)
           end.to yield_successive_args([true, true],
                                         [true, false],
                                         [false, true],
@@ -541,7 +541,7 @@ describe Array do
         subject { [ true, true, true ] }
         it 'calls the block for every variant of every item' do
           expect do |b|
-            subject.permutate_with([ :identity, :! ], &b)
+            subject.permutate_with([ :itself, :! ], &b)
           end.to yield_successive_args([true, true, true],
                                        [true, true, false],
                                        [true, false, true],

@@ -13,6 +13,15 @@ module SG::Ext
       end
     end
 
+    # Yields a proxy object that merges the supplied keyword options to
+    # any method calls.
+    #
+    # @example
+    #   with_options(x: 123, y: 456) do |w|
+    #     w.merge({ z: 789 })
+    #   end # => { x: 123, y: 456, z: 789 }
+    #
+    # @param [Hash] opts The pairs to merge.
     def with_options **opts, &blk
       yield(OptionApplier.new(self, **opts))
     end
@@ -21,6 +30,12 @@ module SG::Ext
   refine ::Object.singleton_class do
     import_methods WithOptions
 
+    # Define question and exclamation marked methods tomaccess a
+    # boolean instance variable.
+    #
+    # @param [Array<String, Symbol>] names
+    # @return [self]
+    # @raise [ArgumentError]
     def predicate *names
       raise ArgumentError.new("No predicates named.") if names.empty?
       
@@ -37,7 +52,11 @@ EOT
 
       self
     end
-    
+
+    # Forward method call through a method.
+    # @param [Array<Symbol, String>] methods
+    # @param [Symbol] to The target method.
+    # @return [void]
     def delegate(*methods, to:)
       raise ArgumentError.new("No delegates were named.") if methods.empty?
 
@@ -62,7 +81,9 @@ EOT
       end
       self
     end
-    
+
+    # Class attributes that subclasses can change for their family.
+    # @param [Array<Symbol>] attrs The new attributes to generate.
     def inheritable_attr *attrs
       attrs.each do |a|
         define_singleton_method(a) do
@@ -75,32 +96,25 @@ EOT
         end
       end
     end
+
+    # Globals initialized from ENV.
+    def env_flag name, opts = {}
+      name = name.to_s
+      eval("$%s = ENV[%s].to_bool if ENV.has_key?(%s)" %
+           [ name.downcase, name.upcase.dump, name.upcase.dump ])
+    end
   end
 
   refine ::Object do
     import_methods WithOptions
 
-    def identity; self; end
+    def identity
+      warn("Deprecation warning: use Object#itself:", *caller_locations[0, 3])
+      self
+    end
     
-    def recurse(m, top = true)
-      r = send(m)
-      if r
-        r = r + r.collect { |o| o.recurse(m, false) }
-        if top
-          r.flatten
-        else
-          r
-        end
-      end
-    end
-
-    def env_flag name, opts = {}
-      name = name.to_s
-      eval("$%s = ENV[%s].to_bool if ENV.has_key?(%s)" % [ name.downcase, name.upcase.dump, name.upcase.dump ])
-    end
-
     def try meth = nil, *args, **opts, &block
-      warn("Deprecated since Ruby added &.")
+      warn("Deprecated since Ruby added &.", *caller_locations[0, 3])
       if meth
         send(meth, *args, **opts, &block)
       else
@@ -108,10 +122,14 @@ EOT
       end
     end
 
+    # Become truthy.
     def to_bool; true; end
 
+    # Objects are truthy.
     def true?; true; end
+    # Objects are not falsey.
     def false?; false; end
+    # Objects are no blanks.
     def blank?; false; end
 
     def skip_unless test = true, &b
@@ -130,12 +148,18 @@ EOT
       s._test_passes?? self : s
     end
 
+    # Collect the {#[]} values for the given keys.
+    # @param [Array<Symbol>] keys
+    # @return [Enumerable]
     def pick *keys
       keys.collect(&method(:[]))
     end
 
-    def pick_attrs *keys
-      keys.collect(&method(:send))
+    # Collect the values for the given methods.
+    # @param [Array<Symbol>] names
+    # @return [Enumerable]
+    def pick_attrs *names
+      names.collect(&method(:send))
     end
   end
 end
