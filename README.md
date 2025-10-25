@@ -1,6 +1,6 @@
 # The SemanticGap Ruby Gem
 
-Copyright © 2023-2024 SemanticGap. Licensed under
+Copyright © 2023-2025 SemanticGap. Licensed under
 an MIT license found in {file:COPYING}. All other
 rights reserved.
 
