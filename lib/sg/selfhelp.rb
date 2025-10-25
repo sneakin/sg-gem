@@ -7,8 +7,10 @@ using SG::Ext
 module SG
   # Small self documenting modal scripts.
   #
-  # Use `@commands` to start, and `@cmd` for each case.
-  # `@cmd(x, y, z)` can documont argumo\ents.
+  # Scans the script's source looking for a comment containing
+  # `@commands` to start. Then it looks for `@cmd` for each command's
+  # line of help text. Command arguments can be documented with an
+  # arglist: `@cmd(x, y, z)`
   #
   # An `if $0 == __FILE__` line is also detected and treated
   # like it was a `@commands`.
