@@ -78,7 +78,7 @@ namespace :doc do
       t.options = ['--title', $NAME,
                    '-o', $ROOT.join('doc', 'yard').to_s,
                    '-m', 'markdown',
-                   '-e', SG_ROOT.join('lib/sg/yard/refine.rb').to_s,
+                   '-e', SG_ROOT.join('lib/sg/yard.rb').to_s,
                    '-p', SG_ROOT.join('templates').to_s ]
     end
       

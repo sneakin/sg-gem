@@ -16,7 +16,7 @@ module SG::Defer
     public
     
     # Create a new value obtained by later calling the block argument.
-    # @yield [void]
+    # @yield [self]
     # @yieldreturn [Object]
     def initialize &fn
       @producer = fn || method(:wait_ready)
@@ -45,8 +45,7 @@ module SG::Defer
         raise
       end
     end
-    
-    # Has a value been obtained?
+
     predicate :ready
     # Was the value an error?
     def rejected?; @ready == :rejected; end
