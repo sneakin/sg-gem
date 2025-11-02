@@ -21,18 +21,18 @@ module SG::Defer
     end
     def accept v
       @mut.synchronize do
-        super.tap { @cv.signal }
+        super.tap { @cv.broadcast }
       end
     end
     def reject v
       @mut.synchronize do
-        super.tap { @cv.signal }
+        super.tap { @cv.broadcast }
       end
     end
 
     def wait_ready secs = nil
       @mut.synchronize do
-        @cv.wait(@mut, secs)
+        @cv.wait(@mut, secs) until secs != nil && ready?
       end
       self
     end
