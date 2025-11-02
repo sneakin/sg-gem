@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rdoc', '~>6.5.0'
   s.add_development_dependency 'rspec', '~>3.12.0'
   s.add_development_dependency "simplecov", "~> 0.22.0"
-  s.add_development_dependency 'solargraph'
+  # s.add_development_dependency 'solargraph'
   s.add_development_dependency 'yard'
   s.add_development_dependency 'org-ruby'
   s.add_development_dependency 'irb'
