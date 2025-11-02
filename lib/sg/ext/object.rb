@@ -95,14 +95,7 @@ EOT
           end
         end
       end
-    end
-
-    # Globals initialized from ENV.
-    def env_flag name, opts = {}
-      name = name.to_s
-      eval("$%s = ENV[%s].to_bool if ENV.has_key?(%s)" %
-           [ name.downcase, name.upcase.dump, name.upcase.dump ])
-    end
+    end   
   end
 
   refine ::Object do
@@ -131,6 +124,13 @@ EOT
     def false?; false; end
     # Objects are no blanks.
     def blank?; false; end
+
+    # Globals initialized from ENV.
+    def env_flag name, opts = {}
+      name = name.to_s
+      eval("$%s = ENV[%s].to_bool if ENV.has_key?(%s)" %
+           [ name.downcase, name.upcase.dump, name.upcase.dump ])
+    end
 
     # Returns an proxy that calls the following chained method
     # call when `test` is not `nil`. The chained call after that is
