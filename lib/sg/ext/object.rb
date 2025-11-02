@@ -169,5 +169,11 @@ EOT
     def pick_attrs *names
       names.collect(&method(:send))
     end
+
+    # Dig down the attributes calling each attribute on the returned value.
+    # @return [Object]
+    def dig *attrs
+      attrs.reduce(self) { _1.send(_2) }
+    end
   end
 end

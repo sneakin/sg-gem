@@ -392,6 +392,27 @@ describe Object do
     end
   end
 
+  describe '#dig' do
+    describe 'no args' do
+      it { expect(subject.dig).to be(subject) }
+    end
+
+    describe 'down a level' do
+      it 'calls the method' do
+        expect(subject).to receive(:hello).and_return(:hello)
+        expect(subject.dig(:hello)).to eql(:hello)
+      end
+      describe 'down a level' do
+        it 'calls the method' do
+          foo = double(Object)
+          expect(foo).to receive(:bar).and_return(:bar)
+          expect(subject).to receive(:hello).and_return(foo)
+          expect(subject.dig(:hello, :bar)).to eql(:bar)
+        end
+      end
+    end
+  end
+
   describe '#with_options' do
     describe 'instance' do
       subject { Object.new }
