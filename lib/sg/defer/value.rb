@@ -19,7 +19,7 @@ module SG::Defer
     # @yield [self]
     # @yieldreturn [Object]
     def initialize &fn
-      @producer = fn || method(:wait_ready)
+      @producer = fn || lambda { |_| wait_ready }
       @mut = Mutex.new
       @cv = ConditionVariable.new
     end
@@ -100,7 +100,7 @@ module SG::Defer
       [ self.class.new { other }, self ]
     end
 
-    def wait_ready acceptor, secs = nil
+    def wait_ready secs = nil
       @mut.synchronize do
         @cv.wait(@mut, secs)
       end
