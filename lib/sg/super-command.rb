@@ -1,6 +1,6 @@
 #!/usr/bin/env -S ruby -W:no-experimental
-require 'bundler/setup'
 require 'optparse'
+require 'pathname'
 require 'sg/terminstry'
 require 'sg/table-printer'
 require 'sg/assoc'

@@ -1,6 +1,5 @@
 #!/usr/bin/env -S ruby -W:no-experimental
 # -*- coding: utf-8 -*-
-require 'bundler/setup'
 require 'sg/terminstry/util'
 require 'sg/ext'
 using SG::Ext

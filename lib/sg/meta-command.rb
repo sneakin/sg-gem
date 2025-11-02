@@ -1,5 +1,6 @@
 require 'open3'
 require 'shellwords'
+require 'pathname'
 require 'sg/terminstry'
 require 'sg/table-printer'
 require 'sg/ext'
@@ -25,7 +26,7 @@ class SG::MetaCommand
   def commands
     @commands ||= Hash[bin_path.glob('*[^~]').
                        select { |p|
-                         p.expand_path != meta_path &&
+                         p.basename != meta_path.basename &&
                          !p.directory? &&
                          p.executable?
                        }.collect { |p| [ p.basename.to_s, p ] }]
@@ -51,7 +52,7 @@ class SG::MetaCommand
     hi = tty.fg('brightcyan') + tty.bold
     normal = tty.normal
     puts("%sUsage:%s %s command [arguments...]" %
-         [ hi, normal, meta_path ])
+         [ hi, normal, meta_path.basename ])
     puts
     puts("%sCommands:%s" % [ hi, normal ])
     cmds = commands.keys.sort.reduce([]) do |acc, name|
