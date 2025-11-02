@@ -1,0 +1,40 @@
+require 'sg/ext'
+using SG::Ext
+
+require 'thread'
+require_relative 'value'
+
+module SG::Defer
+  # A {Defer::Value} synchronized by {Mutex} with a {ConditionVariable}
+  # providing ready signaling.
+  class ConditionValue < Value
+    def initialize &fn
+      @mut = Mutex.new
+      @cv = ConditionVariable.new
+      super(&(fn || lambda { |_| wait_ready }))
+    end
+
+    def reset!
+      @mut.synchronize do
+        super
+      end
+    end
+    def accept v
+      @mut.synchronize do
+        super.tap { @cv.signal }
+      end
+    end
+    def reject v
+      @mut.synchronize do
+        super.tap { @cv.signal }
+      end
+    end
+
+    def wait_ready secs = nil
+      @mut.synchronize do
+        @cv.wait(@mut, secs)
+      end
+      self
+    end
+  end
+end

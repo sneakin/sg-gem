@@ -3,7 +3,7 @@ require_relative 'value'
 require_relative 'missing'
 
 module SG::Defer
-  class Threaded < Value
+  class Threaded < ConditionValue
     include Missing
     def initialize init = nil, &fn
       @thread = Thread.new(*init) do |*a|

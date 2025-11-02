@@ -3,7 +3,7 @@ using SG::Ext
 
 require_relative 'defer'
 
-describe SG::Defer::Value do
+describe SG::Defer::ConditionValue do
   let(:state) { SG::Spec::Defer::QueueTest.new(described_class: described_class) }
   subject { state.make_instance }
   
@@ -32,6 +32,12 @@ describe SG::Defer::Value do
   end
 
   describe 'initialized without a block' do
-    it { expect { described_class.new }.to raise_error(ArgumentError) }
+    subject { described_class.new }
+    it 'waits for #ready?' do
+      Thread.new { sleep(1); subject.accept(100) }
+      t = Time.now.to_f + 1
+      expect { subject.wait }.
+        to change { Time.now.to_f }.to be_within(0.001).of(t.to_f)
+    end
   end
 end

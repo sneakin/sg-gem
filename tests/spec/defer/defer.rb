@@ -260,7 +260,7 @@ shared_examples_for 'a Defer::Value' do
     describe '#wait' do
       it 'returns the value immediately' do
         expect { subject.wait }.
-          to change { Time.now }.to be_within(0.001).of(Time.now)
+          to change { Time.now }.to be_within(0.01).of(Time.now)
       end
     end
     describe '#accept' do

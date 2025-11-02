@@ -19,9 +19,8 @@ module SG::Defer
     # @yield [self]
     # @yieldreturn [Object]
     def initialize &fn
-      @producer = fn || lambda { |_| wait_ready }
-      @mut = Mutex.new
-      @cv = ConditionVariable.new
+      raise ArgumentError.new("No block given.") unless fn
+      @producer = fn
     end
 
     # Wait for the actual value. The producer is called
@@ -31,19 +30,16 @@ module SG::Defer
     # @return [Object]
     # @raise [RuntimeError]
     def wait
-      @mut.synchronize do
-        raise @value if rejected?
-        return @value if ready?
-      end
-      begin
-        v = @producer.call(self)
-        v = v.wait while Waitable === v
-        # could have waited on self
-        ready?? (rejected?? raise(@value) : @value) : accept(v)
-      rescue
-        reject($!)
-        raise
-      end
+      raise @value if rejected?
+      return @value if ready?
+
+      v = @producer.call(self)
+      v = v.wait while Waitable === v
+      # could have waited on self
+      ready?? (rejected?? raise(@value) : @value) : accept(v)
+    rescue
+      reject($!)
+      raise
     end
 
     predicate :ready
@@ -53,10 +49,8 @@ module SG::Defer
     # Zero out the state and value.
     # @return [self]
     def reset!
-      @mut.synchronize do
-        unready!
-        @value = nil
-      end
+      unready!
+      @value = nil
       self
     end
 
@@ -68,27 +62,18 @@ module SG::Defer
     # @raise [AlreadyResolved]
     def accept v
       raise AlreadyResolved.new(self) if ready?
-      @mut.synchronize do
-        ready!
-        @value = v
-        @cv.signal
-        @value
-      end
+      ready!
+      @value = v
     end
 
-    # todo no raise on reject. raise only on woit
-    
     # Assign the value and set the state to flag an error occurred.
     # @param v [StandardError, String]
-    # @return [Object]
+    # @return [self]
     # @raise [AlreadyResolved]
     def reject v
       unless ready?
-        @mut.synchronize do
-          ready!(:rejected)
-          @value = v
-          @cv.signal
-        end
+        ready!(:rejected)
+        @value = v
       end
       self
     end
@@ -98,13 +83,6 @@ module SG::Defer
     # @return [Array(Value, self)]
     def coerce other
       [ self.class.new { other }, self ]
-    end
-
-    def wait_ready secs = nil
-      @mut.synchronize do
-        @cv.wait(@mut, secs)
-      end
-      self
     end
   end
 end
