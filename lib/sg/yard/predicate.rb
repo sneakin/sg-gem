@@ -8,7 +8,7 @@ module YARD
     handles method_call(:predicate)
     namespace_only
 
-    # todo Any comment near a predicate call will documont the added methods.
+    # @todo Any comment near a predicate call will document all the added methods, not just the accessor.
     
     def process
       return if statement.type == :var_ref || statement.type == :vcall
@@ -44,6 +44,5 @@ EOT
         register(o)
       end
     end
-
   end
 end
