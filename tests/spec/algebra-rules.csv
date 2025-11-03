@@ -1,0 +1,44 @@
+Input,Output
+# general rules
+0,0
+123,123
+x,x
+"bop(:+, 1, 2)",3
+# Addition
+0 + x,x
+x + 0,x
+x + 1 + 2,x + 3
+"bop(:+, 1, 2) + x",3 + x
+"x + bop(:+, 1, 2)",x + 3
+0 + x + 0,x
+1 + (x + 3),4 + x
+(1 + x) + 3,4 + x
+# Subtraction
+x - 0,x
+0 - x,-x
+x - x,0
+# Products
+x * 0,0
+0 * x,0
+x * 1,x
+1 * x,x
+x * x,x ** 2
+3 * x * 4 * 5,60 * x
+x * 3 / x,3
+3 * x / 3,x
+# Division
+0 / x,0
+0.0 / y,0.0
+0.0 / 10.0,0.0
+x / x,1
+x / 1,x
+"bop(:/, 1, 0)",ZeroDivisionError # An error
+x / 0,x / 0
+x / 0.0,x / 0.0
+"x / bop(:/, 5, 0)",ZeroDivisionError
+# Exponents
+x ** 0,1
+x ** 1,x
+(x ** 2) * 3,(x ** 2) * 3
+(x ** 2) ** 3,x ** 6
+(x ** 2) * (x ** 3),x ** 5
