@@ -34,9 +34,10 @@ module SG::Ext
     # boolean instance variable.
     #
     # @param [Array<String, Symbol>] names
+    # @param read_only [Boolean] Set to prevent setters.
     # @return [self]
     # @raise [ArgumentError]
-    def predicate *names
+    def predicate *names, read_only: false
       raise ArgumentError.new("No predicates named.") if names.empty?
       
       names.each do |n|
@@ -45,6 +46,8 @@ module SG::Ext
         end
         class_eval <<-EOT
 def #{n}?; !!@#{n}; end
+EOT
+        class_eval <<-EOT unless read_only
 def #{n}!(v=true); @#{n} = v; self; end
 def un#{n}!; @#{n} = false; self; end
 EOT

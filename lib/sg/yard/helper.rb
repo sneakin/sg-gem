@@ -6,9 +6,10 @@ module SG
         # (:assoc,
         #    s(:label, "to"),
         #    s(:symbol_literal, s(:symbol, s(:ident, "test_fn"))))
-        Hash[opts.collect { [ strip_symbol(_1[0].source).to_sym,
-                              strip_symbol(_1[1].source)
-                            ] }]
+        Hash[opts.reject { _1[0].nil? || _1[1].nil? }.
+             collect { [ strip_symbol(_1[0].source).to_sym,
+                         strip_symbol(_1[1].source)
+                       ] }]
       end
 
       def strip_symbol str
