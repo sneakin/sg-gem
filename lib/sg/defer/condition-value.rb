@@ -8,9 +8,12 @@ module SG::Defer
   # A {Defer::Value} synchronized by {Mutex} with a {ConditionVariable}
   # providing ready signaling.
   class ConditionValue < Value
-    def initialize &fn
+    attr_reader :timeout
+    
+    def initialize timeout: nil, &fn
       @mut = Mutex.new
       @cv = ConditionVariable.new
+      @timeout = timeout
       super(&(fn || lambda { |_| wait_ready }))
     end
 
@@ -30,9 +33,9 @@ module SG::Defer
       end
     end
 
-    def wait_ready secs = nil
+    def wait_ready secs = timeout
       @mut.synchronize do
-        @cv.wait(@mut, secs) until secs != nil && ready?
+        @cv.wait(@mut, secs) until secs != nil || ready?
       end
       self
     end

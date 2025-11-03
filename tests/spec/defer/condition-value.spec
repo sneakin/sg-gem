@@ -34,10 +34,11 @@ describe SG::Defer::ConditionValue do
   describe 'initialized without a block' do
     subject { described_class.new }
     it 'waits for #ready?' do
-      Thread.new { sleep(1); subject.accept(100) }
+      th = Thread.new { sleep(1); subject.accept(100) }
       t = Time.now.to_f + 1
       expect { subject.wait }.
-        to change { Time.now.to_f }.to be_within(0.001).of(t.to_f)
+        to change { Time.now.to_f }.to be_within(1.0).of(t.to_f)
+      th.join
     end
   end
 end

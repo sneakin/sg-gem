@@ -61,7 +61,7 @@ describe SG::Promise do
         end
 
         it 'resolves to deferred values' do
-          v = SG::Defer::Value.new # { x == 1 ? raise('boom') : 123 }
+          v = SG::Defer::ConditionValue.new # { x == 1 ? raise('boom') : 123 }
           p2 = p.rescues { _1 + 1000 }.and_then { _1 + _1 }
           expect(p2.resolve(v)).to eql(456 + 456)
           expect(v.wait).to eql(456 + 456)
@@ -120,7 +120,7 @@ describe SG::Promise do
         end
 
         it 'resolves to deferred values' do
-          v = SG::Defer::Value.new # { x == 1 ? raise('boom') : 123 }
+          v = SG::Defer::ConditionValue.new # { x == 1 ? raise('boom') : 123 }
           p2 = p.rescues { 1000 }.and_then { _1 + _1 }
           expect(p2.resolve(v)).to eql(2000)
           expect(v.wait).to eql(2000)
@@ -128,7 +128,7 @@ describe SG::Promise do
       end
 
       it 'ensures' do
-        v = SG::Defer::Value.new # { x == 1 ? raise('boom') : 123 }
+        v = SG::Defer::ConditionValue.new # { x == 1 ? raise('boom') : 123 }
         fin = 0
         pe = p.ensure { fin += 1; _1 + 1 }.
           and_then { fin += 10; _1 + 10 }.
