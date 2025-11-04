@@ -26,13 +26,15 @@ describe SG::Algebra do
       join('algebra-rules.csv').
       open { SG::CSV.read(_1) }
     
-    test_cases.each do |(input, output)|
+    test_cases.each do |(input, output, vars)|
       input = SG::Algebra(input)
       output = if String === output && output =~ /\A[A-Z][A-Za-z_]+\Z/
                  const_get(output)
                else
                  SG::Algebra(output)
                end
+      vars = vars&.split || []
+      varvals = Hash[vars.each_with_index.collect { [ _1.to_sym, 10.0 * (1 + _2) ] }]
       
       if Class === output
         it "raises #{output} for #{input}" do
@@ -43,6 +45,33 @@ describe SG::Algebra do
         it "simplifies #{input} to #{output}" do
           expect(SG::Algebra.simplify(input)).
             to eql(output)
+        end
+        
+        if !(Numeric === input)
+          def expect_match input, output
+            if Exception === input || Exception === output
+              expect(input).to be_kind_of(output.class)
+            elsif Numeric === output && output != Float::INFINITY
+              expect(input).to be_within(0.0001).of(output)
+            else
+              expect(input).to eql(output)
+            end
+          end
+          def eval_data data, varvals
+            Numeric === data ? data : (data.call(**varvals) rescue $!)
+          end
+          
+          it "computes #{input} to the same result as #{output}" do
+            i = eval_data(input, varvals)
+            o = eval_data(output, varvals)
+            expect_match(i, o)
+          end
+          it "computes #{input} to same result when simplified" do
+            o = SG::Algebra.simplify(input)
+            o = eval_data(o, varvals)
+            i = eval_data(input, varvals)
+            expect_match(i, o)
+          end
         end
       end
     end

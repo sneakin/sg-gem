@@ -15,13 +15,13 @@ describe SG::CSV do
           end
 
           it 'read headers' do
-            expect(subject.headers).to eql(%w{ Input Output })
+            expect(subject.headers).to eql(%w{ Input Output Variables })
           end
           it 'populated entries' do
             expect(subject.entries.size).to_not eql(0)
           end
           it 'only read two fields' do
-            expect(subject.entries.all? { _1.size == 2 }).to be(true)
+            expect(subject.entries.all? { _1.size == 2 || _1.size == 3 }).to be(true)
           end
           it {
             expect{ test_data.open { |io| subject.read(io) { |e| e } } }.
@@ -42,7 +42,7 @@ describe SG::CSV do
             ents = []
             test_data.open do |io|
               subject.read(io) do |*fields|
-                expect(fields.size).to eql(2)
+                expect(fields.size).to be_within(1).of(3)
                 ents << fields
               end
             end

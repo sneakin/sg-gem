@@ -32,7 +32,7 @@ module SG::Algebra
     end
 
     def ** other
-      BinOp.new(:**, self, other)
+      Exponent.new(self, other)
     end
 
     def | other
@@ -168,8 +168,8 @@ module SG::Algebra
       super || (other.kind_of?(BinOp) && op == other.op)
     end
 
-    alias_method :numerator, :left
-    alias_method :denominator, :right
+    alias_method :base, :left
+    alias_method :exponent, :right
     def initialize l, r
       super(:**, l, r)
     end
@@ -287,11 +287,16 @@ module SG::Algebra
       BinOp.new(...)
     end
 
+    def m(...)
+      MethodCall.new(...)
+    end
+
     def build str = nil, &cb
       return str unless str == nil || String === str
       r = nil
       r = instance_eval(str) if str
       r = instance_eval(&cb) if cb
+      # r = Constant.new(r) if Numeric === r
       r
     end
 
