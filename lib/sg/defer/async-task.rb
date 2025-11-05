@@ -19,10 +19,8 @@ module SG::Defer
 
     def start
       @task ||= Async do
-        $stderr.puts("Calling #{self} #{fn.inspect} #{init.inspect}")
-        [ :ok, fn.call(*init) ].tap { $stderr.puts("Returning #{_1.inspect}") }
+        [ :ok, fn.call(*init) ]
       rescue
-        $stderr.puts("Rescued #{$!}")
         [ :error, $! ]
       end
     end
