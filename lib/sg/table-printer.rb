@@ -133,8 +133,14 @@ class SG::TablePrinter
     @decorator = decorator || Decorator.new(style)
   end
 
-  def add_column **opts
-    @columns << Column.new(**opts)
+  def add_column title = nil, **opts
+    @columns << Column.new(**opts.skip_unless(title).merge(title: title))
+    self
+  end
+
+  def columns *cols
+    return @columns if cols.empty?
+    cols.each { add_column(**(String === _1 ? { title: _1 } : _1)) }
     self
   end
 
