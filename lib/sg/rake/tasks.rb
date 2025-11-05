@@ -1,4 +1,5 @@
 require 'rspec/core/rake_task'
+require 'shellwords'
 require 'bundler/gem_tasks'
 require 'sg/ext'
 using SG::Ext
@@ -6,7 +7,9 @@ using SG::Ext
 SG_ROOT = Pathname.new(__FILE__).dirname.dirname.dirname.dirname
 TEST_GLOB = '{,tests/}spec/**{,/*/**}/*.spec'
 
-rspec_opts = [ ENV['RSPEC_OPTS'] || '' ]
+rspec_opts = [ *%w{-f json -o doc/spec.json},
+               ENV['RSPEC_OPTS']
+             ].reject(&:nil?)
 
 unless $NAME && $VERSION
   warn("$NAME and $VERSION are undefined.")
@@ -19,7 +22,8 @@ end
 
 desc 'Run the RSpec test suit'
 RSpec::Core::RakeTask.new(:spec) do |t|
-  t.rspec_opts = rspec_opts.join(' ')
+  rspec_opts += %w{ -f progress }
+  t.rspec_opts = Shellwords.join(rspec_opts)
   t.pattern = TEST_GLOB
 end
 
@@ -38,22 +42,23 @@ namespace :spec do
   
   desc 'Run the RSpec test suit'
   RSpec::Core::RakeTask.new(:fast) do |t|
-    t.rspec_opts = [ *rspec_opts, '-t "~slow"' ].join(' ')
+    rspec_opts += %w{ -f progress } unless rspec_opts.include?('-f')
+    t.rspec_opts = Shellwords.join([ *rspec_opts, '-t "~slow"' ])
     t.pattern = TEST_GLOB
   end
 
   desc 'Run the RSpec test suit with the doc formatter.'
   RSpec::Core::RakeTask.new(:doc) do |t|
-    t.rspec_opts = [ *rspec_opts, "-f doc", *rspec_opts ].join(' ')
+    t.rspec_opts = Shellwords.join([ *rspec_opts, *%w{-f doc } ])
     t.pattern = TEST_GLOB
   end
 
   RSpec::Core::RakeTask.new(:_html) do |t|
-    t.rspec_opts = [ *rspec_opts, '-f html -o doc/spec.html' ].join(' ')
+    t.rspec_opts = Shellwords.join([ *rspec_opts, *%w{-f html -o doc/spec.html}])
     t.pattern = TEST_GLOB
   end
 
-  file 'doc/spec.html' => [ 'spec:coverage', 'spec:_html' ]
+  file 'doc/spec.html' => [ 'spec:_html' ]
 
   desc 'Run the RSpec test suit with HTML output to doc/spec.html'
   task :html => 'doc/spec.html'
@@ -116,4 +121,4 @@ namespace :doc do
 end
 
 desc 'Generate the API docs and spec doc.'
-task :doc => [ 'doc:api', 'doc/api', 'spec:html' ]
+task :doc => [ 'doc:api', 'doc/api', 'spec:coverage', 'spec:html' ]
