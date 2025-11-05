@@ -43,8 +43,9 @@ module SG::Spec::Defer
   class QueueTest
     attr_reader :queue, :described_class
 
-    def initialize described_class:
-        @described_class = described_class
+    def initialize described_class:, queue_class: nil
+      @described_class = described_class
+      @queue_class = queue_class || Queue
     end
     
     def make_instance
@@ -57,7 +58,7 @@ module SG::Spec::Defer
     end
 
     def setup
-      @queue = Queue.new
+      @queue = @queue_class.new
     end
 
     def teardown
@@ -75,7 +76,7 @@ module SG::Spec::Defer
 end
 
 shared_examples_for 'a Defer::Value that can defer' do
-  |init_args: nil, this_error: nil|
+  |this_error: nil|
   
   this_error ||= Class.new(RuntimeError)
   
@@ -83,11 +84,54 @@ shared_examples_for 'a Defer::Value that can defer' do
     it { expect(subject).to_not be_ready }
     it { expect(subject).to_not be_rejected }
 
+    describe '#accept' do
+      # todo necessary? problematic for cross process
+      describe 'with a deferred value' do
+        let(:test_value) { 123 }
+        let(:src) { SG::Defer::Value.new { test_value } }
+
+        before do
+          state.push_value(test_value)
+        end
+        
+        it 'returns a new deferred value that is dependent' do
+          expect(subject.accept(src)).to be_kind_of(SG::Defer::Value)
+        end
+        
+        it 'becomes ready' do
+          expect { subject.accept(src) }.
+            to change(subject, :ready?)
+        end
+        
+        it 'is not rejected' do
+          expect { subject.accept(src) }.
+            to_not change(subject, :rejected?)
+        end
+        
+        describe 'dependent resolves' do
+          it 'returns the value' do
+            expect(subject.accept(src).wait).to eql(123)
+          end
+        end
+        
+        describe 'dependent errors' do
+          let(:src) { SG::Defer::Value.new { raise this_error, 'dependent' } }
+          
+          it 'fails with the error' do
+            expect { subject.accept(src).wait }.to raise_error(this_error)
+          end
+        end
+      end
+    end
+    
     describe '#wait' do
       describe 'the producer returns a deferred value' do
-        let(:qval) { described_class.new(*init_args) { '456' } }
-        let(:src) { described_class.new(*init_args) { qval } }
-        subject { described_class.new(*init_args) { src } }
+        let(:qval) { SG::Defer::Value.new { '456' } }
+        let(:src) { SG::Defer::Value.new { qval } }
+
+        before do
+          state.push_value(src)
+        end
         
         it 'waits on it' do
           allow(src).to receive(:wait).and_return('heyo')
@@ -102,9 +146,12 @@ shared_examples_for 'a Defer::Value that can defer' do
       end
 
       describe 'the producer returns a deferred error' do
-        let(:qval) { described_class.new(*init_args) { raise this_error, 'deferred' } }
-        let(:src) { described_class.new(*init_args) { qval } }
-        subject { described_class.new(*init_args) { src } }
+        let(:qval) { SG::Defer::Value.new { raise this_error, 'deferred' } }
+        let(:src) { SG::Defer::Value.new { qval } }
+
+        before do
+          state.push_value(src)
+        end
         
         it 'waits on it' do
           allow(src).to receive(:wait).and_return('heyo')
@@ -123,7 +170,7 @@ shared_examples_for 'a Defer::Value that can defer' do
 end
 
 shared_examples_for 'a Defer::Value' do
-  |test_state:, init_args: nil, test_value: 1234, test_result: test_value, this_error: nil|
+  |test_value: 1234, test_result: test_value, this_error: nil|
   
   this_error ||= Class.new(RuntimeError)
   
@@ -133,7 +180,9 @@ shared_examples_for 'a Defer::Value' do
 
     describe '#wait' do
       describe 'the producer raises an error' do
-        subject { described_class.new(*init_args) { raise this_error, 'err' } }
+        before do
+          state.push_error(this_error.new('err'))
+        end
         
         it 'fails with the error' do
           expect { subject.wait }.to raise_error(this_error)
@@ -176,38 +225,6 @@ shared_examples_for 'a Defer::Value' do
     end
 
     describe '#accept' do
-      describe 'with a deferred value' do
-        let(:src) { described_class.new(*init_args) { test_value } }
-        
-        it 'returns a new deferred value that is dependent' do
-          expect(subject.accept(src)).to be_kind_of(SG::Defer::Value)
-        end
-        
-        it 'becomes ready' do
-          expect { subject.accept(src) }.
-            to change(subject, :ready?)
-        end
-        
-        it 'is not rejected' do
-          expect { subject.accept(src) }.
-            to_not change(subject, :rejected?)
-        end
-        
-        describe 'dependent resolves' do
-          it 'returns the value' do
-            expect(subject.accept(src).wait).to eql(test_result)
-          end
-        end
-        
-        describe 'dependent errors' do
-          let(:src) { described_class.new(*init_args) { raise this_error, 'dependent' } }
-          
-          it 'fails with the error' do
-            expect { subject.accept(src).wait }.to raise_error(this_error)
-          end
-        end
-      end
-
       describe 'regular value' do
         it 'updated the value' do
           subject.accept('boom')

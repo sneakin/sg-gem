@@ -30,4 +30,5 @@ Gem::Specification.new do |s|
   s.add_dependency 'unicode-display_width', '~>2.5.0'
   s.add_dependency 'unicode-emoji', '~>3.4.0'
   s.add_dependency 'webrick'
+  s.add_dependency 'async'
 end

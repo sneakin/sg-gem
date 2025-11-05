@@ -3,49 +3,7 @@ using SG::Ext
 
 require_relative 'defer'
 require 'sg/defer/forked'
-
-class ForkedTest
-  class Error < RuntimeError; end
-  
-  attr_reader :pipe, :described_class
-  
-  def initialize cmd: 'cat', described_class: SG::Defer::Forked
-    @cmd = cmd
-    @described_class = described_class
-  end
-  
-  def setup
-    return if @pipe
-    @pipe = IO.pipe
-  end
-  
-  def teardown
-    @pipe.each(&:close)
-  end
-
-  def make_instance
-    raise ArgumentError, cmd unless String === @cmd
-    setup unless @pipe
-    described_class.new(@cmd, child_args: [ pipe[0] ]) do |io, pipe|
-      data = pipe.readline.strip
-      case data
-      when /ERROR ([^\n]*)/ then raise Error.new($1)
-      else io.puts(data); io.close_write; io.read.strip
-      end
-    end
-  end
-
-  def push_value v
-    pipe[1].puts(v)
-    pipe[1].flush
-  end
-
-  def push_error err
-    push_value("ERROR #{err}\n")
-  end
-  
-  def mock_for_error v; push_error(v); end
-end
+require_relative 'forked'
 
 describe SG::Defer::Forked do
   describe 'groups' do
@@ -61,10 +19,14 @@ describe SG::Defer::Forked do
       state.teardown
     end
 
+    describe 'with a value' do
+      before do
+        state.push_value(123)
+      end
+      it_should_behave_like 'a SG::Defer::Forked'
+    end
     it_should_behave_like 'a Defer::Able'
     it_should_behave_like('a Defer::Value',
-                          test_state: ForkedTest,
-                          init_args: [ [ 'echo', '1234' ] ],
                           test_value: '1234',
                           test_result: "1234",
                           this_error: ForkedTest::Error)
@@ -76,6 +38,8 @@ describe SG::Defer::Forked do
     it 'works' do
       expect(subject.wait).to eql(IO.popen('ls') { _1.read })
     end
+
+    it_should_behave_like 'a SG::Defer::Forked'
   end
 
   describe 'cat' do
@@ -90,5 +54,7 @@ describe SG::Defer::Forked do
     it 'works' do
       expect(subject.wait).to eql("hello\n")
     end
+
+    it_should_behave_like 'a SG::Defer::Forked'
   end
 end

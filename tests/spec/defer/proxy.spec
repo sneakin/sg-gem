@@ -4,6 +4,8 @@ using SG::Ext
 require_relative 'defer'
 
 describe SG::Defer::Proxy do
+  include SG::Spec::Matchers
+  
   let(:state) { SG::Spec::Defer::QueueTest.new(described_class: described_class) }
   subject { state.make_instance }
   
@@ -11,9 +13,12 @@ describe SG::Defer::Proxy do
     state.setup
   end
 
+  after do
+    state.teardown
+  end
+
   it_should_behave_like 'a Defer::Able'
-  it_should_behave_like('a Defer::Value',
-                        test_state: SG::Spec::Defer::QueueTest)
+  it_should_behave_like('a Defer::Value')
   it_should_behave_like 'a Defer::Value that can defer'
 
   it 'works' do
@@ -26,8 +31,7 @@ describe SG::Defer::Proxy do
     z = (n + y)
     expect([x.wait, n.wait, y.wait, z.wait]).
       to eql([50, 100, 100, 200])
-    expect { [x.wait, n.wait, y.wait, z.wait] }.
-      to change { Time.now }.to be_within(0.001).of(Time.now)
+    expect_clock_at(0, 0.001) { [x.wait, n.wait, y.wait, z.wait] }
   end
 
   describe 'for an array' do
