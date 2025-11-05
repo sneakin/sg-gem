@@ -1,5 +1,6 @@
 require 'sg/algebra'
 require 'sg/csv'
+require 'sg/is'
 
 describe SG::Algebra do
   it 'provides symbolic math' do
@@ -46,7 +47,7 @@ describe SG::Algebra do
           expect(SG::Algebra.simplify(input)).
             to eql(output)
         end
-        
+
         if !(Numeric === input)
           def expect_match input, output
             if Exception === input || Exception === output
@@ -59,6 +60,11 @@ describe SG::Algebra do
           end
           def eval_data data, varvals
             Numeric === data ? data : (data.call(**varvals) rescue $!)
+          end
+          
+          it 'lowers the depth' do
+            simp = SG::Algebra.simplify(input)
+            expect(Numeric === simp || simp.depth < input.depth).to be_truthy
           end
           
           it "computes #{input} to the same result as #{output}" do
