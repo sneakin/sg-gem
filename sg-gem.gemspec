@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.metadata    = {
     "source_code_uri" => "https://github.com/sneakin/sg-gem"
   }
-  s.executables = [ 'sg-color', 'sg-tabler' ]
+  s.executables = [ 'sg-color', 'sg-tabler', 'sg-rspec-report' ]
   s.require_paths = [ 'lib' ]
   s.add_dependency 'rake', '~>13.0.0'
   s.add_development_dependency 'bindata'

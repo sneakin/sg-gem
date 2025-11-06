@@ -1,0 +1,69 @@
+#!/usr/bin/env -S ruby
+
+# todo enumerate results by backend, currently the default driver of client
+
+require 'sg/ext'
+using SG::Ext
+require 'sg/is'
+
+require 'json'
+require 'optparse'
+require 'sg/table-printer'
+
+@style = nil
+@filters = []
+
+paths = OptionParser.new do |o|
+  o.on('-s', '--style NAME', SG::TablePrinter::Decorator::Styles.keys) do
+    @style = _1
+  end
+  o.on('-f', '--filter PATH') do
+    @filters << File.read(_1)
+  end
+  o.on('-e', '--eval-filter RUBY') do
+    @filters << _1
+  end
+  o.on('-g') do
+    @grouped = true
+  end
+end.parse!(ARGV)
+
+json = ARGF.read
+data = JSON.load(json)
+
+def filter_call filter, examples
+  instance_eval(filter)
+end
+
+examples = @filters.reduce(data['examples']) { filter_call(_2, _1) }
+if !@grouped
+  examples = examples.group_by { _1['id'].split(/[:\[]/)&.first }
+end
+
+stats = examples.
+  collect do |(path, examples)|
+  [ path, 
+    examples.
+  then { |r| [ r.size,
+            r.all? { _1['status'] == 'passed' },
+            Hash[r.group_by { _1['status'] }.collect { [ _1, _2.size ] }] ] }
+    
+  ]
+end
+
+def percentage n, t
+  return '' unless n && t
+  per = n / t.to_f * 100.0
+  [ "%3.f%% (%i/%i)" % [ per, n, t ] ]
+end
+
+SG::TablePrinter.new(style: @style).
+  columns(*%w{ File 100% Passed Pending }).
+  # collect { _1.gsub(/(^|[^_])_([^_]|$)/, '\1 \2') }).
+  print(stats.sort_by(&:first).
+        collect { [ File.basename(_1[0]),
+                    _1[1][0] > 0 && _1[1][1],
+                    *percentage(_1[1][2]['passed'], _1[1][0]),
+                    *percentage(_1[1][2]['pending'], _1[1][0])
+                  ]
+        })
