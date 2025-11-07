@@ -99,30 +99,12 @@ module SG
           all?(&/\A([#{quotes}]).*\1\Z/m) || raise(UnterminanedQuoteError.new(line, line_num))
         }.
         collect {
-          (_1[2] && unescape(_1[2])) ||
-          (_1[1] && unescape(_1[1])) ||
+          (_1[2] && _1[2].unescape(quotes: quotes)) ||
+          (_1[1] && _1[1].unescape(quotes: quotes)) ||
           _1[0]
         }.
         skip_unless(strip?).collect(&:strip)
         # tap { puts("After", _1.inspect) }
-    end
-    
-    Specials = {
-      "\\" => "\\",
-      '0' => "\x00",
-      'b' => "\b",
-      'e' => "\e",
-      'f' => "\f",
-      'n' => "\n",
-      'r' => "\r",
-      't' => "\t",
-      'v' => "\v",
-    }
-    SpecialChars = Specials.keys.join.gsub("\\", "\\\\\\\\")
-    
-    def unescape str
-      str.gsub(/\\([#{quotes}])/, '\1').
-        gsub(/\\([#{SpecialChars}])/) { Specials[_1[1]] || _1 }
     end
   end
 end

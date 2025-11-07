@@ -1148,6 +1148,52 @@ EOT
     it { expect('hello'.rjust_visually(10, 'x')).to eql('xxxxxhello') }
     it { expect('hello'.rjust_visually(10, 'xyz')).to eql('xyzxyhello') }
   end
+
+  describe '#split_at' do
+    [ [ 'hello world', 5, [ 'hello', ' world' ] ],
+      [ 'hello', 0, [ '', 'hello' ] ],
+      [ 'hello', 2, [ 'he', 'llo' ] ],
+      [ 'hello', -1, [ 'hell', 'o' ] ],
+      [ 'hello', -3, [ 'he', 'llo' ] ],
+      [ 'hello world', ' ', [ 'hello', ' world' ] ],
+      [ 'hello world', /[^l]o/, [ 'hello ', 'world' ] ],
+    ].each do |(input, at, output)|
+      it "splits #{input.inspect} into #{output.inspect} at #{at}" do
+        expect(input.split_at(at)).to eql(output)
+      end
+    end
+  end
+  
+  describe '#unescape' do
+    [ [ "\\\\", "\\" ],
+      [ '\0', "\x00" ],
+      [ '\b', "\b" ],
+      [ '\e', "\e" ],
+      [ '\f', "\f" ],
+      [ '\n', "\n" ],
+      [ '\r', "\r" ],
+      [ '\t', "\t" ],
+      [ '\v', "\v" ],
+      [ '\#', "\#" ],
+      [ '\x00', "\x00" ],
+      [ '\x20', " " ],
+      [ '\x0A', "\n" ],
+      [ '\u000A', "\n" ],
+      [ '\u0Ahuh', "\\u0Ahuh" ],
+      [ '\x10', "\u0010" ],
+      [ '\x2023', " 23" ],
+      [ '\u9023', "\u9023" ]
+    ].each do |(input, output)|
+      [ [ input, output ],
+        [ input + 'test', output + 'test' ],
+        [ 'test' + input, 'test' + output ]
+      ].each do |(rinput, routput)|
+        it "converts #{rinput.inspect} into #{routput.inspect}" do
+          expect(rinput.unescape).to eql(routput)
+        end
+      end
+    end
+  end
 end
 
 describe Enumerable do

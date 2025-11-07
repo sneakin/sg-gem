@@ -112,12 +112,23 @@ EOT
       # replace case transitions, spaces, and hyphens with hyphens
       decamelize(delim: '-')
     end
+  
+    def to_proc
+      lambda do |*args|
+        self % case args
+               in [ Array ] then args[0]
+               else args
+               end
+      end
+    end
 
     def to_bool
       !(self =~ /\A((no*)|(f(alse)?)|0*\Z)/i)
     end
 
     def split_at n
+      n = index(n) unless Integer === n
+      n = size + n if n < 0
       [ self[0, n], self[n, size - n] ]
     end
 
@@ -228,14 +239,28 @@ EOT
       padding <= 0 ? self : pad.cycled(size + padding).
         tap { |s| s[-size, size] = self }
     end
-  
-    def to_proc
-      lambda do |*args|
-        self % case args
-               in [ Array ] then args[0]
-               else args
-               end
-      end
-    end
+  end
+
+  EscapableCharMap = {
+    "\\" => "\\",
+    '#' => '#',
+    '0' => "\x00",
+    'b' => "\b",
+    'e' => "\e",
+    'f' => "\f",
+    'n' => "\n",
+    'r' => "\r",
+    't' => "\t",
+    'v' => "\v",
+  }
+  EscapableChars = EscapableCharMap.keys.join.gsub("\\", "\\\\\\\\")
+
+  refine String do
+    def unescape quotes: "'\""
+      gsub(/\\([#{quotes}])/, '\1').
+        gsub(/\\u([0-9a-f]{4})/i) { [ _1[2..-1].to_i(16) ].pack('U') }.
+        gsub(/\\x([0-9a-f]{2})/i) { [ _1[2..-1].to_i(16) ].pack('C') }.
+        gsub(/\\([#{EscapableChars}])/) { EscapableCharMap[_1[1]] || _1 }
+    end    
   end
 end

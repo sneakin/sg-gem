@@ -76,7 +76,7 @@ describe SG::CSV do
         [ 'hey"big,big,world",bye,"bye,\"foo\""',
           [ 'hey"big', 'big', 'world"', 'bye', 'bye,"foo"' ] ],
         [ 'hey\nworld,"hello\n\tworld\x23",foo',
-          [ 'hey\nworld', "hello\n\tworld\\x23", 'foo' ] ],
+          [ 'hey\nworld', "hello\n\tworld\#", 'foo' ] ],
         [ 'bye,goodbye,"Farewell,,"', [ 'bye', 'goodbye', 'Farewell,,' ] ]
       ].each do |(input, output)|
         if Class === output
