@@ -31,8 +31,7 @@ namespace :spec do
   if Gem.loaded_specs['simplecov']
     desc 'Add options to generate a coverage report.'
     task :coverage do
-      rspec_opts << '-Ilib -Itests -Ispec -rsg/rake/simplecov-init'
-      Rake::Task['spec'].execute
+      rspec_opts += %w{-Ilib -Itests -Ispec -rsg/rake/simplecov-init}
     end
   else
     task :coverage do
@@ -57,6 +56,9 @@ namespace :spec do
     t.rspec_opts = Shellwords.join([ *rspec_opts, *%w{-f html -o doc/spec.html}])
     t.pattern = TEST_GLOB
   end
+
+  desc 'Generate coverage and HTML output.'
+  task 'coverage+html' => [ 'spec:coverage', 'spec:html' ]
 
   file 'doc/spec.html' => [ 'spec:_html' ]
 
@@ -121,4 +123,4 @@ namespace :doc do
 end
 
 desc 'Generate the API docs and spec doc.'
-task :doc => [ 'doc:api', 'doc/api', 'spec:coverage', 'spec:html' ]
+task :doc => [ 'doc:api', 'doc/api', 'spec:coverage+html' ]
